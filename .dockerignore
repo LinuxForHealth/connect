@@ -1,0 +1,8 @@
+# exclude everything from the build context
+*
+
+# now include specific items as our inclusions < our exclusions
+!pyconnect
+!setup.py
+!README.md
+!LICENSE

@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  nats-server:
+    image: docker.io/linuxforhealth/jetstream:v0.0.19
+    volumes:
+      - ./local-certs:/certs
+    command: server --tls \
+      --tlscert=/certs/nats-server.crt \
+      --tlskey=/certs/nats-server.key \
+      --tlscacert=/certs/rootCA.crt
+    ports:
+      - "4222:4222"
+  zookeeper:
+    image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
+    expose:
+      - "2181"
+  kafka:
+    image: docker.io/linuxforhealth/kafka-alpine:2.5.0
+    restart: "always"
+    expose:
+      - "9092"
+      - "9094"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
