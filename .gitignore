@@ -70,6 +70,7 @@ venv.bak/
 
 # Certificates
 local-certs/*.pem
+local-certs/*.csr
 local-certs/*.crt
 local-certs/*.key
 local-certs/index*
