@@ -16,8 +16,11 @@ def test_status_get(settings):
     assert actual_response.status_code == 200
 
     actual_json = actual_response.json()
+    assert 'application_version' in actual_json
+
     expected = {
         'application': 'pyconnect.main:app',
+        'application_version': actual_json['application_version'],
         'is_reload_enabled': False,
         'system_status': 'OK',
         'messaging_status': 'OK',

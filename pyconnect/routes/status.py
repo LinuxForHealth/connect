@@ -18,7 +18,7 @@ class StatusResponse(BaseModel):
     The response provides component specific and overall status information
     """
     application: str
-    version: str
+    application_version: str
     is_reload_enabled: bool
     system_status: str = 'OK'
     messaging_status: str = 'OK'
@@ -28,7 +28,7 @@ class StatusResponse(BaseModel):
         schema_extra = {
             'example': {
                 'application': 'pyconnect.main:app',
-                'version': '0.25.0',
+                'application_version': '0.25.0',
                 'is_reload_enabled': False,
                 'system_status': 'OK',
                 'messaging_status': 'OK',
@@ -44,7 +44,7 @@ async def get_status(settings: Settings = Depends(get_settings)):
     """
     status_fields = {
         'application': settings.uvicorn_app,
-        'version': __version__,
+        'application_version': __version__,
         'is_reload_enabled': settings.uvicorn_reload,
     }
     return StatusResponse(**status_fields)

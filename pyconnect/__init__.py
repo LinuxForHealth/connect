@@ -1,3 +1,3 @@
-from version import version
+from pyconnect.version import version
 
 __version__ = version
