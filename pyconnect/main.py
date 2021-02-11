@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from pyconnect.config import get_settings
 from pyconnect.routes import status
+from pyconnect import __version__
 import uvicorn
 
 
@@ -15,7 +16,11 @@ def get_app() -> FastAPI:
     Creates the Fast API application instance
     :return: The application instance
     """
-    app = FastAPI()
+    app = FastAPI(
+        title='LinuxForHealth pyConnect',
+        description='LinuxForHealth Connectors for Inbound Data Processing',
+        version=__version__,
+    )
     app.add_middleware(HTTPSRedirectMiddleware)
     app.include_router(status.router, prefix='/status')
     return app
