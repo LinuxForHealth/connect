@@ -1,6 +1,15 @@
 version: "3.8"
+networks:
+  main:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
+      driver: default
 services:
   nats-server:
+    networks:
+      - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
       - ./local-certs:/certs
@@ -11,10 +20,14 @@ services:
     ports:
       - "4222:4222"
   zookeeper:
+    networks:
+      - main
     image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
     expose:
       - "2181"
   kafka:
+    networks:
+      - main
     image: docker.io/linuxforhealth/kafka-alpine:2.5.0
     restart: "always"
     expose:
