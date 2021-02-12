@@ -13,6 +13,8 @@ import datetime
 
 router = APIRouter()
 
+data_record_regex = '^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$'
+
 
 class LinuxForHealthDataRecordResponse(BaseModel):
     """
@@ -28,7 +30,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     data: str
     data_format: str
     status: str
-    data_record_location: constr(regex='^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$')
+    data_record_location: constr(regex=data_record_regex)
     target_endpoint_url: Optional[AnyUrl]
     elapsed_storage_time: float
     elapsed_transmit_time: float
