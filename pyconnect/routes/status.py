@@ -8,6 +8,7 @@ from fastapi.routing import APIRouter
 from pydantic.main import BaseModel
 from pyconnect import __version__
 from pyconnect.config import Settings, get_settings
+import time
 
 router = APIRouter()
 
@@ -23,6 +24,7 @@ class StatusResponse(BaseModel):
     system_status: str = 'OK'
     messaging_status: str = 'OK'
     database_status: str = 'OK'
+    elapsed_time: float
 
     class Config:
         schema_extra = {
@@ -32,7 +34,8 @@ class StatusResponse(BaseModel):
                 'is_reload_enabled': False,
                 'system_status': 'OK',
                 'messaging_status': 'OK',
-                'database_status': 'OK'
+                'database_status': 'OK',
+                'elapsed_time': '0.080413915000008'
             }
         }
 
@@ -42,9 +45,11 @@ async def get_status(settings: Settings = Depends(get_settings)):
     """
     :return: the current system status
     """
+    start_time = time.perf_counter()
     status_fields = {
         'application': settings.uvicorn_app,
         'application_version': __version__,
         'is_reload_enabled': settings.uvicorn_reload,
+        'elapsed_time': time.perf_counter() - start_time
     }
     return StatusResponse(**status_fields)

@@ -17,6 +17,8 @@ def test_status_get(settings):
 
     actual_json = actual_response.json()
     assert 'application_version' in actual_json
+    assert 'elapsed_time' in actual_json
+    assert actual_json['elapsed_time'] > 0.0
 
     expected = {
         'application': 'pyconnect.main:app',
@@ -24,6 +26,7 @@ def test_status_get(settings):
         'is_reload_enabled': False,
         'system_status': 'OK',
         'messaging_status': 'OK',
-        'database_status': 'OK'
+        'database_status': 'OK',
+        'elapsed_time': actual_json['elapsed_time']
     }
     assert actual_json == expected
