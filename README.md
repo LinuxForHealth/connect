@@ -7,9 +7,10 @@ LinuxForHealth Connectors for Inbound Data Processing
 The LinuxForHealth pyConnect development environment requires the following:
 
 - [git](https://git-scm.com) for project version control
-- [mkcert](https://github.com/FiloSottile/mkcert) for https support
-- [Python 3.8 or higher](python download for mac) for runtime/coding support
+- [Python 3.8 or higher](https://www.python.org/downloads/mac-osx/) for runtime/coding support
 - [Docker Compose](https://docs.docker.com/compose/install/) for a local container runtime
+
+For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
 
 ### Getting Started
 Clone the project and navigate to the root directory
