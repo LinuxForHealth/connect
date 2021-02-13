@@ -6,7 +6,8 @@ Bootstraps the Fast API application and Uvicorn processes
 from fastapi import FastAPI
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from pyconnect.config import get_settings
-from pyconnect.routes import status
+from pyconnect.routes import (data,
+                              status)
 from pyconnect import __version__
 import uvicorn
 
@@ -22,6 +23,7 @@ def get_app() -> FastAPI:
         version=__version__,
     )
     app.add_middleware(HTTPSRedirectMiddleware)
+    app.include_router(data.router, prefix='/data')
     app.include_router(status.router, prefix='/status')
     return app
 
