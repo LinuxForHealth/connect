@@ -14,6 +14,9 @@ if [ -z "$OPENSSL" ]; then
     exit 1
 fi
 
+touch index.txt
+echo "01" >> serial.txt
+
 echo "Creating the LinuxForHealth rootCA certificate"
 openssl req -nodes -x509 -newkey rsa:4096 -sha256 -days 3650 -keyout rootCA.key \
     -out rootCA.crt -passout pass:$PASSWORD -config ./ca.cnf
