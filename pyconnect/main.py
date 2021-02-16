@@ -7,7 +7,8 @@ from fastapi import FastAPI
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from pyconnect.config import get_settings
 from pyconnect.routes import (data,
-                              status)
+                              status,
+                              fhir)
 from pyconnect import __version__
 import uvicorn
 
@@ -25,6 +26,7 @@ def get_app() -> FastAPI:
     app.add_middleware(HTTPSRedirectMiddleware)
     app.include_router(data.router, prefix='/data')
     app.include_router(status.router, prefix='/status')
+    app.include_router(fhir.router, prefix='/fhir')
     return app
 
 

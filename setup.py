@@ -29,7 +29,8 @@ setuptools.setup(
     install_requires=[
         'fastapi==0.63.0',
         'uvicorn==0.13.3',
-        'requests==2.25.1'
+        'requests==2.25.1',
+        'xworkflows==1.0.4'
     ],
     extras_require={
         'test': ['pytest==6.1.2'],
