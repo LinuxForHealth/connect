@@ -2,17 +2,17 @@
 test_status.py
 Tests the /status API endpoints
 """
-from tests import client
 from pyconnect.config import get_settings
 
 
-def test_status_get(settings):
+def test_status_get(test_client, settings):
     """
     Tests /status [GET]
+    :param test_client: Fast API test client
     :param settings: Settings test fixture
     """
-    client.app.dependency_overrides[get_settings] = lambda: settings
-    actual_response = client.get('/status')
+    test_client.app.dependency_overrides[get_settings] = lambda: settings
+    actual_response = test_client.get('/status')
     assert actual_response.status_code == 200
 
     actual_json = actual_response.json()
