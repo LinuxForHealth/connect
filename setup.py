@@ -30,8 +30,8 @@ setuptools.setup(
         'fastapi==0.63.0',
         'uvicorn==0.13.3',
         'requests==2.25.1',
-        'xworkflows==1.0.4',
-        'pyaml==20.4.0'
+        'pyaml==20.4.0',
+        'xworkflows==1.0.4'
     ],
     extras_require={
         'test': ['pytest==6.1.2'],
