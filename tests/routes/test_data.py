@@ -7,6 +7,7 @@ Tests /data endpoints
 def test_get_data_record(test_client):
     """
     Tests /data?dataFormat=x&partition=0&offset=0
+    :param test_client: Fast API test client
     """
     actual_response = test_client.get('/data',
                                       params={
