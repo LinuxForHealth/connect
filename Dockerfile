@@ -9,6 +9,7 @@ WORKDIR /home/lfh
 COPY --chown=lfh:lfh ./pyconnect ./pyconnect
 COPY --chown=lfh:lfh ./setup.py setup.py
 COPY --chown=lfh:lfh ./README.md README.md
+COPY --chown=lfh:lfh ./logging.yaml logging.yaml
 RUN pip install --user -e .
 
 CMD ["python", "/home/lfh/pyconnect/main.py"]

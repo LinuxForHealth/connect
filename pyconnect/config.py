@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     """
     pyconnect application settings
     """
+    # logging
+    logging_config_path: str = 'logging.yaml'
     # uvicorn settings
     uvicorn_cert: str
     uvicorn_cert_key: str
