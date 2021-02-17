@@ -12,8 +12,7 @@ import yaml
 import sys
 from yaml.error import YAMLError
 from pyconnect.config import get_settings
-from pyconnect.routes import (data,
-                              status)
+from pyconnect.routes.api import router
 from pyconnect import __version__
 
 settings = get_settings()
@@ -30,8 +29,7 @@ def get_app() -> FastAPI:
         version=__version__,
     )
     app.add_middleware(HTTPSRedirectMiddleware)
-    app.include_router(data.router, prefix='/data')
-    app.include_router(status.router, prefix='/status')
+    app.include_router(router)
     return app
 
 
