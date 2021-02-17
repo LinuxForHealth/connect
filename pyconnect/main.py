@@ -3,7 +3,9 @@ main.py
 
 Bootstraps the Fast API application and Uvicorn processes
 """
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import (FastAPI,
+                     HTTPException,
+                     Request)
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
