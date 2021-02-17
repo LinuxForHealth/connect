@@ -12,6 +12,7 @@ Receive a FHIR data record using the /fhir [POST] endpoint of the form
 from pydantic import (BaseModel,
                       AnyUrl,
                       constr)
+from fastapi import HTTPException
 from fastapi.routing import APIRouter
 from pyconnect.workflows import core
 
@@ -34,6 +35,8 @@ def post_fhir_data(message: FhirMessage):
     :param message: The incoming FHIR message
     :return: The FHIR message result
     """
-    workflow = core.CoreWorkflow(message)
-
-    return workflow.run()
+    try:
+        workflow = core.CoreWorkflow(message)
+        return workflow.run()
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=ex)

@@ -3,8 +3,9 @@ main.py
 
 Bootstraps the Fast API application and Uvicorn processes
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.responses import JSONResponse
 import uvicorn
 import logging.config
 import os
@@ -39,6 +40,12 @@ def get_app() -> FastAPI:
 
 app = get_app()
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code = exc.status_code,
+        content = {"detail": f"{exc.detail}"}
+    )
 
 @app.on_event('startup')
 def configure_logging():
