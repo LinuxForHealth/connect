@@ -45,7 +45,10 @@ Start supporting services and pyconnect
 ```shell
 docker-compose up -d
 docker-compose ps
-UVICORN_CERT=./local-certs/server.crt UVICORN_CERT_KEY=./local-certs/server.key UVICORN_RELOAD=True python pyconnect/main.py 
+UVICORN_CERT=./local-certs/server.crt \
+  UVICORN_CERT_KEY=./local-certs/server.key \
+  UVICORN_RELOAD=True \
+  python pyconnect/main.py 
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
