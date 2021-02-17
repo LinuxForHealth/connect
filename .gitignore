@@ -78,4 +78,4 @@ local-certs/serial*
 
 # IDE configurations
 .idea
-.iml
+*.iml
