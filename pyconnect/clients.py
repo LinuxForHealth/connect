@@ -2,6 +2,7 @@
 clients.py
 
 Client services used to support internal and external transactions.
+Services instances are bound to data attributes and accessed through "get" functions.
 """
 import asyncio
 import confluent_kafka
@@ -76,6 +77,9 @@ def get_kafka_producer() -> Optional[ConfluentAsyncKafkaProducer]:
     global async_kafka_producer
     if not async_kafka_producer:
         settings = get_settings()
-        producer_config = {'bootstrap.servers': settings.kafka_bootstrap_servers}
+        producer_config = {
+            'bootstrap.servers': settings.kafka_bootstrap_servers,
+            'acks': settings.kafka_producer_acks
+        }
         async_kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config)
     return async_kafka_producer

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     """
     # kakfa
     kafka_bootstrap_servers: str = 'localhost:9094'
+    kafka_producer_acks: str = 'all'
 
     # logging
     logging_config_path: str = 'logging.yaml'
