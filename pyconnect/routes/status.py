@@ -14,6 +14,8 @@ import time
 
 router = APIRouter()
 
+status_regex = '^AVAILABLE|UNAVAILABLE$'
+
 
 class StatusResponse(BaseModel):
     """
@@ -23,8 +25,8 @@ class StatusResponse(BaseModel):
     application: str
     application_version: str
     is_reload_enabled: bool
-    nats_status: constr(regex='^AVAILABLE|UNAVAILABLE$')
-    kafka_broker_status: constr(regex='^AVAILABLE|UNAVAILABLE$')
+    nats_status: constr(regex=status_regex)
+    kafka_broker_status: constr(regex=status_regex)
     elapsed_time: float
 
     class Config:
