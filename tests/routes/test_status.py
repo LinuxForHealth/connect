@@ -24,9 +24,11 @@ def test_status_get(test_client, settings):
         'application': 'pyconnect.main:app',
         'application_version': actual_json['application_version'],
         'is_reload_enabled': False,
-        'system_status': 'OK',
-        'messaging_status': 'OK',
-        'database_status': 'OK',
+        'nats_status': 'AVAILABLE',
+        'nats_client_status': 'CONNECTED',
+        'kafka_broker_status': 'AVAILABLE',
+        'kafka_producer_status': 'CONNECTED',
+        'kafka_consumer_status': 'CONNECTED',
         'elapsed_time': actual_json['elapsed_time']
     }
     assert actual_json == expected

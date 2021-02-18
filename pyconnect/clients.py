@@ -7,6 +7,11 @@ import asyncio
 import confluent_kafka
 from confluent_kafka import KafkaException
 from threading import Thread
+from pyconnect.config import get_settings
+from typing import Optional
+
+# client instances
+async_kafka_producer = None
 
 
 class ConfluentAsyncKafkaProducer:
@@ -62,3 +67,15 @@ class ConfluentAsyncKafkaProducer:
                     on_delivery, err, msg)
         self._producer.produce(topic, value, on_delivery=ack)
         return result
+
+
+def get_kafka_producer() -> Optional[ConfluentAsyncKafkaProducer]:
+    """
+    :return: the configured ConfluentAsyncKafkaProducer instance
+    """
+    global async_kafka_producer
+    if not async_kafka_producer:
+        settings = get_settings()
+        producer_config = {'bootstrap.servers': settings.kafka_bootstrap_servers}
+        async_kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config)
+    return async_kafka_producer
