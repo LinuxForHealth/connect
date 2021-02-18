@@ -14,7 +14,7 @@ from pydantic import (BaseModel,
                       constr)
 from fastapi import HTTPException
 from fastapi.routing import APIRouter
-from pyconnect.workflows import core
+from pyconnect.workflows import fhir
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ def post_fhir_data(message: FhirMessage):
     :return: The FHIR message result
     """
     try:
-        workflow = core.CoreWorkflow(message)
+        workflow = fhir.FhirWorkflow(message)
         return workflow.run()
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)

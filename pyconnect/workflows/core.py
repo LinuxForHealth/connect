@@ -1,13 +1,16 @@
 import xworkflows
 
 class CoreWorkflowDef(xworkflows.Workflow):
-
+    """
+    Implements the base LinuxForHealth workflow definition.
+    """
     states = (
         ('parse', "Parse"),
         ('validate', "Validate"),
         ('transform', "Transform"),
         ('persist', "Persist"),
         ('transmit', "Transmit"),
+        ('sync', "Synchronize"),
         ('error', "Error")
     )
 
@@ -16,42 +19,68 @@ class CoreWorkflowDef(xworkflows.Workflow):
         ('do_transform', 'validate', 'transform'),
         ('do_persist', 'transform', 'persist'),
         ('do_transmit', 'persist', 'transmit'),
-        ('handle_error', ('parse', 'validate', 'transform', 'persist', 'transmit'), 'error')
+        ('do_sync', ('persist', 'transmit'), 'sync'),
+        ('handle_error', ('parse', 'validate', 'transform', 'persist', 'transmit', 'sync'), 'error')
     )
 
     initial_state = 'parse'
 
-
 class CoreWorkflow(xworkflows.WorkflowEnabled):
-
+    """
+    Implements the base LinuxForHealth workflow.
+    """
     def __init__(self, message):
         self.message = message
-        self.original_message = message
 
     state = CoreWorkflowDef()
 
     @xworkflows.transition('do_validate')
     def validate(self):
-        print("Validated message: ", self.message)
+        """
+        Override to send message to a NATS subscriber for validation.
+        """
+        print("Override to validate message: ", self.message)
 
     @xworkflows.transition('do_transform')
     def transform(self):
-        message = self.message
-        print("Transformed message: ", message)
-        self.message = message
+        """
+        Send message to a NATS subscriber for transformation to the LinuxForHealth Kafka storage format.
+        """
+        # Provide default transformation to the Kafka storage format in CoreWorkflow
+        print("Transforming message: ", self.message)
 
     @xworkflows.transition('do_persist')
     def persist(self):
-        print("Persisted message: ", self.message)
+        """
+        Send message to a NATS subscriber for Kafka persistence.
+        """
+        # Provide default persistence in Kafka in CoreWorkflow
+        print("Persisting message: ", self.message)
 
     @xworkflows.transition('do_transmit')
     def transmit(self):
+        """
+        Send message to a NATS subscriber for transmission to an external service via HTTP.
+        """
+        # Provide default http transmission in CoreWorkflow, but do not include in run()
+        # Create property for HTTP target.
         print("Transmitting message: ", self.message)
-        # raise Exception('Error transmitting message', 'connection error')
+
+    @xworkflows.transition('do_sync')
+    def synchronize(self):
+        """
+        Send message to NATS subscriber for synchronization across LFH instances.
+        """
+        # Provide default NATS record publish
+        print("Synchronizing message: ", self.message)
 
     @xworkflows.transition('handle_error')
     def error(self):
-        print("Error during state transition. error: ", self.message)
+        """
+        Send message to NATS subscriber to record errors.
+        """
+        # Provide default NATS error publish
+        print("Processing error: ", self.message)
 
     def run(self):
         try:
@@ -67,6 +96,9 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             print("State after persist = ", self.state)
             # Transition from persist to transmit
             self.transmit()
+            print("State after transmit = ", self.state)
+            # Transition from transmit to sync
+            self.synchronize()
             print("CoreWorkflow complete: final state = ", self.state)
             return self.message
         except Exception as ex:
