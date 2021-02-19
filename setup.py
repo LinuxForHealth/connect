@@ -27,10 +27,11 @@ setuptools.setup(
     },
     packages=setuptools.find_packages(),
     install_requires=[
+        'confluent-kafka==1.6.0',
         'fastapi==0.63.0',
-        'uvicorn==0.13.3',
+        'pyaml==20.4.0',
         'requests==2.25.1',
-        'pyaml==20.4.0'
+        'uvicorn==0.13.3',
     ],
     extras_require={
         'test': ['pytest==6.1.2'],
