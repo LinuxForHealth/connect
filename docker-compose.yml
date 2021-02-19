@@ -23,16 +23,11 @@ services:
     networks:
       - main
     image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
-    expose:
-      - "2181"
   kafka:
     networks:
       - main
     image: docker.io/linuxforhealth/kafka-alpine:2.5.0
     restart: "always"
-    expose:
-      - "9092"
-      - "9094"
     ports:
       - "9094:9094"
     environment:
