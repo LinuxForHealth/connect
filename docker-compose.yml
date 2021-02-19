@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 networks:
   main:
     driver: bridge
@@ -8,6 +8,7 @@ networks:
       driver: default
 services:
   nats-server:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
@@ -20,12 +21,14 @@ services:
     ports:
       - "4222:4222"
   zookeeper:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
     expose:
       - "2181"
   kafka:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/kafka-alpine:2.5.0
@@ -40,6 +43,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
   ipfs-cluster-0:
+    profiles: ["ipfs"]
     container_name: ipfs-cluster-0
     image: ipfs/ipfs-cluster:latest
     depends_on:
@@ -56,6 +60,7 @@ services:
     volumes:
       - ./ipfs-cluster-0/config:/data/ipfs-cluster
   ipfs-node-0:
+    profiles: ["ipfs"]
     container_name: ipfs-node-0
     image: ipfs/go-ipfs:latest
     ports:
@@ -71,6 +76,7 @@ services:
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ipfs-cluster-1:
+    profiles: ["ipfs"]
     container_name: ipfs-cluster-1
     image: ipfs/ipfs-cluster:latest
     depends_on:
@@ -84,6 +90,7 @@ services:
     volumes:
       - ./ipfs-cluster-1/config:/data/ipfs-cluster
   ipfs-node-1:
+    profiles: ["ipfs"]
     container_name: ipfs-node-1
     image: ipfs/go-ipfs:latest
     environment:
@@ -94,6 +101,7 @@ services:
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ipfs-cluster-2:
+    profiles: ["ipfs"]
     container_name: ipfs-cluster-2
     image: ipfs/ipfs-cluster:latest
     depends_on:
@@ -107,6 +115,7 @@ services:
     volumes:
       - ./ipfs-cluster-2/config:/data/ipfs-cluster
   ipfs-node-2:
+    profiles: ["ipfs"]
     container_name: ipfs-node-2
     image: ipfs/go-ipfs:latest
     environment:
