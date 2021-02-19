@@ -13,6 +13,10 @@ root:
   level: WARN
   handlers: [console]
 loggers:
+  pyconnect:
+    level: INFO
+    handlers: [console]
+    propogate: no
   uvicorn.access:
     level: INFO
     handlers: [console]
