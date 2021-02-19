@@ -41,6 +41,15 @@ cd local-certs
 cd ../
 ```
 
+Create Swarm Key for a private IPFS peer network
+```shell
+docker run --rm golang:1.9 sh -c 'go get github.com/Kubuxu/go-ipfs-swarm-key-gen/ipfs-swarm-key-gen && ipfs-swarm-key-gen'
+/key/swarm/psk/1.0.0/
+/base16/
+f744ccf21ef090407977a33e01deb0a0c6a3397ae0366ff6f3c749e200f2510d
+```
+Persist the generated output (example above) to `./private-ipfs-network/.ipfs/swarm.key`
+
 Start supporting services and pyconnect
 ```shell
 docker-compose up -d
