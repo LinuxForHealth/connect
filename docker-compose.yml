@@ -93,10 +93,6 @@ services:
       - ./ipfs-node-1:/data/ipfs
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
-    ports:
-      - 8080
-      - 5001
-      - 4001
   ipfs-cluster-2:
     container_name: ipfs-cluster-2
     image: ipfs/ipfs-cluster:latest
@@ -120,8 +116,4 @@ services:
       - ./ipfs-node-2:/data/ipfs
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
-    ports:
-      - 8080
-      - 5001
-      - 4001
 
