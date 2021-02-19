@@ -15,20 +15,17 @@ from pydantic import (BaseModel,
 from fastapi import HTTPException
 from fastapi.routing import APIRouter
 from pyconnect.workflows import fhir
+from fhir.resources.patient import Patient
 
 router = APIRouter()
 
-class FhirMessage(BaseModel):
+class FhirMessage:
     """
     LinuxForHealth FhirMessage Document stores FHIR patient information.
     """
-    resourceType: str
-    id: str
-    active: bool
-    gender: str
 
-@router.post('', response_model=FhirMessage)
-def post_fhir_data(message: FhirMessage):
+@router.post('')
+def post_fhir_data(message: Patient):
     """
     Receive a single FHIR data record
 

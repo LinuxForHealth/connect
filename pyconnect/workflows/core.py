@@ -17,7 +17,7 @@ class CoreWorkflowDef(xworkflows.Workflow):
     transitions = (
         ('do_validate', 'parse', 'validate'),
         ('do_transform', 'validate', 'transform'),
-        ('do_persist', 'transform', 'persist'),
+        ('do_persist', ('parse', 'validate', 'transform'), 'persist'),
         ('do_transmit', 'persist', 'transmit'),
         ('do_sync', ('persist', 'transmit'), 'sync'),
         ('handle_error', ('parse', 'validate', 'transform', 'persist', 'transmit', 'sync'), 'error')
@@ -37,22 +37,23 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_validate')
     def validate(self):
         """
-        Override to send message to a NATS subscriber for validation.
+        Override to send the message to a NATS subscriber for validation.
         """
         print("Override to validate message: ", self.message)
 
     @xworkflows.transition('do_transform')
     def transform(self):
         """
-        Send message to a NATS subscriber for transformation to the LinuxForHealth Kafka storage format.
+        Override to send the message to a NATS subscriber for optional transformation from one
+        form or protocol to another (e.g. HL7v2 to FHIR or FHIR R3 to R4).
         """
-        # Provide default transformation to the Kafka storage format in CoreWorkflow
         print("Transforming message: ", self.message)
 
     @xworkflows.transition('do_persist')
     def persist(self):
         """
-        Send message to a NATS subscriber for Kafka persistence.
+        Send the message to a NATS subscriber for persistence, including transformation of
+        the message to the LinuxForHealth data storage format.
         """
         # Provide default persistence in Kafka in CoreWorkflow
         print("Persisting message: ", self.message)
@@ -60,7 +61,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_transmit')
     def transmit(self):
         """
-        Send message to a NATS subscriber for transmission to an external service via HTTP.
+        Send the message to a NATS subscriber for transmission to an external service via HTTP.
         """
         # Provide default http transmission in CoreWorkflow, but do not include in run()
         # Create property for HTTP target.
@@ -69,7 +70,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_sync')
     def synchronize(self):
         """
-        Send message to NATS subscriber for synchronization across LFH instances.
+        Send the message to a NATS subscriber for synchronization across LFH instances.
         """
         # Provide default NATS record publish
         print("Synchronizing message: ", self.message)
@@ -77,7 +78,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('handle_error')
     def error(self):
         """
-        Send message to NATS subscriber to record errors.
+        Send the message to a NATS subscriber to record errors.
         """
         # Provide default NATS error publish
         print("Processing error: ", self.message)
