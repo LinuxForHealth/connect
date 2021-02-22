@@ -14,7 +14,6 @@ fi
 
 # 2nd invocation with regular user
 ipfs version
-# if [ ! -e "$repo/swarm.key" ]; then echo "$SWARM_KEY" > $repo/swarm.key; fi
 if [ ! -z $SWARM_KEY ]; then echo "$SWARM_KEY" > $repo/swarm.key; fi
 if [ ! -z $SWARM_KEY ]; then echo "HERE IS A KEY" && echo "$SWARM_KEY" > /root/swarm.key; fi
 
