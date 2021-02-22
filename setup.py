@@ -40,5 +40,5 @@ setuptools.setup(
         'test': ['pytest==6.1.2'],
         'dev': ['autopep8==1.5.5', 'pylint==2.6.0']
     },
-    python_requires='>=3.8'
+    python_requires='>=3.7'
 )
