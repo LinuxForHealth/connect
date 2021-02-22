@@ -4,7 +4,8 @@ import sys
 import yaml
 from yaml import YAMLError
 from pyconnect.config import get_settings
-from pyconnect.clients import get_kafka_producer
+from pyconnect.clients import (get_kafka_producer,
+                               get_nats_client)
 
 
 def configure_logging() -> None:
@@ -35,8 +36,9 @@ def configure_logging() -> None:
         logging.info('Logging configuration not found. Applying basic logging configuration.')
 
 
-def configure_clients() -> None:
+async def configure_clients() -> None:
     """
     Configures pyConnect service clients for internal and external integrations
     """
     get_kafka_producer()
+    await get_nats_client()

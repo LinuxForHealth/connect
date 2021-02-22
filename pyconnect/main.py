@@ -40,8 +40,8 @@ if __name__ == '__main__':
         'host': settings.uvicorn_host,
         'port': settings.uvicorn_port,
         'reload': settings.uvicorn_reload,
-        'ssl_keyfile': settings.uvicorn_cert_key,
-        'ssl_certfile': settings.uvicorn_cert
+        'ssl_keyfile': settings.pyconnect_cert_key,
+        'ssl_certfile': settings.pyconnect_cert
     }
 
     uvicorn.run(**uvicorn_params)
