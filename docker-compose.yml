@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 networks:
   main:
     driver: bridge
@@ -8,34 +8,117 @@ networks:
       driver: default
 services:
   nats-server:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
       - ./local-certs:/certs
     command: server --tls \
-      --tlscert=/certs/nats-server.crt \
+      --tlscert=/certs/nats-server.pem \
       --tlskey=/certs/nats-server.key \
-      --tlscacert=/certs/rootCA.crt
+      --tlscacert=/certs/rootCA.pem
     ports:
       - "4222:4222"
   zookeeper:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
-    expose:
-      - "2181"
   kafka:
+    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/kafka-alpine:2.5.0
     restart: "always"
-    expose:
-      - "9092"
-      - "9094"
+    ports:
+      - "9094:9094"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: INTERNAL://kafka:9092
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  ipfs-cluster-0:
+    profiles: ["ipfs"]
+    container_name: ipfs-cluster-0
+    image: ipfs/ipfs-cluster:latest
+    depends_on:
+      - ipfs-node-0
+    environment:
+      CLUSTER_PEERNAME: ipfs-cluster-0
+      CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-0/tcp/5001
+      CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
+#       CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/127.0.0.1/tcp/9094 # Expose API
+      CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
+#     ports:
+#       - "127.0.0.1:9094:9094"
+    volumes:
+      - ./ipfs-cluster-0/config:/data/ipfs-cluster
+  ipfs-node-0:
+    profiles: ["ipfs"]
+    container_name: ipfs-node-0
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "4001:4001"
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:5001:5001"
+    environment:
+      LIBP2P_FORCE_PNET: '1'
+    volumes:
+      - ./staging_dir:/export
+      - ./pv-data_dir:/data/pv
+      - ./ipfs-node-0:/data/ipfs
+      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
+      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
+  ipfs-cluster-1:
+    profiles: ["ipfs"]
+    container_name: ipfs-cluster-1
+    image: ipfs/ipfs-cluster:latest
+    depends_on:
+      - ipfs-node-1
+    environment:
+      CLUSTER_PEERNAME: ipfs-cluster-1
+      CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-1/tcp/5001
+      CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
+      CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
+    volumes:
+      - ./ipfs-cluster-1/config:/data/ipfs-cluster
+  ipfs-node-1:
+    profiles: ["ipfs"]
+    container_name: ipfs-node-1
+    image: ipfs/go-ipfs:latest
+    environment:
+      LIBP2P_FORCE_PNET: '1'
+    volumes:
+      - ./pv-data_dir:/data/pv
+      - ./ipfs-node-1:/data/ipfs
+      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
+      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
+  ipfs-cluster-2:
+    profiles: ["ipfs"]
+    container_name: ipfs-cluster-2
+    image: ipfs/ipfs-cluster:latest
+    depends_on:
+      - ipfs-node-2
+    environment:
+      CLUSTER_PEERNAME: ipfs-cluster-2
+      CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-2/tcp/5001
+      CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
+      CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
+    volumes:
+      - ./ipfs-cluster-2/config:/data/ipfs-cluster
+  ipfs-node-2:
+    profiles: ["ipfs"]
+    container_name: ipfs-node-2
+    image: ipfs/go-ipfs:latest
+    environment:
+      LIBP2P_FORCE_PNET: '1'
+    volumes:
+      - ./pv-data_dir:/data/pv
+      - ./ipfs-node-2:/data/ipfs
+      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
+      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs

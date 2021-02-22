@@ -38,7 +38,3 @@ openssl req -nodes -newkey rsa:2048 -sha256 -out natsservercert.csr \
 echo "Signing the LinuxForHealth NATS server certificate"
 openssl ca -batch -config ca.cnf -policy signing_policy -extensions signing_req -out nats-server.crt \
     -infiles natsservercert.csr
-
-## TODO: migrate pyconnect self-signed certs to use openssl CA and chain defined above
-#mkcert --install
-#mkcert dev.linuxforhealth.com localhost 127.0.0.1 ::1

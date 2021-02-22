@@ -1,18 +1,18 @@
-# LinuxForHealth certificate and store generation
+# Local Trusted Certificates
 
-The LinuxForHealth container-support/certs directory contains the scripts required to generate self-signed certs needed for LinuxForHealth. Follow the instructions below to re-generate and install the LinuxForHealth certs.
+pyConnect is configured to support secure transmissions (HTTPS/SSL/TLS) for core and external services.
+[mkcert](https://github.com/FiloSottile/mkcert)is used to implement secure processing for local/development deployments. Please note that mkcert is not recommended for use in an external deployed environment.
+External/deployed environments are expected to utilize valid non-self signed certificates.
 
-## Generate the certs, truststore and keystore
 
-Run the following commands to generate and install the LinuxForHealth certs.
+## mkcert certificate support
 
-```shell script
-cd local-certs
-./clean.sh
-./mk-certs.sh
-cp *.jks ../../src/main/resources
+to create certificates
+```shell
+./local-certs/install-certificates.sh
 ```
 
-Note: When asked for information for input, just hit return as the defaults have already been provided.
-
-##
+to remove certificates
+```shell
+./local-certs/uninstall-certificates.sh
+```
