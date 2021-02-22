@@ -50,6 +50,11 @@ f744ccf21ef090407977a33e01deb0a0c6a3397ae0366ff6f3c749e200f2510d
 ```
 Persist the generated output (example above) to `./private-ipfs-network/.ipfs/swarm.key`
 
+Create IPFS Cluster Secret (32-bit hex-encoded string) and update `CLUSTER_SECRET` in `docker-compose.yml`
+```shell
+openssl rand -hex 32
+```
+
 Start supporting services and pyconnect
 ```shell
 docker-compose up -d
