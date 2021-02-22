@@ -7,6 +7,7 @@ LinuxForHealth Connectors for Inbound Data Processing
 The LinuxForHealth pyConnect development environment requires the following:
 
 - [git](https://git-scm.com) for project version control
+- [mkcert](https://github.com/FiloSottile/mkcert) for local trusted certificates
 - [Python 3.8 or higher](https://www.python.org/downloads/mac-osx/) for runtime/coding support
 - [Docker Compose](https://docs.docker.com/compose/install/) for a local container runtime
 
@@ -33,13 +34,12 @@ pip install -e .[dev,test]
 # pip install -e ".[dev,test]"
 ```
 
-#### Generate local certs for NATS Jetstream and pyConnect
+#### Generate trusted local certs for pyConnect and supporting services
+
 ```shell
-cd local-certs
-./mk-certs.sh
-# hit enter to accept defaults from cnf files
-cd ../
+./local-certs/install-certificates.sh
 ```
+For more information on pyConnect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
 
 #### Create Swarm Key for a private IPFS peer network
 ```shell
@@ -61,14 +61,13 @@ openssl rand -hex 32
 ```shell
 docker-compose --profile dev up -d
 docker-compose ps
-UVICORN_CERT=./local-certs/server.crt \
-  UVICORN_CERT_KEY=./local-certs/server.key \
+PYCONNECT_CERT=./local-certs/lfh.pem \
+  PYCONNECT_CERT_KEY=./local-certs/lfh.key \
   UVICORN_RELOAD=True \
   python pyconnect/main.py 
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
-Please note that the browser may prompt to trust the certificate as it is self-signed.
 
 ### Docker Image
 The pyconnect docker image is an "incubating" feature. The image builds successfully but additional work is required to
@@ -77,13 +76,4 @@ integrate certificates and supporting components such as NATS Jetstream, Kafka, 
 #### Build the image
 ```shell
 docker build -t linuxforhealth/pyconnect:0.25.0 .
-```
-
-#### The command to launch the container will be similar to
-```shell
-docker run --name pyconnect -d \
-  -v local-certs:/home/lfh/certs:ro \
-  -e UVICORN_CERT=./home/lfh/certs/server.crt \
-  -e UVICORN_CERT_KEY=./home/lfh/certs/server.key \
-  linuxforhealth/pyconnect:0.25.0
 ```

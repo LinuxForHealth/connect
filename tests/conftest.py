@@ -14,11 +14,12 @@ def settings() -> Settings:
     :return: Application Settings
     """
     settings_fields = {
-        'kafka_bootstrap_servers': 'localhost:8080',
+        'kafka_bootstrap_servers': ['localhost:8080'],
+        'nats_servers': ['tls://localhost:8080'],
         'uvicorn_reload': False,
         'uvicorn_app': 'pyconnect.main:app',
-        'uvicorn_cert_key': './mycert.key',
-        'uvicorn_cert': './mycert.pem'
+        'pyconnect_cert_key': './mycert.key',
+        'pyconnect_cert': './mycert.pem'
     }
     return Settings(**settings_fields)
 
@@ -30,8 +31,8 @@ def test_client(monkeypatch) -> TestClient:
     :param monkeypatch: monkeypatch fixture
     :return: Fast API test client
     """
-    monkeypatch.setenv('UVICORN_CERT', './mycert.pem')
-    monkeypatch.setenv('UVICORN_CERT_KEY', './mycert.key')
+    monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
+    monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
     from pyconnect.main import app
     return TestClient(app)
 

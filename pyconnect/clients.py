@@ -7,12 +7,15 @@ Services instances are bound to data attributes and accessed through "get" funct
 import asyncio
 import confluent_kafka
 from confluent_kafka import KafkaException
+from nats.aio.client import Client as NatsClient
 from threading import Thread
 from pyconnect.config import get_settings
 from typing import Optional
 
+
 # client instances
-async_kafka_producer = None
+kafka_producer = None
+nats_client = None
 
 
 class ConfluentAsyncKafkaProducer:
@@ -72,14 +75,32 @@ class ConfluentAsyncKafkaProducer:
 
 def get_kafka_producer() -> Optional[ConfluentAsyncKafkaProducer]:
     """
-    :return: the configured ConfluentAsyncKafkaProducer instance
+    :return: a connected ConfluentAsyncKafkaProducer instance
     """
-    global async_kafka_producer
-    if not async_kafka_producer:
+    global kafka_producer
+    if not kafka_producer:
         settings = get_settings()
         producer_config = {
-            'bootstrap.servers': settings.kafka_bootstrap_servers,
+            'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
             'acks': settings.kafka_producer_acks
         }
-        async_kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config)
-    return async_kafka_producer
+        kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config)
+    return kafka_producer
+
+
+async def get_nats_client() -> Optional[NatsClient]:
+    """
+    :return: a connected NATS client instance
+    """
+    global nats_client
+
+    if not nats_client:
+        settings = get_settings()
+
+        nats_client = NatsClient()
+        await nats_client.connect(
+            servers=settings.nats_servers,
+            allow_reconnect=settings.nats_allow_reconnect,
+            max_reconnect_attempts=settings.nats_max_reconnect_attempts)
+
+    return nats_client

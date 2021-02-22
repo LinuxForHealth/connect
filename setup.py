@@ -17,7 +17,9 @@ setuptools.setup(
     url='https://linuxforhealth.github.io/docs',
     classifiers=[
         'Development Status :: 4 - Beta',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Intended Audience :: Healthcare Industry'
     ],
     keywords='healthit linuxforhealth x12 fhir hl7 linux',
@@ -27,6 +29,7 @@ setuptools.setup(
     },
     packages=setuptools.find_packages(),
     install_requires=[
+        'asyncio-nats-client==0.11.4',
         'confluent-kafka==1.6.0',
         'fastapi==0.63.0',
         'pyaml==20.4.0',
@@ -37,5 +40,5 @@ setuptools.setup(
         'test': ['pytest==6.1.2'],
         'dev': ['autopep8==1.5.5', 'pylint==2.6.0']
     },
-    python_requires='>=3.8'
+    python_requires='>=3.7'
 )

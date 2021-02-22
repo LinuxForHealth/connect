@@ -5,6 +5,7 @@ pyConnect convenience functions
 """
 import socket
 from typing import List
+from urllib.parse import urlsplit
 
 
 def ping_host(hostname: str, port: int) -> bool:
@@ -22,39 +23,32 @@ def ping_host(hostname: str, port: int) -> bool:
     return True
 
 
-def get_host_ports(service_setting: str, delimiter: str = None) -> List[tuple]:
+def get_host_ports(service_setting: List[str]) -> List[tuple]:
     """
     Parses a service setting string into a list of (hostname, port) entries
     :param service_setting: The service setting string
-    :param delimiter: the optional delimiter used to separate entries oin the service setting.
     :return: List of (hostname, port) entries
     """
-    def parse_service(service: str) -> tuple:
-        service_tokens = service.split(':')
-        host_name = service_tokens[0].strip()
-        port = int(service_tokens[1]) if len(service_tokens) >= 2 else None
-        return host_name, port
-
     host_ports = []
-    if delimiter:
-        services = service_setting.split(delimiter)
-        host_ports = [parse_service(s) for s in services]
-    else:
-        host_ports.append(parse_service(service_setting))
 
+    for service in service_setting:
+        parsed_url = urlsplit(service)
+        # parse a second time if hostname isn't found
+        # useful for settings without a protocol scheme
+        if parsed_url.hostname is None:
+            parsed_url = urlsplit('//' + service)
+        host_ports.append((parsed_url.hostname.strip(), parsed_url.port))
     return host_ports
 
 
-def is_service_available(service_setting: str, delimiter: str = None) -> bool:
+def is_service_available(service_setting: List[str]) -> bool:
     """
     Tests one or more services for availability using a TCP socket connection.
     The service_setting contains one or more addresses defined as [host]:[port].
-    Multiple entries are supported using a delimiter. E.g [host]:[port],[host]:[port]
 
     :param service_setting: the address string
-    :param delimiter: optional delimiter
     :return: True if all services can be reached, otherwise returns False
     """
-    host_ports = get_host_ports(service_setting, delimiter=delimiter)
+    host_ports = get_host_ports(service_setting)
     test_results = [ping_host(hp[0], hp[1]) for hp in host_ports]
     return all(test_results)

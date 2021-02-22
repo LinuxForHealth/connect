@@ -15,9 +15,9 @@ services:
     volumes:
       - ./local-certs:/certs
     command: server --tls \
-      --tlscert=/certs/nats-server.crt \
+      --tlscert=/certs/nats-server.pem \
       --tlskey=/certs/nats-server.key \
-      --tlscacert=/certs/rootCA.crt
+      --tlscacert=/certs/rootCA.pem
     ports:
       - "4222:4222"
   zookeeper:

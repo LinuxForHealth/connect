@@ -10,6 +10,7 @@ from pydantic import constr
 from pyconnect import __version__
 from pyconnect.config import get_settings
 from pyconnect.support import is_service_available
+from typing import List
 import time
 
 router = APIRouter()
@@ -47,8 +48,8 @@ def get_status(settings=Depends(get_settings)):
     """
     :return: the current system status
     """
-    def get_service_status(setting: str, delimiter: str = None) -> str:
-        is_available = is_service_available(setting, delimiter=delimiter)
+    def get_service_status(setting: List[str]) -> str:
+        is_available = is_service_available(setting)
         return 'AVAILABLE' if is_available else 'UNAVAILABLE'
 
     start_time = time.perf_counter()
@@ -56,7 +57,7 @@ def get_status(settings=Depends(get_settings)):
         'application': settings.uvicorn_app,
         'application_version': __version__,
         'is_reload_enabled': settings.uvicorn_reload,
-        'nats_status': 'AVAILABLE',
+        'nats_status': get_service_status(settings.nats_servers),
         'kafka_broker_status': get_service_status(settings.kafka_bootstrap_servers),
         'elapsed_time': time.perf_counter() - start_time
     }
