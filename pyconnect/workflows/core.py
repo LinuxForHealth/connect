@@ -1,4 +1,7 @@
+import json
 import xworkflows
+from pyconnect.clients import get_nats_client
+from pydantic.json import pydantic_encoder
 
 class CoreWorkflowDef(xworkflows.Workflow):
     """
@@ -39,7 +42,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         Override to send the message to a NATS subscriber for validation.
         """
-        print("Override to validate message: ", self.message)
 
     @xworkflows.transition('do_transform')
     def transform(self):
@@ -47,63 +49,51 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Override to send the message to a NATS subscriber for optional transformation from one
         form or protocol to another (e.g. HL7v2 to FHIR or FHIR R3 to R4).
         """
-        print("Transforming message: ", self.message)
 
     @xworkflows.transition('do_persist')
-    def persist(self):
+    async def persist(self):
         """
         Send the message to a NATS subscriber for persistence, including transformation of
         the message to the LinuxForHealth data storage format.
         """
-        # Provide default persistence in Kafka in CoreWorkflow
-        print("Persisting message: ", self.message)
+        print("CoreWorkflow: Persisting message: ", self.message)
+        nc = await get_nats_client()
+        resource = self.message.dict()
+        await nc.publish("ACTIONS.persist",
+                         bytearray(json.dumps(resource, indent=2, default=pydantic_encoder),
+                                   'utf-8'))
 
     @xworkflows.transition('do_transmit')
     def transmit(self):
         """
         Send the message to a NATS subscriber for transmission to an external service via HTTP.
         """
-        # Provide default http transmission in CoreWorkflow, but do not include in run()
-        # Create property for HTTP target.
-        print("Transmitting message: ", self.message)
+        # TODO: Provide default http transmission in CoreWorkflow
 
     @xworkflows.transition('do_sync')
     def synchronize(self):
         """
         Send the message to a NATS subscriber for synchronization across LFH instances.
         """
-        # Provide default NATS record publish
-        print("Synchronizing message: ", self.message)
+        # TODO: Create default NATS subscriber for EVENTS.* and synchronize data to all subscribers
 
     @xworkflows.transition('handle_error')
-    def error(self):
+    def error(self, error):
         """
         Send the message to a NATS subscriber to record errors.
         """
-        # Provide default NATS error publish
-        print("Processing error: ", self.message)
+        # TODO: Use LFH logging
+        print("CoreWorkflow: Processing error: ", error)
 
-    def run(self):
+    async def run(self):
         try:
             print("Running CoreWorkflow, starting state=", self.state)
-            # Transition from parse to validate
             self.validate()
-            print("State after validate = ", self.state)
-            # Transition from validate to transform
             self.transform()
-            print("State after transform = ", self.state)
-            # Transition from transform to persist
-            self.persist()
-            print("State after persist = ", self.state)
-            # Transition from persist to transmit
+            await self.persist()
             self.transmit()
-            print("State after transmit = ", self.state)
-            # Transition from transmit to sync
             self.synchronize()
-            print("CoreWorkflow complete: final state = ", self.state)
             return self.message
         except Exception as ex:
-            print("State before error transition:", self.state)
-            self.error()
-            print("Received exception: ", ex, "State after error:", self.state)
+            self.error(ex)
             raise

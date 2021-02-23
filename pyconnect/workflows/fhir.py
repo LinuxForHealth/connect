@@ -5,7 +5,14 @@ class FhirWorkflow(core.CoreWorkflow):
     """
     Implements a FHIR validation and storage workflow for LinuxForHealth.
     """
-    @xworkflows.transition('do_validate')
-    def validate(self):
-        # Overridden to send message to a NATS subscriber for FHIR validation
-        print("Performing FHIR validation for message: ", self.message)
+    async def run(self):
+        try:
+            # TODO: Use LFH logging
+            print("Running CoreWorkflow, starting state=", self.state)
+            await self.persist()
+            self.transmit()
+            self.synchronize()
+            return self.message
+        except Exception as ex:
+            self.error(ex)
+            raise

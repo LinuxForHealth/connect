@@ -41,6 +41,11 @@ pip install -e .[dev,test]
 ```
 For more information on pyConnect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
 
+#### Configure NATS streams and consumers 
+```shell
+./configure-nats.sh
+```
+
 #### Create Swarm Key for a private IPFS peer network
 ```shell
 docker run --rm golang:1.9 sh -c 'go get github.com/Kubuxu/go-ipfs-swarm-key-gen/ipfs-swarm-key-gen && ipfs-swarm-key-gen'

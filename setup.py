@@ -36,7 +36,7 @@ setuptools.setup(
         'requests==2.25.1',
         'pyaml==20.4.0',
         'xworkflows==1.0.4',
-        'fhir.resources==6.1.0'
+        'fhir.resources==6.1.0',
         'uvicorn==0.13.3',
     ],
     extras_require={

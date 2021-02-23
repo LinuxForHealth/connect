@@ -6,6 +6,7 @@ Services instances are bound to data attributes and accessed through "get" funct
 """
 import asyncio
 import confluent_kafka
+import ssl
 from confluent_kafka import KafkaException
 from nats.aio.client import Client as NatsClient
 from threading import Thread
@@ -97,9 +98,16 @@ async def get_nats_client() -> Optional[NatsClient]:
     if not nats_client:
         settings = get_settings()
 
+        # TODO: externalize the cert values as settings
+        ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+        ssl_ctx.load_verify_locations('./local-certs/rootCA.pem')
+        ssl_ctx.load_cert_chain(certfile='./local-certs/nats-server.pem',
+                                keyfile='./local-certs/nats-server.key')
+
         nats_client = NatsClient()
         await nats_client.connect(
             servers=settings.nats_servers,
+            tls=ssl_ctx,
             allow_reconnect=settings.nats_allow_reconnect,
             max_reconnect_attempts=settings.nats_max_reconnect_attempts)
 

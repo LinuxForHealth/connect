@@ -1,17 +1,8 @@
 """
 fhir.py
 
-Receive a FHIR data record using the /fhir [POST] endpoint of the form
-{
-    "resourceType": "Patient",
-    "id": "001",
-    "active": true,
-    "gender": "male"
-}
+Receive and store any valid  FHIR data record using the /fhir [POST] endpoint.
 """
-from pydantic import (BaseModel,
-                      AnyUrl,
-                      constr)
 from fastapi import HTTPException
 from fastapi.routing import APIRouter
 from pyconnect.workflows import fhir
@@ -25,7 +16,7 @@ class FhirMessage:
     """
 
 @router.post('')
-def post_fhir_data(message: Patient):
+async def post_fhir_data(message: Patient):
     """
     Receive a single FHIR data record
 
@@ -34,6 +25,7 @@ def post_fhir_data(message: Patient):
     """
     try:
         workflow = fhir.FhirWorkflow(message)
-        return workflow.run()
+        result = await workflow.run()
+        return result
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)
