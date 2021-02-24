@@ -8,7 +8,6 @@ networks:
       driver: default
 services:
   nats-server:
-    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
@@ -21,12 +20,10 @@ services:
     ports:
       - "4222:4222"
   zookeeper:
-    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
   kafka:
-    profiles: ["dev","ipfs"]
     networks:
       - main
     image: docker.io/linuxforhealth/kafka-alpine:2.5.0
@@ -50,10 +47,10 @@ services:
       CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-0/tcp/5001
       CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
-#       CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/127.0.0.1/tcp/9094 # Expose API
+#     CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/127.0.0.1/tcp/9094 # Expose API
       CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
-#     ports:
-#       - "127.0.0.1:9094:9094"
+#   ports:
+#     - "127.0.0.1:9094:9094"
     volumes:
       - ./ipfs-cluster-0/config:/data/ipfs-cluster
   ipfs-node-0:
