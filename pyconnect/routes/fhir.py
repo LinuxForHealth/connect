@@ -8,7 +8,8 @@ from fastapi import (Body,
 from fastapi.routing import APIRouter
 from fhir.resources.fhirtypesvalidators import get_fhir_model_class
 from pyconnect.workflows import fhir
-from pydantic import BaseModel, ValidationError
+from pydantic.error_wrappers import ErrorWrapper, ValidationError
+from pydantic.utils import ROOT_KEY
 
 
 router = APIRouter()
