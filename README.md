@@ -56,15 +56,17 @@ openssl rand -hex 32
 ```
 
 #### Start supporting services and pyconnect
-- To start services without IPFS support, please use the `dev` profile.
-- To add IPFS support use the `ipfs` profile.
 ```shell
-docker-compose --profile dev up -d
+docker-compose up -d
 docker-compose ps
 PYCONNECT_CERT=./local-certs/lfh.pem \
   PYCONNECT_CERT_KEY=./local-certs/lfh.key \
   UVICORN_RELOAD=True \
   python pyconnect/main.py 
+```
+- To add IPFS support use the `ipfs` profile.
+```
+docker-compose --profile ipfs up -d
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
