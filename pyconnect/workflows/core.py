@@ -1,3 +1,9 @@
+"""
+core.py
+
+Provides the base LinuxForHealth workflow definition.
+"""
+import logging
 import json
 import xworkflows
 from pyconnect.clients import get_nats_client
@@ -46,7 +52,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_transform')
     def transform(self):
         """
-        Override to send the message to a NATS subscriber for optional transformation from one
+        Override to send the message to a NATS subscriber for transformation from one
         form or protocol to another (e.g. HL7v2 to FHIR or FHIR R3 to R4).
         """
 
@@ -56,11 +62,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Send the message to a NATS subscriber for persistence, including transformation of
         the message to the LinuxForHealth data storage format.
         """
-        print("CoreWorkflow: Persisting message: ", self.message)
+        logging.info("CoreWorkflow: Persisting message: ", self.message)
         nc = await get_nats_client()
-        resource = self.message.dict()
+        msg = self.message.dict()
         await nc.publish("ACTIONS.persist",
-                         bytearray(json.dumps(resource, indent=2, default=pydantic_encoder),
+                         bytearray(json.dumps(msg, indent=2, default=pydantic_encoder),
                                    'utf-8'))
 
     @xworkflows.transition('do_transmit')
@@ -82,12 +88,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         Send the message to a NATS subscriber to record errors.
         """
-        # TODO: Use LFH logging
-        print("CoreWorkflow: Processing error: ", error)
+        logging.info("CoreWorkflow: Processing error: ", error)
 
     async def run(self):
         try:
-            print("Running CoreWorkflow, starting state=", self.state)
+            logging.info("Running CoreWorkflow, starting state=", self.state)
             self.validate()
             self.transform()
             await self.persist()

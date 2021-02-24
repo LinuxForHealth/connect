@@ -57,7 +57,7 @@ async def configure_nats_subscribers() -> None:
 
 async def http_exception_handler(request: Request, exc: HTTPException):
     """
-    Allows HTTPExceptions to be thrown without being parsed against a response_model.
+    Allows HTTPExceptions to be thrown without being parsed against a response model.
     """
     return JSONResponse(
         status_code = exc.status_code,

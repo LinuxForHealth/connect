@@ -1,4 +1,9 @@
-import xworkflows
+"""
+fhir.py
+
+Customizes the base LinuxForHealth workflow definition for FHIR resources.
+"""
+import logging
 from pyconnect.workflows import core
 
 class FhirWorkflow(core.CoreWorkflow):
@@ -7,8 +12,7 @@ class FhirWorkflow(core.CoreWorkflow):
     """
     async def run(self):
         try:
-            # TODO: Use LFH logging
-            print("Running CoreWorkflow, starting state=", self.state)
+            logging.info("Running FhirWorkflow, starting state=", self.state)
             await self.persist()
             self.transmit()
             self.synchronize()
