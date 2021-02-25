@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     nats_servers: List[str] = ['tls://localhost:4222']
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
+    nats_rootCA_file: str = local_certs_path + '/rootCA.pem'
+    nats_cert_file: str = local_certs_path + '/nats-server.pem'
+    nats_key_file: str = local_certs_path + '/nats-server.key'
 
     # pyConnect
     pyconnect_cert: str

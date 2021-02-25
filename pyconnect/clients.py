@@ -98,11 +98,9 @@ async def get_nats_client() -> Optional[NatsClient]:
     if not nats_client:
         settings = get_settings()
 
-        # TODO: externalize the cert values as settings
         ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-        ssl_ctx.load_verify_locations('./local-certs/rootCA.pem')
-        ssl_ctx.load_cert_chain(certfile='./local-certs/nats-server.pem',
-                                keyfile='./local-certs/nats-server.key')
+        ssl_ctx.load_verify_locations(settings.nats_rootCA_file)
+        ssl_ctx.load_cert_chain(settings.nats_cert_file, settings.nats_key_file)
 
         nats_client = NatsClient()
         await nats_client.connect(

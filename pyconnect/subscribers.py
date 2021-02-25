@@ -15,7 +15,7 @@ nats_subscribers = []
 
 async def create_nats_subscribers():
     """
-    Create an instance of each NATS subscriber.  Add additional subscribers as needed below.
+    Create an instance of each NATS subscriber.  Add additional subscribers as needed.
     """
     persist = PersistToKafka()
     subscriber = await persist.start_subscriber()

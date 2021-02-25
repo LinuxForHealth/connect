@@ -62,12 +62,13 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Send the message to a NATS subscriber for persistence, including transformation of
         the message to the LinuxForHealth data storage format.
         """
-        logging.info("CoreWorkflow: Persisting message: ", self.message)
         nc = await get_nats_client()
-        msg = self.message.dict()
-        await nc.publish("ACTIONS.persist",
-                         bytearray(json.dumps(msg, indent=2, default=pydantic_encoder),
-                                   'utf-8'))
+
+        # json.dumps filters out all the None values in the generated resource,
+        # leaving us with the message we started with. msg_str is stringified json.
+        msg_str = json.dumps(self.message, indent=2, default=pydantic_encoder)
+        await nc.publish("ACTIONS.persist", bytearray(msg_str, 'utf-8'))
+        self.message = json.loads(msg_str)
 
     @xworkflows.transition('do_transmit')
     def transmit(self):

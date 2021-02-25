@@ -4,9 +4,9 @@ fhir.py
 Customizes the base LinuxForHealth workflow definition for FHIR resources.
 """
 import logging
-from pyconnect.workflows import core
+from pyconnect.workflows.core import CoreWorkflow
 
-class FhirWorkflow(core.CoreWorkflow):
+class FhirWorkflow(CoreWorkflow):
     """
     Implements a FHIR validation and storage workflow for LinuxForHealth.
     """
