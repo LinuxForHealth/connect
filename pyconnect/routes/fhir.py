@@ -38,7 +38,7 @@ def instantiate_fhir_class(data):
     Adapted from fhir.resources fhirtypesvalidators.py
 
     :param data: Incoming request data dictionary
-    :return:
+    :return: FHIR resource class instance
     """
     resource_type = data.pop("resourceType", None)
     if (resource_type is None): raise MissingFhirResourceType
