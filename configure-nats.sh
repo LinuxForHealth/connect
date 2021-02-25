@@ -1,12 +1,7 @@
 #!/bin/bash
 #
-# (C) Copyright IBM Corp. 2020
-# SPDX-License-Identifier: Apache-2.0
-#
 # configure-nats.sh
 # Configures the NATS JetStream server.
-
-# wait parameters used to determine when the services within a container are available
 
 NATS_SERVICE_NAME=pyconnect_nats-server_1
 NATS_CLIENT_PORT=4222

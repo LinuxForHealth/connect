@@ -32,7 +32,7 @@ async def post_fhir_data(request_data: dict = Body(...)):
         raise HTTPException(status_code=500, detail=ex)
 
 
-def instantiate_fhir_class(data):
+def instantiate_fhir_class(data: dict):
     """
     Instantiate a FHIR resource class from input data.
     Adapted from fhir.resources fhirtypesvalidators.py

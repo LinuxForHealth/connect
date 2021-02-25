@@ -5,7 +5,7 @@ Subscriber services support internal and external transactions and may use clien
 Services instances are bound to data attributes and accessed through "get" functions.
 """
 from pyconnect.clients import get_nats_client
-from pyconnect.nats_subscribers.persistToKafka import PersistToKafka
+from pyconnect.nats_subscribers.persist_to_kafka import start_persist_subscriber
 
 
 # client instances
@@ -17,8 +17,7 @@ async def create_nats_subscribers():
     """
     Create an instance of each NATS subscriber.  Add additional subscribers as needed.
     """
-    persist = PersistToKafka()
-    subscriber = await persist.start_subscriber()
+    subscriber = await start_persist_subscriber()
     nats_subscribers.append(subscriber)
 
 
