@@ -36,7 +36,7 @@ def configure_logging() -> None:
         logging.info('Logging configuration not found. Applying basic logging configuration.')
 
 
-async def configure_clients() -> None:
+async def configure_global_clients() -> None:
     """
     Configures pyConnect service clients for internal and external integrations
     """

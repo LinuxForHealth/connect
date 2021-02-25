@@ -4,18 +4,25 @@ clients.py
 Client services used to support internal and external transactions.
 Services instances are bound to data attributes and accessed through "get" functions.
 """
-import asyncio
-import confluent_kafka
-from confluent_kafka import KafkaException
+import ssl
+import sys
+from asyncio import get_event_loop, create_task, gather, sleep, get_running_loop
+from confluent_kafka import Producer, Consumer, KafkaException
 from nats.aio.client import Client as NatsClient
 from threading import Thread
 from pyconnect.config import get_settings
+from pyconnect.utils import combine_segments
 from typing import Optional
 
 
 # client instances
 kafka_producer = None
 nats_client = None
+nats_subscribers = []
+
+# HARD_CODED VARS
+# Helps provide state of KafkaConsumer instances
+_MONITOR_FREQ_IN_SECS_ON_LISTENER_TASKS = 120
 
 
 class ConfluentAsyncKafkaProducer:
@@ -23,9 +30,10 @@ class ConfluentAsyncKafkaProducer:
     Confluent's AsyncIO Wrapper for a Kafka Producer
     Adapted from https://github.com/confluentinc/confluent-kafka-python
     """
+
     def __init__(self, configs, loop=None):
-        self._loop = loop or asyncio.get_event_loop()
-        self._producer = confluent_kafka.Producer(configs)
+        self._loop = loop or get_event_loop()
+        self._producer = Producer(configs)
         self._cancelled = False
         self._poll_thread = Thread(target=self._poll_loop)
         self._poll_thread.start()
@@ -46,7 +54,8 @@ class ConfluentAsyncKafkaProducer:
 
         def ack(err, msg):
             if err:
-                self._loop.call_soon_threadsafe(result.set_exception, KafkaException(err))
+                self._loop.call_soon_threadsafe(result.set_exception,
+                                                KafkaException(err))
             else:
                 self._loop.call_soon_threadsafe(result.set_result, msg)
         self._producer.produce(topic, value, on_delivery=ack)
@@ -88,6 +97,106 @@ def get_kafka_producer() -> Optional[ConfluentAsyncKafkaProducer]:
     return kafka_producer
 
 
+class ConfluentAsyncKafkaConsumer:
+    """
+    A high-level KafkaConsumer class in order to create mutliple instances of
+    the KafkaConsumer (each require a topic_name & optional consumer_group_id).
+
+    A default consumer_group_id as specified in config.py will be used if no
+    consumer_group_id is specified at instance creation.
+    """
+
+    def __init__(self, topic_name, consumer_group_id=None,
+                 concurrent_listeners=None):
+        if topic_name is None:
+            raise ValueError('No topic_name provided to KafkaConsumer')
+
+        # We pull default configs from config.py
+        # TODO find a neat manner in which configs flow from Docker later
+        settings = get_settings()
+        consumer_conf = {
+            'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
+            'group.id': consumer_group_id if consumer_group_id is not None else
+            settings.kafka_consumer_default_group_id,
+            'auto.offset.reset': 'smallest'
+        }
+
+        self.consumer = Consumer(consumer_conf)
+        self.topic_name = topic_name
+        self.concurrent_listeners = concurrent_listeners if concurrent_listeners is not None \
+            else settings.kafka_consumer_default_concurrent_listeners
+        self.tasks = None
+        self.done = False
+        self.monitor_task = None
+
+    async def start_listening(self, callback_method):
+        if self.consumer is None:
+            raise ValueError('Cannot start listening - consumer is not initialized')
+        self.tasks = [create_task(self._listening_task(callback_method)) for _ in range(self.concurrent_listeners)]
+        self.monitor_task = create_task(self._task_monitor(self.tasks))
+        while not self.done:
+            try:
+                await gather(*self.tasks)
+            except Exception as e:
+                if self.done:
+                    for task in self.tasks:
+                        if task.done():
+                            self.tasks.remove(task)
+                else:
+                    print(str(e), file=sys.stderr)
+                    for task in self.tasks:
+                        if task.done():
+                            self.tasks.remove(task)
+                            self.tasks.append(create_task(self._listening_task(callback_method)))
+
+    async def _listening_task(self, callback_method):
+        self.consumer.subscribe([self.topic_name])
+        loop = self._get_running_loop()
+
+        while True:
+            msgs = await loop.run_in_executor(None, self.consumer.consume, 1)
+            for msg in msgs:
+                if msg.error():
+                    print('Consumer error: {}', msg.error(), file=sys.stderr)
+                    continue
+
+                headers = msg.headers()
+                if headers is None:
+                    message = msg.value()
+                else:
+                    message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
+
+                if message is not None:
+                    await callback_method(message)
+
+    def _get_running_loop(self):
+        try:
+            return get_running_loop()
+        except RuntimeError as e:
+            print('Invalid call to async consumer. No active loop', file=sys.stderr)
+            raise e
+
+    async def _task_monitor(self, tasks):
+        while not self.done:
+            print('MONITOR: total active listeners: {}', len(self.tasks), ' for topic: {}', self.topic_name,
+                  file=sys.stdout)
+            await sleep(_MONITOR_FREQ_IN_SECS_ON_LISTENER_TASKS)
+
+    def _generate_header_dictionary(self, headers):
+        headers_dict = {}
+        for key, value in headers:
+            headers_dict[key] = value
+        return headers_dict
+
+    def close_consumer(self):
+        self.done = True
+        self.monitor_task.cancel()
+        for task in self.tasks:
+            task.cancel()
+        if self.consumer is not None:
+            self.consumer.close()
+
+
 async def get_nats_client() -> Optional[NatsClient]:
     """
     :return: a connected NATS client instance
@@ -97,9 +206,14 @@ async def get_nats_client() -> Optional[NatsClient]:
     if not nats_client:
         settings = get_settings()
 
+        ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+        ssl_ctx.load_verify_locations('./local-certs/rootCA.pem')
+        ssl_ctx.load_cert_chain(certfile='./local-certs/nats-server.pem',
+                                keyfile='./local-certs/nats-server.key')
         nats_client = NatsClient()
         await nats_client.connect(
             servers=settings.nats_servers,
+            tls=ssl_ctx,
             allow_reconnect=settings.nats_allow_reconnect,
             max_reconnect_attempts=settings.nats_max_reconnect_attempts)
 

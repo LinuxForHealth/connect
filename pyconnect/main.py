@@ -9,7 +9,7 @@ import uvicorn
 from pyconnect.config import get_settings
 from pyconnect.routes.api import router
 from pyconnect import __version__
-from pyconnect.server_handlers import (configure_clients,
+from pyconnect.server_handlers import (configure_global_clients,
                                        configure_logging)
 
 settings = get_settings()
@@ -28,7 +28,7 @@ def get_app() -> FastAPI:
     app.add_middleware(HTTPSRedirectMiddleware)
     app.include_router(router)
     app.add_event_handler('startup', configure_logging)
-    app.add_event_handler('startup', configure_clients)
+    app.add_event_handler('startup', configure_global_clients)
     return app
 
 

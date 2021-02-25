@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # kakfa
     kafka_bootstrap_servers: List[str] = ['localhost:9094']
     kafka_producer_acks: str = 'all'
+    kafka_consumer_default_group_id: str = 'lfh_consumer_group'
+    kafka_consumer_default_concurrent_listeners: int = 3
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']
