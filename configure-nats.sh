@@ -7,8 +7,6 @@
 # Configures the NATS JetStream server.
 
 # wait parameters used to determine when the services within a container are available
-SLEEP_INTERVAL=2
-MAX_CHECKS=10
 
 NATS_SERVICE_NAME=pyconnect_nats-server_1
 NATS_CLIENT_PORT=4222
