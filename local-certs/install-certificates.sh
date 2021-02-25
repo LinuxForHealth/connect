@@ -21,7 +21,7 @@ echo "create NATS development certificate"
 echo ""
 mkcert -cert-file "$SCRIPT_DIRECTORY"/nats-server.pem \
        -key-file "$SCRIPT_DIRECTORY"/nats-server.key \
-       nats-server compose_nats-server_1 localhost 127.0.0.1 ::1 \
+       nats-server pyconnect_nats-server_1 localhost 127.0.0.1 ::1 \
 
 echo "create LinuxForHealth development certificate"
 mkcert -cert-file "$SCRIPT_DIRECTORY"/lfh.pem \
