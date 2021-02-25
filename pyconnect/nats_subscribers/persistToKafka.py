@@ -34,5 +34,4 @@ async def message_handler(msg):
 
     # TODO: massage message into the correct format
 
-    # TODO: check to see if we can get the message version to use as the topic
     await kafka_producer.produce("FHIR_R4", data)
