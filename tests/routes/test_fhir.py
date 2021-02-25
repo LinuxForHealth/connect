@@ -2,7 +2,8 @@
 test_fhir.py
 Tests the /fhir endpoint
 """
-
+import socket
+from pyconnect.config import get_settings
 
 def test_fhir_post(test_client, settings, mock_client_socket, monkeypatch):
     """
@@ -21,7 +22,7 @@ def test_fhir_post(test_client, settings, mock_client_socket, monkeypatch):
                                            json={
                                                "resourceType": "Patient",
                                                "id": "001",
-                                               "active": true,
+                                               "active": True,
                                                "gender": "male"
                                            })
         assert actual_response.status_code == 200
@@ -34,7 +35,7 @@ def test_fhir_post(test_client, settings, mock_client_socket, monkeypatch):
 
         expected = {
             "id": "001",
-            "active": true,
+            "active": True,
             "gender": "male",
             "resourceType": "Patient"
         }
