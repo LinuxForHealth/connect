@@ -3,9 +3,13 @@ import os
 import sys
 import yaml
 from yaml import YAMLError
+from fastapi import (HTTPException,
+                     Request)
+from fastapi.responses import JSONResponse
 from pyconnect.config import get_settings
 from pyconnect.clients import (get_kafka_producer,
                                get_nats_client)
+from pyconnect.subscribers import create_nats_subscribers
 
 
 def configure_logging() -> None:
@@ -42,3 +46,20 @@ async def configure_global_clients() -> None:
     """
     get_kafka_producer()
     await get_nats_client()
+
+
+async def configure_nats_subscribers() -> None:
+    """
+    Configures pyConnect NATS subscribers for internal and external integrations
+    """
+    await create_nats_subscribers()
+
+
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Allows HTTPExceptions to be thrown without being parsed against a response model.
+    """
+    return JSONResponse(
+        status_code = exc.status_code,
+        content = {"detail": f"{exc.detail}"}
+    )

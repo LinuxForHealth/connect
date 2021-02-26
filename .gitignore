@@ -76,5 +76,9 @@ local-certs/*.key
 local-certs/index*
 local-certs/serial*
 
+# Container runtime folders
+ipfs-*
+
 # IDE configurations
 .idea
+*.iml

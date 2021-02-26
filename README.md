@@ -69,6 +69,12 @@ PYCONNECT_CERT=./local-certs/lfh.pem \
 docker-compose --profile ipfs up -d
 ```
 
+#### Configure NATS streams and consumers
+After starting the containers, configure NATS JetStream streams and consumers.
+```shell
+./configure-nats.sh
+```
+
 Browse to `https://localhost:5000/docs` to view the Open API documentation
 
 ### Docker Image

@@ -4,6 +4,7 @@ clients.py
 Client services used to support internal and external transactions.
 Services instances are bound to data attributes and accessed through "get" functions.
 """
+
 import ssl
 import sys
 from asyncio import get_event_loop, create_task, gather, sleep, get_running_loop
@@ -18,7 +19,6 @@ from typing import Optional
 # client instances
 kafka_producer = None
 nats_client = None
-nats_subscribers = []
 
 # HARD_CODED VARS
 # Helps provide state of KafkaConsumer instances
@@ -207,9 +207,9 @@ async def get_nats_client() -> Optional[NatsClient]:
         settings = get_settings()
 
         ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-        ssl_ctx.load_verify_locations('./local-certs/rootCA.pem')
-        ssl_ctx.load_cert_chain(certfile='./local-certs/nats-server.pem',
-                                keyfile='./local-certs/nats-server.key')
+        ssl_ctx.load_verify_locations(settings.nats_rootCA_file)
+        ssl_ctx.load_cert_chain(settings.nats_cert_file, settings.nats_key_file)
+
         nats_client = NatsClient()
         await nats_client.connect(
             servers=settings.nats_servers,
