@@ -1,10 +1,25 @@
+"""
+kafka_segments.py
+
+pyConnect convenience functions to handle Kafka message segmentation
+"""
+
 import uuid
 import math
 import time
 import sys
+import logging
+import logging.config
+from pyconnect.config import get_settings
 
 
-def segment_message(msg, chunk_size=900*1024):
+logging.config.fileConfig('logging.yaml')
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+
+def segment_message(msg, chunk_size=settings.kafka_message_chunk_size):
     if type(msg) == str:
         msg_bytes = msg.encode('utf-8')
     elif type(msg) == bytes:
@@ -24,8 +39,6 @@ def segment_message(msg, chunk_size=900*1024):
         yield (msg_segment, identifier, str(msg_segment_count).encode('utf-8'), str(counter).encode('utf-8'))
         counter += 1
 
-
-_SEGMENTS_PURGE_TIMEOUT = 60 * 10    # 10 mins in seconds
 
 ID = 'fragment.identifier'
 COUNT = 'fragment.count'
@@ -67,7 +80,7 @@ def combine_segments(value, headers):
 def _purge_segments():
     for identifier in list(_message_store.keys()):
         last_accessed = _message_store[identifier]['last_accessed']
-        current_time = time.time() - _SEGMENTS_PURGE_TIMEOUT
+        current_time = time.time() - settings.kafka_segments_purge_timeout
         if last_accessed < current_time:
             print('Purging message segments with identifier: {}', identifier, file=sys.stdout)
             del _message_store[identifier]

@@ -6,23 +6,22 @@ Services instances are bound to data attributes and accessed through "get" funct
 """
 
 import ssl
-import sys
+import logging
+import logging.config
 from asyncio import get_event_loop, create_task, gather, sleep, get_running_loop
 from confluent_kafka import Producer, Consumer, KafkaException
 from nats.aio.client import Client as NatsClient
 from threading import Thread
 from pyconnect.config import get_settings
-from pyconnect.utils import combine_segments
+from pyconnect.support.kafka_segments import combine_segments
 from typing import Optional
 
+logging.config.fileConfig('logging.yaml')
+logger = logging.getLogger(__name__)
 
 # client instances
 kafka_producer = None
 nats_client = None
-
-# HARD_CODED VARS
-# Helps provide state of KafkaConsumer instances
-_MONITOR_FREQ_IN_SECS_ON_LISTENER_TASKS = 120
 
 
 class ConfluentAsyncKafkaProducer:
@@ -112,22 +111,32 @@ class ConfluentAsyncKafkaConsumer:
             raise ValueError('No topic_name provided to KafkaConsumer')
 
         # We pull default configs from config.py
-        # TODO find a neat manner in which configs flow from Docker later
         settings = get_settings()
+        self.group_id = consumer_group_id if consumer_group_id is not None \
+            else settings.kafka_consumer_default_group_id
+
         consumer_conf = {
             'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
-            'group.id': consumer_group_id if consumer_group_id is not None else
-            settings.kafka_consumer_default_group_id,
+            'group.id': self.group_id,
             'auto.offset.reset': 'smallest'
         }
 
         self.consumer = Consumer(consumer_conf)
         self.topic_name = topic_name
-        self.concurrent_listeners = concurrent_listeners if concurrent_listeners is not None \
-            else settings.kafka_consumer_default_concurrent_listeners
+        if concurrent_listeners is not None:
+            self.concurrent_listeners = concurrent_listeners
+        else:
+            self.concurrent_listeners = settings.kafka_consumer_default_concurrent_listeners
+
         self.tasks = None
         self.done = False
         self.monitor_task = None
+
+        # Have consumer_conf avl as a class level attribute
+        self.consumer_conf = dict(consumer_conf.items() + {
+            'concurrent.listeners': self.concurrent_listeners,
+            'consumer.task.monitor.freq': settings.kafka_consumer_monitor_freq_in_secs
+        })
 
     async def start_listening(self, callback_method):
         if self.consumer is None:
@@ -143,7 +152,7 @@ class ConfluentAsyncKafkaConsumer:
                         if task.done():
                             self.tasks.remove(task)
                 else:
-                    print(str(e), file=sys.stderr)
+                    logger.exception('Exception occured in KafkaConsumer: {}', str(e), exc_info=True)
                     for task in self.tasks:
                         if task.done():
                             self.tasks.remove(task)
@@ -151,13 +160,13 @@ class ConfluentAsyncKafkaConsumer:
 
     async def _listening_task(self, callback_method):
         self.consumer.subscribe([self.topic_name])
-        loop = self._get_running_loop()
+        loop = get_running_loop()
 
         while True:
             msgs = await loop.run_in_executor(None, self.consumer.consume, 1)
             for msg in msgs:
                 if msg.error():
-                    print('Consumer error: {}', msg.error(), file=sys.stderr)
+                    logger.error('Consumer error: {}', msg.error())
                     continue
 
                 headers = msg.headers()
@@ -169,18 +178,10 @@ class ConfluentAsyncKafkaConsumer:
                 if message is not None:
                     await callback_method(message)
 
-    def _get_running_loop(self):
-        try:
-            return get_running_loop()
-        except RuntimeError as e:
-            print('Invalid call to async consumer. No active loop', file=sys.stderr)
-            raise e
-
     async def _task_monitor(self, tasks):
         while not self.done:
-            print('MONITOR: total active listeners: {}', len(self.tasks), ' for topic: {}', self.topic_name,
-                  file=sys.stdout)
-            await sleep(_MONITOR_FREQ_IN_SECS_ON_LISTENER_TASKS)
+            logger.info('MONITOR: total active listeners: {}', len(self.tasks), ' for topic: {}', self.topic_name)
+            await sleep(self.consumer_conf['consumer.task.monitor.freq'])
 
     def _generate_header_dictionary(self, headers):
         headers_dict = {}
