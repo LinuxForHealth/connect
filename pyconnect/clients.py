@@ -7,7 +7,6 @@ Services instances are bound to data attributes and accessed through "get" funct
 
 import ssl
 import logging
-import logging.config
 from asyncio import get_event_loop, create_task, gather, sleep, get_running_loop
 from confluent_kafka import Producer, Consumer, KafkaException
 from nats.aio.client import Client as NatsClient
@@ -16,7 +15,6 @@ from pyconnect.config import get_settings
 from pyconnect.support.kafka_segments import combine_segments
 from typing import Optional
 
-logging.config.fileConfig('logging.yaml')
 logger = logging.getLogger(__name__)
 
 # client instances

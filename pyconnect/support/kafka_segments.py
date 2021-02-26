@@ -9,11 +9,8 @@ import math
 import time
 import sys
 import logging
-import logging.config
 from pyconnect.config import get_settings
 
-
-logging.config.fileConfig('logging.yaml')
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
