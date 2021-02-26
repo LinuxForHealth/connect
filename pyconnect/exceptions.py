@@ -5,6 +5,7 @@ Defines LinuxForHealth exceptions.
 
 """
 
+
 class MissingFhirResourceType(Exception):
     """Raised when an input FHIR message does not contain a resourceType"""
     def __init__(self, msg=None):

@@ -12,12 +12,12 @@ from pyconnect.clients import (get_kafka_producer,
 kafka_producer = None
 
 
-"""
-Subscribes to ACTIONS.persist NATS messages and sends each message
-payload to Kafka for storage.  Before sending to Kafka, each message is formatted
-in the LinuxForHealth message format.
-"""
 async def start_persist_subscriber():
+    """
+    Subscribes to ACTIONS.persist NATS messages and sends each message
+    payload to Kafka for storage.  Before sending to Kafka, each message is formatted
+    in the LinuxForHealth message format.
+    """
     global kafka_producer
     kafka_producer = get_kafka_producer()
     nc = await get_nats_client()
@@ -25,10 +25,10 @@ async def start_persist_subscriber():
     return sid
 
 
-"""
-Callback for ACTIONS.persist messages
-"""
 async def message_handler(msg: Msg):
+    """
+    Callback for ACTIONS.persist messages
+    """
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()

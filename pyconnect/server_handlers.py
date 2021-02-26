@@ -40,18 +40,14 @@ def configure_logging() -> None:
         logging.info('Logging configuration not found. Applying basic logging configuration.')
 
 
-async def configure_clients() -> None:
+async def configure_internal_integrations() -> None:
     """
-    Configures pyConnect service clients for internal and external integrations
+    Configure internal integrations to support:
+    - Kafka
+    - NATS Messaging/Jetstream
     """
     get_kafka_producer()
     await get_nats_client()
-
-
-async def configure_nats_subscribers() -> None:
-    """
-    Configures pyConnect NATS subscribers for internal and external integrations
-    """
     await create_nats_subscribers()
 
 
@@ -61,5 +57,5 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     """
     return JSONResponse(
         status_code = exc.status_code,
-        content = {"detail": f"{exc.detail}"}
+        content = {'detail': f'{exc.detail}'}
     )
