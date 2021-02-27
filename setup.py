@@ -37,7 +37,7 @@ setuptools.setup(
         'pyaml==20.4.0',
         'xworkflows==1.0.4',
         'fhir.resources==6.1.0',
-        'uvicorn==0.13.3',
+        'uvicorn[standard]==0.13.4',
     ],
     extras_require={
         'test': ['pytest==6.1.2'],
