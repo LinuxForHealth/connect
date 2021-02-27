@@ -15,9 +15,5 @@ root:
 loggers:
   pyconnect:
     level: INFO
-    handlers: [console]
-    propogate: no
-  uvicorn.access:
+  uvicorn:
     level: INFO
-    handlers: [console]
-    propogate: no

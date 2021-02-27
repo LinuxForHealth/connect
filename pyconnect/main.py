@@ -4,8 +4,7 @@ main.py
 Bootstraps the Fast API application and Uvicorn processes
 """
 from fastapi import (FastAPI,
-                     HTTPException,
-                     Request)
+                     HTTPException)
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import uvicorn
 from pyconnect.config import get_settings
@@ -14,7 +13,8 @@ from pyconnect import __version__
 from pyconnect.server_handlers import (configure_clients,
                                        configure_logging,
                                        configure_nats_subscribers,
-                                       http_exception_handler)
+                                       http_exception_handler,
+                                       log_configuration)
 
 settings = get_settings()
 
@@ -32,6 +32,7 @@ def get_app() -> FastAPI:
     app.add_middleware(HTTPSRedirectMiddleware)
     app.include_router(router)
     app.add_event_handler('startup', configure_logging)
+    app.add_event_handler('startup', log_configuration)
     app.add_event_handler('startup', configure_clients)
     app.add_event_handler('startup', configure_nats_subscribers)
     app.add_exception_handler(HTTPException, http_exception_handler)
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     uvicorn_params = {
         'app': settings.uvicorn_app,
         'host': settings.uvicorn_host,
+        'log_config': None,
         'port': settings.uvicorn_port,
         'reload': settings.uvicorn_reload,
         'ssl_keyfile': settings.pyconnect_cert_key,
