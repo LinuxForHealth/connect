@@ -85,7 +85,8 @@ def get_kafka_producer() -> Optional[ConfluentAsyncKafkaProducer]:
             'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
             'acks': settings.kafka_producer_acks
         }
-        kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config)
+        kafka_producer = ConfluentAsyncKafkaProducer(configs=producer_config,
+                                                     loop=asyncio.get_running_loop())
     return kafka_producer
 
 
@@ -105,6 +106,7 @@ async def get_nats_client() -> Optional[NatsClient]:
         nats_client = NatsClient()
         await nats_client.connect(
             servers=settings.nats_servers,
+            loop=asyncio.get_running_loop(),
             tls=ssl_ctx,
             allow_reconnect=settings.nats_allow_reconnect,
             max_reconnect_attempts=settings.nats_max_reconnect_attempts)

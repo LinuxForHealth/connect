@@ -55,6 +55,19 @@ async def configure_nats_subscribers() -> None:
     await create_nats_subscribers()
 
 
+def close_internal_clients() -> None:
+    """
+    Closes internal pyConnect client connections:
+    - Kafka
+    - NATS
+    """
+    kafka_producer = get_kafka_producer()
+    kafka_producer.close()
+
+    nats_client = get_nats_client()
+    nats_client.close()
+
+
 async def http_exception_handler(request: Request, exc: HTTPException):
     """
     Allows HTTPExceptions to be thrown without being parsed against a response model.
