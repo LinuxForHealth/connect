@@ -41,6 +41,7 @@ if __name__ == '__main__':
     uvicorn_params = {
         'app': settings.uvicorn_app,
         'host': settings.uvicorn_host,
+        'log_config': None,
         'port': settings.uvicorn_port,
         'reload': settings.uvicorn_reload,
         'ssl_keyfile': settings.pyconnect_cert_key,
