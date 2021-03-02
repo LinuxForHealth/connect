@@ -33,8 +33,9 @@ class Settings(BaseSettings):
     kafka_message_chunk_size: int = 900*1024  # 900 KB chunk_size
     kafka_producer_acks: str = 'all'
     kafka_consumer_default_group_id: str = 'lfh_consumer_group'
-    kafka_consumer_default_concurrent_listeners: int = 3
-    kafka_consumer_monitor_freq_in_secs: int = 3
+    kafka_consumer_default_enable_auto_commit: bool = False
+    kafka_consumer_default_enable_auto_offset_store: bool = False
+    kafka_consumer_default_poll_timeout_secs: float = 1.0
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']

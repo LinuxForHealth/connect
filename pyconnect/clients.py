@@ -7,8 +7,8 @@ Services instances are bound to data attributes and accessed through "get" funct
 
 import ssl
 import logging
-from asyncio import get_event_loop, create_task, gather, sleep, get_running_loop
-from confluent_kafka import Producer, Consumer, KafkaException
+from asyncio import get_event_loop, get_running_loop
+from confluent_kafka import Producer, Consumer, KafkaException, TopicPartition
 from nats.aio.client import Client as NatsClient
 from threading import Thread
 from pyconnect.config import get_settings
@@ -104,10 +104,12 @@ class ConfluentAsyncKafkaConsumer:
     consumer_group_id is specified at instance creation.
     """
 
-    def __init__(self, topic_name, consumer_group_id=None,
-                 concurrent_listeners=None):
-        if topic_name is None:
-            raise ValueError('No topic_name provided to KafkaConsumer')
+    def __init__(self, topic_name, partition, offset, consumer_group_id=None):
+        if None in (topic_name, partition, offset):
+            logger.error('Init Error: No topic_name, partition or offset information '
+                         'provided to KafkaConsumer')
+            raise ValueError('Init Error: No topic_name, partition or offset information '
+                             'provided to KafkaConsumer')
 
         # We pull default configs from config.py
         settings = get_settings()
@@ -117,70 +119,58 @@ class ConfluentAsyncKafkaConsumer:
         consumer_conf = {
             'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
             'group.id': self.group_id,
-            'auto.offset.reset': 'smallest'
+            'auto.offset.reset': 'smallest',
+            'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit,
+            'enable.auto.offset.store': settings.kafka_consumer_default_enable_auto_offset_store
         }
 
         self.consumer = Consumer(consumer_conf)
         self.topic_name = topic_name
-        if concurrent_listeners is not None:
-            self.concurrent_listeners = concurrent_listeners
-        else:
-            self.concurrent_listeners = settings.kafka_consumer_default_concurrent_listeners
+        self.partition = partition
+        self.offset = offset
+        self.poll_timeout_secs = settings.kafka_consumer_default_poll_timeout_secs
 
-        self.tasks = None
-        self.done = False
-        self.monitor_task = None
-
-        # Have consumer_conf avl as a class level attribute
-        self.consumer_conf = dict(consumer_conf.items() + {
-            'concurrent.listeners': self.concurrent_listeners,
-            'consumer.task.monitor.freq': settings.kafka_consumer_monitor_freq_in_secs
-        })
-
-    async def start_listening(self, callback_method):
+    async def get_message_from_kafka(self, callback_method):
         if self.consumer is None:
-            raise ValueError('Cannot start listening - consumer is not initialized')
-        self.tasks = [create_task(self._listening_task(callback_method)) for _ in range(self.concurrent_listeners)]
-        self.monitor_task = create_task(self._task_monitor(self.tasks))
-        while not self.done:
-            try:
-                await gather(*self.tasks)
-            except Exception as e:
-                if self.done:
-                    for task in self.tasks:
-                        if task.done():
-                            self.tasks.remove(task)
-                else:
-                    logger.exception('Exception occured in KafkaConsumer: {}', str(e), exc_info=True)
-                    for task in self.tasks:
-                        if task.done():
-                            self.tasks.remove(task)
-                            self.tasks.append(create_task(self._listening_task(callback_method)))
+            logger.error('Kafka Consumer not initialized prior to this call')
+            raise ValueError('ERROR - Consumer is not initialized')
 
-    async def _listening_task(self, callback_method):
-        self.consumer.subscribe([self.topic_name])
+        if callback_method is None:
+            logger.error('No callback_method provided for handling of fetched message segment')
+            raise ValueError('ERROR - Consumer is not initialized')
+
         loop = get_running_loop()
+        try:
+            # This automatically sets the offset to the one provided by the user
+            topic_partition = TopicPartition(self.topic_name, self.partition, self.offset)
+            self.consumer.assign([topic_partition])
 
-        while True:
-            msgs = await loop.run_in_executor(None, self.consumer.consume, 1)
-            for msg in msgs:
-                if msg.error():
-                    logger.error('Consumer error: {}', msg.error())
-                    continue
+            # polls for exactly one record - waits for a configurable max time (seconds)
+            msg = await loop.run_in_executor(None, self.consumer.poll, self.poll_timeout_secs)
 
-                headers = msg.headers()
-                if headers is None:
-                    message = msg.value()
-                else:
-                    message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
+            if msg.error():
+                logger.error('Consumer error: {}', msg.error())
+                raise KafkaException('Consumer error: code: {} - error: {}', msg.error.code(), msg.error())
 
-                if message is not None:
-                    await callback_method(message)
+            headers = msg.headers()
 
-    async def _task_monitor(self, tasks):
-        while not self.done:
-            logger.info('MONITOR: total active listeners: {}', len(self.tasks), ' for topic: {}', self.topic_name)
-            await sleep(self.consumer_conf['consumer.task.monitor.freq'])
+            if headers is None:
+                message = msg.value()
+            else:
+                message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
+
+            if message is not None:
+                await callback_method(message)
+            else:
+                _msg_not_found_error = 'No message was found that could be fetched for topic_name: {},' + \
+                    'partition: {}, offset: {}'
+                logger.error(_msg_not_found_error, self.topic_name, self.partition, self.offset)
+                raise KafkaException(_msg_not_found_error, self.topic_name, self.partition, self.offset)
+
+        except Exception as e:
+            logger.exception('Exception occured in KafkaConsumer: {}', str(e), exc_info=True)
+        finally:
+            self.close_consumer()
 
     def _generate_header_dictionary(self, headers):
         headers_dict = {}
@@ -189,10 +179,6 @@ class ConfluentAsyncKafkaConsumer:
         return headers_dict
 
     def close_consumer(self):
-        self.done = True
-        self.monitor_task.cancel()
-        for task in self.tasks:
-            task.cancel()
         if self.consumer is not None:
             self.consumer.close()
 
