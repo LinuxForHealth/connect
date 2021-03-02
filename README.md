@@ -55,10 +55,19 @@ Persist the generated output (example above) to `./private-ipfs-network/.ipfs/sw
 openssl rand -hex 32
 ```
 
-#### Start supporting services and pyconnect
+#### Start supporting services
 ```shell
 docker-compose up -d
 docker-compose ps
+```
+
+#### Configure NATS streams and consumers
+```shell
+./configure-nats.sh
+```
+
+#### Start pyconnect
+```shell
 PYCONNECT_CERT=./local-certs/lfh.pem \
   PYCONNECT_CERT_KEY=./local-certs/lfh.key \
   UVICORN_RELOAD=True \
@@ -67,12 +76,6 @@ PYCONNECT_CERT=./local-certs/lfh.pem \
 - To add IPFS support use the `ipfs` profile.
 ```
 docker-compose --profile ipfs up -d
-```
-
-#### Configure NATS streams and consumers
-After starting the containers, configure NATS JetStream streams and consumers.
-```shell
-./configure-nats.sh
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
