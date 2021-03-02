@@ -1,6 +1,8 @@
+import logging
 import logging.config
 import os
 import sys
+import logging
 import yaml
 from yaml import YAMLError
 from fastapi import (HTTPException,
@@ -10,6 +12,9 @@ from pyconnect.config import get_settings
 from pyconnect.clients import (get_kafka_producer,
                                get_nats_client)
 from pyconnect.subscribers import create_nats_subscribers
+
+
+logger = logging.getLogger(__name__)
 
 
 def configure_logging() -> None:
@@ -31,13 +36,55 @@ def configure_logging() -> None:
             try:
                 logging_config = yaml.safe_load(f)
                 logging.config.dictConfig(logging_config)
+                logger.info(f'Loaded logging configuration from {settings.logging_config_path}')
             except YAMLError as e:
                 apply_basic_config()
-                logging.error(f'Unable to load logging configuration from file: {e}.')
-                logging.info('Applying basic logging configuration.')
+                logger.error(f'Unable to load logging configuration from file: {e}.')
+                logger.info('Applying basic logging configuration.')
     else:
         apply_basic_config()
-        logging.info('Logging configuration not found. Applying basic logging configuration.')
+        logger.info('Logging configuration not found. Applying basic logging configuration.')
+
+
+def log_configuration() -> None:
+    """
+    Logs pyConnect configuration settings.
+    "General" settings are logged at an INFO level.
+    "Internal" settings for clients/components are logged at a DEBUG level.
+    """
+    settings = get_settings()
+    header_footer_length = 50
+
+    logger.info('*' * header_footer_length)
+    logger.info('pyConnect Configuration Settings')
+    logger.info('=' * header_footer_length)
+    logger.info(f'UVICORN_APP: {settings.uvicorn_app}')
+    logger.info(f'UVICORN_HOST: {settings.uvicorn_host}')
+    logger.info(f'UVICORN_PORT: {settings.uvicorn_port}')
+    logger.info(f'UVICORN_RELOAD: {settings.uvicorn_reload}')
+    logger.info('=' * header_footer_length)
+
+    logger.info(f'CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}')
+    logger.info(f'LOGGING_CONFIG_PATH: {settings.logging_config_path}')
+    logger.info('=' * header_footer_length)
+
+    logger.debug(f'KAFKA_BOOTSTRAP_SERVERS: {settings.kafka_bootstrap_servers}')
+    logger.debug(f'KAFKA_PRODUCER_ACKS: {settings.kafka_producer_acks}')
+    logger.debug('=' * header_footer_length)
+
+    logger.debug(f'NATS_SERVERS: {settings.nats_servers}')
+    logger.debug(f'NATS_ALLOW_RECONNECT: {settings.nats_allow_reconnect}')
+    logger.debug(f'NATS_MAX_RECONNECT_ATTEMPTS: {settings.nats_max_reconnect_attempts}')
+    logger.debug(f'NATS_ROOTCA_FILE: {settings.nats_rootCA_file}')
+    logger.debug(f'NATS_CERT_FILE: {settings.nats_cert_file}')
+    logger.debug(f'NATS_KEY_FILE: {settings.nats_key_file}')
+    logger.debug('=' * header_footer_length)
+
+    logger.debug(f'PYCONNECT_CERT: {settings.pyconnect_cert}')
+    logger.debug(f'PYCONNECT_CERT_KEY: {settings.pyconnect_cert_key}')
+    logger.debug('=' * header_footer_length)
+
+    logger.info('*' * header_footer_length)
 
 
 async def configure_global_clients() -> None:
@@ -53,6 +100,19 @@ async def configure_nats_subscribers() -> None:
     Configures pyConnect NATS subscribers for internal and external integrations
     """
     await create_nats_subscribers()
+
+
+def close_internal_clients() -> None:
+    """
+    Closes internal pyConnect client connections:
+    - Kafka
+    - NATS
+    """
+    kafka_producer = get_kafka_producer()
+    kafka_producer.close()
+
+    nats_client = get_nats_client()
+    nats_client.close()
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):
