@@ -38,7 +38,7 @@ def get_kafka_result(err, msg):
         logging.debug("Failed to deliver message: %s: %s" % (str(msg), str(err)))
     else:
         kafka_result = "%s:%s:%s" % (msg.topic(), msg.partition(), msg.offset())
-        loggin.debug("Produced record to topic {} partition [{}] @ offset {}"
+        logging.debug("Produced record to topic {} partition [{}] @ offset {}"
                      .format(msg.topic(), msg.partition(), msg.offset()))
 
 
