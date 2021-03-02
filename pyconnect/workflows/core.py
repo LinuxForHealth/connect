@@ -6,7 +6,7 @@ Provides the base LinuxForHealth workflow definition.
 import json
 import logging
 import xworkflows
-from pyconnect.clients import (get_kafka_producer)
+from pyconnect.clients import get_kafka_producer
 from pydantic.json import pydantic_encoder
 
 
@@ -84,8 +84,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         # TODO: add the Kafka storage offset to the final format to be returned
 
+        logging.debug("CoreWorkflow.persist: stored resource location =", kafka_result)
         self.message = kafka_result
-        print("persist exit")
 
 
     @xworkflows.transition('do_transmit')
