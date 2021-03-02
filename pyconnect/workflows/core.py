@@ -3,11 +3,14 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
-import logging
 import json
+import logging
 import xworkflows
-from pyconnect.clients import get_nats_client
+from pyconnect.clients import (get_kafka_producer)
 from pydantic.json import pydantic_encoder
+
+
+kafka_result = None
 
 
 class CoreWorkflowDef(xworkflows.Workflow):
@@ -51,7 +54,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_validate')
     async def validate(self):
         """
-        Override to send the message to a NATS subscriber for validation.
+        Override to provide data validation.
         """
         pass
 
@@ -59,8 +62,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_transform')
     async def transform(self):
         """
-        Override to send the message to a NATS subscriber for transformation from one
-        form or protocol to another (e.g. HL7v2 to FHIR or FHIR R3 to R4).
+        Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
+        or FHIR R3 to R4).
         """
         pass
 
@@ -68,28 +71,27 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_persist')
     async def persist(self):
         """
-        Send the message to a NATS subscriber for persistence, including transformation of
-        the message to the LinuxForHealth data storage format.
+        Store the message in Kafka for persistence.
         """
-        print("in persist, msg = ", self.message)
-        nats_client = await get_nats_client()
-        msg_str = json.dumps(self.message, indent=2, default=pydantic_encoder)
+        message = self.message
+        logging.debug("CoreWorkflow.persist: incoming message = ", message)
 
-        try:
-            response = await nats_client.request("ACTIONS.persist", bytearray(msg_str, 'utf-8'), timeout=10)
-            print("Received response: {message}".format(message=response.data.decode()))
-        except ErrTimeout:
-            print("Request timed out")
+        # TODO: convert message into the correct format for Kafka storage
 
-        print("Received response: {message}".format(message=response.data.decode()))
-        self.message = response.data.decode()
+        kafka_producer = get_kafka_producer()
+        msg_str = json.dumps(message, indent=2, default=pydantic_encoder)
+        await kafka_producer.produce_with_callback("FHIR_R4", msg_str, on_delivery=get_kafka_result)
+
+        # TODO: add the Kafka storage offset to the final format to be returned
+
+        self.message = kafka_result
         print("persist exit")
 
 
     @xworkflows.transition('do_transmit')
     async def transmit(self):
         """
-        Send the message to a NATS subscriber for transmission to an external service via HTTP.
+        Transmit the message to an external service via HTTP.
         """
         # TODO: Provide default http transmission in CoreWorkflow
         pass
@@ -109,7 +111,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         Send the message to a NATS subscriber to record errors.
         """
-        logging.info("CoreWorkflow: Processing error: ", error)
+        # TODO: Create default NATS subscriber for EVENTS.errors for the local instance
+        pass
 
 
     async def run(self):
@@ -130,3 +133,16 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         except Exception as ex:
             self.error(ex)
             raise
+
+
+def get_kafka_result(err, msg):
+    """
+    Kafka producer callback for persist workflow step.
+    """
+    global kafka_result
+    if err is not None:
+        logging.debug("Failed to deliver message: %s: %s" % (str(msg), str(err)))
+    else:
+        kafka_result = "%s:%s:%s" % (msg.topic(), msg.partition(), msg.offset())
+        logging.debug("Produced record to topic {} partition [{}] @ offset {}"
+                      .format(msg.topic(), msg.partition(), msg.offset()))

@@ -11,7 +11,6 @@ from fastapi.responses import JSONResponse
 from pyconnect.config import get_settings
 from pyconnect.clients import (get_kafka_producer,
                                get_nats_client)
-from pyconnect.subscribers import create_nats_subscribers
 
 
 logger = logging.getLogger(__name__)
@@ -95,7 +94,6 @@ async def configure_internal_integrations() -> None:
     """
     get_kafka_producer()
     await get_nats_client()
-    await create_nats_subscribers()
 
 
 def close_internal_clients() -> None:

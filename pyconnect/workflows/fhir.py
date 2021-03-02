@@ -3,44 +3,49 @@ fhir.py
 
 Customizes the base LinuxForHealth workflow definition for FHIR resources.
 """
-import json
 import logging
 import xworkflows
-from pyconnect.clients import (get_nats_client)
 from pyconnect.workflows.core import CoreWorkflow
-from pydantic.json import pydantic_encoder
+from fhir.resources.fhirtypesvalidators import get_fhir_model_class
+from pyconnect.exceptions import (MissingFhirResourceType,
+                                  FhirValidationTypeError)
 
 
 class FhirWorkflow(CoreWorkflow):
     """
     Implements a FHIR validation and storage workflow for LinuxForHealth.
     """
-
-
     @xworkflows.transition('do_validate')
     async def validate(self):
         """
-        Send the message to a NATS subscriber for FHIR validation.
+        Overridden to validate the incoming FHIR message by instantiating a fhir.resources
+        class from the input data dictionary.  Adapted from fhir.resources fhirtypesvalidators.py
+
+        Result: If a validation error occurs, raises a MissingFhirResourceType or
+        FhirValidationTypeError, otherwise sets the workflow message to the validated resource.
         """
-        print("in validate, msg=", self.message)
-        nats_client = await get_nats_client()
-        msg_str = json.dumps(self.message, indent=2, default=pydantic_encoder)
-        print("awaiting validate response")
+        message = self.message
+        logging.debug("FhirWorkflow.validate: incoming message = ", message)
 
-        try:
-            response = await nats_client.request("ACTIONS.validate", bytearray(msg_str, 'utf-8'), timeout=10)
-            print("Received response: {message}".format(message=response.data.decode()))
-        except ErrTimeout:
-            print("Request timed out")
+        resource_type = message.pop("resourceType", None)
+        logging.debug("FhirWorkflow.validate: resource type =", resource_type)
+        if resource_type is None:
+            raise MissingFhirResourceType
 
-        self.message = response.data.decode()
-        print("validate exit")
+        model_class = get_fhir_model_class(resource_type)
+        resource = model_class.parse_obj(message)
+
+        if not isinstance(resource, model_class):
+            raise FhirValidationTypeError(model_class, type(resource))
+
+        logging.debug("FhirWorkflow.validate: validated resource =", resource)
+        self.message = resource
 
 
     async def run(self):
         """
-        Run the workflow according to the defined states.  Overridden to exclude the 'transform'
-        state for the FHIR workflow.
+        Run the workflow according to the defined states.  Overridden to exclude the
+        'transform' state from the FHIR workflow.
         """
         try:
             logging.info("Running FhirWorkflow, starting state=", self.state)
