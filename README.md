@@ -55,19 +55,10 @@ Persist the generated output (example above) to `./private-ipfs-network/.ipfs/sw
 openssl rand -hex 32
 ```
 
-#### Start supporting services
+#### Start supporting services and pyconnect
 ```shell
 docker-compose up -d
 docker-compose ps
-```
-
-#### Configure NATS streams and consumers
-```shell
-./configure-nats.sh
-```
-
-#### Start pyconnect
-```shell
 PYCONNECT_CERT=./local-certs/lfh.pem \
   PYCONNECT_CERT_KEY=./local-certs/lfh.key \
   UVICORN_RELOAD=True \
