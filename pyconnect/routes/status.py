@@ -9,7 +9,7 @@ from pydantic.main import BaseModel
 from pydantic import constr
 from pyconnect import __version__
 from pyconnect.config import get_settings
-from pyconnect.support import is_service_available
+from pyconnect.support.http_utils import is_service_available
 from typing import List
 import time
 

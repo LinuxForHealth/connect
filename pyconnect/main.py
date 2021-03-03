@@ -14,6 +14,7 @@ from pyconnect.server_handlers import (configure_internal_integrations,
                                        configure_logging,
                                        http_exception_handler)
 
+
 settings = get_settings()
 
 
@@ -32,6 +33,7 @@ def get_app() -> FastAPI:
     app.add_event_handler('startup', configure_logging)
     app.add_event_handler('startup', configure_internal_integrations)
     app.add_exception_handler(HTTPException, http_exception_handler)
+
     return app
 
 
