@@ -111,13 +111,17 @@ class ConfluentAsyncKafkaConsumer:
 
     def __init__(self, topic_name, partition, consumer_conf, offset=None, consumer_group_id=None):
 
+        # Check if a consumer_group_id was provided by the user; then set it
+        if consumer_group_id:
+            consumer_conf['group.id'] = consumer_group_id
+
         self.consumer = Consumer(consumer_conf)
         self.topic_name = topic_name
         self.partition = partition
         self.offset = offset
         self.poll_timeout_secs = consumer_conf['default.poll.timeout.secs']
 
-    async def get_message_from_kafka_cb(self, callback_method):
+    async def get_message_from_kafka_cb(self, callback_method) -> None:
         """
         Get a specific message from the kafka_broker and invoke the callback_method automatically with the
         message body passed as an argument to the callback_method.
@@ -127,21 +131,18 @@ class ConfluentAsyncKafkaConsumer:
         """
         if self.consumer is None:
             logger.error('Kafka Consumer not initialized prior to this call')
-            raise ValueError('ERROR - Consumer is not initialized')
+            raise ValueError('ERROR - Consumer not initialized')
 
         if callback_method is None:
-            logger.error('No callback_method provided for handling of fetched message segment')
-            raise ValueError('ERROR - Consumer is not initialized')
+            logger.error('No callback_method provided for handling of fetched message')
+            raise ValueError('ERROR - callback_method not provided')
 
         loop = get_running_loop()
         topic_partition = None
 
         try:
             # This automatically sets the offset to the one provided by the user if it is not None
-            if self.offset is not None:
-                topic_partition = TopicPartition(self.topic_name, self.partition, self.offset)
-            else:
-                topic_partition = TopicPartition(self.topic_name, self.partition)
+            topic_partition = TopicPartition(self.topic_name, self.partition, self.offset)
 
             self.consumer.assign([topic_partition])
 
@@ -149,34 +150,35 @@ class ConfluentAsyncKafkaConsumer:
             msg = await loop.run_in_executor(None, self.consumer.poll, self.poll_timeout_secs)
 
             if msg.error():
-                logger.error('Consumer error: {}', msg.error())
-                raise KafkaException('Consumer error: code: {} - error: {}', msg.error.code(), msg.error())
+                logger.error(f'Consumer error: {msg.error()}')
+                raise KafkaException(f'Consumer error: code: {msg.error.code()} - error: {msg.error()}')
 
             headers = msg.headers()
+            message = None
 
             if headers is None:
                 message = msg.value()
-            # Re-evaluate later if we will need message semgentation or have a use case where the producer producer
+            # Re-evaluate later if we will need message semgentation or have a use case where the producer
             # will chunk messages and record them with the broker
             # else:
             #     message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
 
             if message is not None:
-                logger.info('Found message for topic_name - {}; partition - {} and offset - {}. '
-                            'Invoking callback_method - {}',
-                            self.topic_name, self.partition, self.offset, callback_method)
+                logger.info(f'Found message for topic_name - {self.topic_name}, partition - {self.partition} + \
+                            and offset - {self.offset}. Invoking callback_method - {callback_method}')
 
                 await callback_method(message)
             else:
-                _msg_not_found_error = 'No message was found that could be fetched for topic_name: {},' + \
-                    'partition: {}, offset: {}'
-                logger.error(_msg_not_found_error, self.topic_name, self.partition, self.offset)
-                raise KafkaException(_msg_not_found_error, self.topic_name, self.partition, self.offset)
+                _msg_not_found_error = f'No message was found that could be fetched for + \
+                topic_name: {self.topic_name}, partition: {self.partition}, offset: {self.offset}'
+
+                logger.error(_msg_not_found_error)
+                raise KafkaException(_msg_not_found_error)
 
         except Exception as e:
-            logger.exception('Exception occured in KafkaConsumer: {}', str(e), exc_info=True)
+            logger.exception(f'Exception occured in KafkaConsumer: {str(e)}', exc_info=True)
         finally:
-            self.close_consumer()
+            self._close_consumer()
 
     def _generate_header_dictionary(self, headers):
         headers_dict = {}
@@ -184,7 +186,7 @@ class ConfluentAsyncKafkaConsumer:
             headers_dict[key] = value
         return headers_dict
 
-    def close_consumer(self):
+    def _close_consumer(self):
         if self.consumer is not None:
             self.consumer.close()
 
@@ -206,18 +208,17 @@ def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=Non
     """
     settings = get_settings()
 
-    if None in (topic_name, partition):
-        logger.error('Init Error: No topic_name or partition information provided.')
-        raise ValueError('Init Error: No topic_name or partition information provided.')
+    if not all(topic_name, partition):
+        msg = 'Init Error: No topic_name or partition information provided.'
+        logger.error(msg)
+        raise ValueError(msg)
 
     # We pull default configs from config.py
     settings = get_settings()
-    group_id = consumer_group_id if consumer_group_id is not None \
-        else settings.kafka_consumer_default_group_id
 
     consumer_conf = {
         'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
-        'group.id': group_id,
+        'group.id': settings.kafka_consumer_default_group_id,
         'auto.offset.reset': 'smallest',
         'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit,
         'enable.auto.offset.store': settings.kafka_consumer_default_enable_auto_offset_store,

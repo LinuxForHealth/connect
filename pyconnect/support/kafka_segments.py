@@ -7,7 +7,6 @@ pyConnect convenience functions to handle Kafka message segmentation
 import uuid
 import math
 import time
-import sys
 import logging
 from pyconnect.config import get_settings
 
@@ -47,8 +46,9 @@ def segment_message(msg, chunk_size=settings.kafka_message_chunk_size):
     elif type(msg) == bytes:
         msg_bytes = msg
     else:
-        print('Msg can only be of type bytes or string', file=sys.stderr)
-        raise ValueError('msg can only be of type bytes or string')
+        msg = 'Msg can only be of type bytes or string'
+        logger.error(msg)
+        raise ValueError(msg)
     msg_size = len(msg_bytes)
     msg_segment_count = math.ceil(msg_size/chunk_size)
     start = 0
@@ -112,5 +112,5 @@ def _purge_segments():
         last_accessed = _message_store[identifier]['last_accessed']
         current_time = time.time() - settings.kafka_segments_purge_timeout
         if last_accessed < current_time:
-            logger.info('Purging message segments with identifier: {}', identifier)
+            logger.info(f'Purging message segments with identifier: {identifier}')
             del _message_store[identifier]
