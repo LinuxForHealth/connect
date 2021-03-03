@@ -4,9 +4,9 @@ test_support.py
 Tests pyConnect support/convenience functions
 """
 import socket
-from pyconnect.support import (get_host_ports,
-                               is_service_available,
-                               ping_host)
+from pyconnect.support.http_utils import (get_host_ports,
+                                          is_service_available,
+                                          ping_host)
 
 
 def test_ping_host(monkeypatch, mock_client_socket):

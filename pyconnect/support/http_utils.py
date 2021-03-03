@@ -1,8 +1,10 @@
 """
-support.py
+http_utils.py
 
-pyConnect convenience functions
+ pyConnect convenience functions for verifying host/service availability
+  and fetching host:port lookups
 """
+
 import socket
 from typing import List
 from urllib.parse import urlsplit

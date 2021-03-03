@@ -41,7 +41,8 @@ def instantiate_fhir_class(data: dict):
     :return: FHIR resource class instance
     """
     resource_type = data.pop("resourceType", None)
-    if (resource_type is None): raise MissingFhirResourceType
+    if (resource_type is None):
+        raise MissingFhirResourceType
 
     # Use fhir.resources methods to instantiate a FHIR resource
     model_class = get_fhir_model_class(resource_type)

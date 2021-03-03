@@ -87,7 +87,7 @@ def log_configuration() -> None:
     logger.info('*' * header_footer_length)
 
 
-async def configure_clients() -> None:
+async def configure_global_clients() -> None:
     """
     Configures pyConnect service clients for internal and external integrations
     """

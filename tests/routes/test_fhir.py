@@ -5,6 +5,7 @@ Tests the /fhir endpoint
 import socket
 from pyconnect.config import get_settings
 
+
 def test_fhir_post(test_client, settings, mock_client_socket, monkeypatch):
     """
     Tests /status [GET]
