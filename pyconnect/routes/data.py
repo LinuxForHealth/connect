@@ -26,32 +26,32 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     creation_date: datetime.datetime
     store_date: datetime.datetime
     transmit_date: Optional[datetime.datetime]
-    consuming_endpoint_url: AnyUrl
+    consuming_endpoint_url: str
     data: str
     data_format: str
     status: str
     data_record_location: constr(regex=data_record_regex)
     target_endpoint_url: Optional[AnyUrl]
     elapsed_storage_time: float
-    elapsed_transmit_time: float
+    elapsed_transmit_time: Optional[float]
     elapsed_total_time: float
 
     class Config:
         schema_extra = {
             'example': {
                 'uuid': 'dbe0e8dd-7b64-4d7b-aefc-d27e2664b94a',
-                'creationDate': '2021-02-12T18:13:17Z',
-                'storedDate': '2021-02-12T18:14:17Z',
-                'transmitDate': '2021-02-12T18:15:17Z',
-                'consumingEndpointUrl': 'https://localhost:8080/endpoint',
-                'dataFormat': 'EXAMPLE',
+                'creation_date': '2021-02-12T18:13:17Z',
+                'store_date': '2021-02-12T18:14:17Z',
+                'transmit_date': '2021-02-12T18:15:17Z',
+                'consuming_endpoint_url': 'https://localhost:8080/endpoint',
+                'data_format': 'EXAMPLE',
                 'data': 'SGVsbG8gV29ybGQhIEl0J3MgbWUu',
                 'status': 'success',
-                'dataRecordLocation': 'EXAMPLE:0:0',
-                'targetEndpointUrl': 'http://externalhost/endpoint',
-                'elapsedStorageTime': 0.080413915000008,
-                'elapsedTransmitTime': 0.080413915000008,
-                'elapsedTotalTime': 0.080413915000008
+                'data_record_location': 'EXAMPLE:0:0',
+                'target_endpoint_url': 'http://externalhost/endpoint',
+                'elapsed_storage_time': 0.080413915000008,
+                'elapsed_transmit_time': 0.080413915000008,
+                'elapsed_total_time': 0.080413915000008
             }
         }
 

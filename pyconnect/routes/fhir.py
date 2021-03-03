@@ -21,7 +21,7 @@ async def post_fhir_data(request_data: dict = Body(...)):
     :return: The resulting FHIR message
     """
     try:
-        workflow = FhirWorkflow(request_data)
+        workflow = FhirWorkflow(request_data, '/fhir')
         result = await workflow.run()
         return result
     except Exception as ex:

@@ -5,12 +5,15 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
+import uuid
 import xworkflows
+from datetime import datetime
 from pyconnect.clients import get_kafka_producer
-from pydantic.json import pydantic_encoder
+from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 
 
 kafka_result = None
+kafka_status = None
 
 
 class CoreWorkflowDef(xworkflows.Workflow):
@@ -44,8 +47,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     Implements the base LinuxForHealth workflow.
     """
 
-    def __init__(self, message):
+    def __init__(self, message, url):
         self.message = message
+        self.data_format = None
+        self.origin_url = url
+        self.start_time = None
 
 
     state = CoreWorkflowDef()
@@ -71,21 +77,44 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @xworkflows.transition('do_persist')
     async def persist(self):
         """
-        Store the message in Kafka for persistence.
-        """
-        message = self.message
-        logging.debug("CoreWorkflow.persist: incoming message = ", message)
+        Store the message in Kafka for persistence after converting it to the LinuxForHealth
+        message format.
 
-        # TODO: convert message into the correct format for Kafka storage
+        input: self.message as object instance (e.g. FHIR-R4 Patient)
+        output: self.message as LinuxForHealthDataRecordResponse with original object instance in
+                data field as stingified json.
+        """
+        data = self.message
+        logging.debug("CoreWorkflow.persist: incoming message = ", data)
+        logging.debug("CoreWorkflow.persist: incoming message type = ", type(data))
+        data_str = json.dumps(data.dict())
+
+        message = {
+            'uuid': str(uuid.uuid4()),
+            'creation_date': str(datetime.utcnow()),
+            'consuming_endpoint_url': f'{self.origin_url}',
+            'data_format': f'{self.data_format}',
+            'data': f'{data_str}',
+            'store_date': str(datetime.utcnow())
+        }
+        msg_str = json.dumps(message)
 
         kafka_producer = get_kafka_producer()
-        msg_str = json.dumps(message, indent=2, default=pydantic_encoder)
-        await kafka_producer.produce_with_callback("FHIR_R4", msg_str, on_delivery=get_kafka_result)
-
-        # TODO: add the Kafka storage offset to the final format to be returned
-
+        storage_start = datetime.now()
+        await kafka_producer.produce_with_callback(self.data_format, msg_str,
+                                                   on_delivery=get_kafka_result)
+        storage_delta = datetime.now() - storage_start
         logging.debug("CoreWorkflow.persist: stored resource location =", kafka_result)
-        self.message = kafka_result
+
+        total_time = datetime.utcnow() - self.start_time
+        message['elapsed_storage_time'] = str(storage_delta.total_seconds())
+        message['elapsed_total_time'] = str(total_time.total_seconds())
+        message['data_record_location'] = kafka_result
+        message['status'] = kafka_status
+
+        lfh_message = LinuxForHealthDataRecordResponse(**message)
+        logging.debug("CoreWorkflow.persist: outgoing message = ", lfh_message)
+        self.message = lfh_message
 
 
     @xworkflows.transition('do_transmit')
@@ -122,6 +151,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         :return: the processed message
         """
+        self.start_time = datetime.utcnow()
+
         try:
             logging.info("Running CoreWorkflow, starting state=", self.state)
             self.validate()
@@ -138,11 +169,18 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 def get_kafka_result(err, msg):
     """
     Kafka producer callback for persist workflow step.
+    :param err: If error, the error returned from Kafka.
+    :param msg: If success, the topic, partition and offset of the stored message.
     """
     global kafka_result
+    global kafka_status
+
     if err is not None:
-        logging.debug("Failed to deliver message: %s: %s" % (str(msg), str(err)))
+        kafka_status = "error: failed to deliver message: %s: %s" % (str(msg), str(err))
+        kafka_result = 'None:0:0'
+        logging.debug(kafka_status)
     else:
+        kafka_status = 'success'
         kafka_result = "%s:%s:%s" % (msg.topic(), msg.partition(), msg.offset())
         logging.debug("Produced record to topic {} partition [{}] @ offset {}"
                       .format(msg.topic(), msg.partition(), msg.offset()))

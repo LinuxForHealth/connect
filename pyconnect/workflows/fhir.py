@@ -5,10 +5,11 @@ Customizes the base LinuxForHealth workflow definition for FHIR resources.
 """
 import logging
 import xworkflows
-from pyconnect.workflows.core import CoreWorkflow
+from datetime import datetime
 from fhir.resources.fhirtypesvalidators import get_fhir_model_class
 from pyconnect.exceptions import (MissingFhirResourceType,
                                   FhirValidationTypeError)
+from pyconnect.workflows.core import CoreWorkflow
 
 
 class FhirWorkflow(CoreWorkflow):
@@ -40,6 +41,7 @@ class FhirWorkflow(CoreWorkflow):
 
         logging.debug("FhirWorkflow.validate: validated resource =", resource)
         self.message = resource
+        self.data_format = resource_type.upper()
 
 
     async def run(self):
@@ -47,6 +49,8 @@ class FhirWorkflow(CoreWorkflow):
         Run the workflow according to the defined states.  Overridden to exclude the
         'transform' state from the FHIR workflow.
         """
+        self.start_time = datetime.utcnow()
+
         try:
             logging.info("Running FhirWorkflow, starting state=", self.state)
             await self.validate()
