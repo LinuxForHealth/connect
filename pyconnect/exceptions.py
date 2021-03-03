@@ -24,8 +24,9 @@ class FhirValidationTypeError(FhirValidationError):
     """Raised when a FHIR resource instance cannot be properly instantiated from input"""
     def __init__(self, expected_type, actual_type):
         super(FhirValidationTypeError, self).__init__(
-            msg=f"Expected an instance of {expected_type}, but got type {actual_type}"
+            msg=f'Expected an instance of {expected_type}, but got type {actual_type}'
         )
+
 
 class KafkaStorageError(Exception):
     """Raised when storing data in Kafka fails"""

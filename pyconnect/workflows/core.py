@@ -86,8 +86,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
                 data field as stingified json.
         """
         data = self.message
-        logging.debug("CoreWorkflow.persist: incoming message = ", data)
-        logging.debug("CoreWorkflow.persist: incoming message type = ", type(data))
+        logging.debug(f'CoreWorkflow.persist: incoming message = {data}')
+        logging.debug(f'CoreWorkflow.persist: incoming message type = {type(data)}')
         data_str = json.dumps(data.dict())
 
         message = {
@@ -105,7 +105,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         await kafka_producer.produce_with_callback(self.data_format, msg_str,
                                                    on_delivery=get_kafka_result)
         storage_delta = datetime.now() - storage_start
-        logging.debug("CoreWorkflow.persist: stored resource location =", kafka_result)
+        logging.debug(f'CoreWorkflow.persist: stored resource location = {kafka_result}')
 
         total_time = datetime.utcnow() - self.start_time
         message['elapsed_storage_time'] = str(storage_delta.total_seconds())
@@ -114,7 +114,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         message['status'] = kafka_status
 
         lfh_message = LinuxForHealthDataRecordResponse(**message)
-        logging.debug("CoreWorkflow.persist: outgoing message = ", lfh_message)
+        logging.debug(f'CoreWorkflow.persist: outgoing message = {lfh_message}')
         self.message = lfh_message
 
 
@@ -179,9 +179,9 @@ def get_kafka_result(err, msg):
     if err is not None:
         kafka_status = 'error'
         logging.debug(kafka_status)
-        raise KafkaStorageError("Failed to deliver message: %s: %s" % (str(msg), str(err)))
+        raise KafkaStorageError(f'Failed to deliver message: {str(msg)} {str(err)}')
     else:
         kafka_status = 'success'
-        kafka_result = "%s:%s:%s" % (msg.topic(), msg.partition(), msg.offset())
-        logging.debug("Produced record to topic {} partition [{}] @ offset {}"
-                      .format(msg.topic(), msg.partition(), msg.offset()))
+        kafka_result = f'{msg.topic()}:{msg.partition()}:{msg.offset()}'
+        logging.debug(f'Produced record to topic {msg.topic()} ' \
+                      f'partition [{msg.partition()}] @ offset {msg.offset()}')

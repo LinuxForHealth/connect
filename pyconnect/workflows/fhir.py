@@ -27,10 +27,10 @@ class FhirWorkflow(CoreWorkflow):
         raises: MissingFhirResourceType, FhirValidationTypeError
         """
         message = self.message
-        logging.debug("FhirWorkflow.validate: incoming message = ", message)
+        logging.debug(f'FhirWorkflow.validate: incoming message = {message}')
 
-        resource_type = message.pop("resourceType", None)
-        logging.debug("FhirWorkflow.validate: resource type =", resource_type)
+        resource_type = message.pop('resourceType', None)
+        logging.debug(f'FhirWorkflow.validate: resource type = {resource_type}')
         if resource_type is None:
             raise MissingFhirResourceType
 
@@ -40,7 +40,7 @@ class FhirWorkflow(CoreWorkflow):
         if not isinstance(resource, model_class):
             raise FhirValidationTypeError(model_class, type(resource))
 
-        logging.debug("FhirWorkflow.validate: validated resource =", resource)
+        logging.debug(f'FhirWorkflow.validate: validated resource = {resource}')
         self.message = resource
         self.data_format = resource_type.upper()
 
@@ -53,7 +53,7 @@ class FhirWorkflow(CoreWorkflow):
         self.start_time = datetime.utcnow()
 
         try:
-            logging.info("Running FhirWorkflow, starting state=", self.state)
+            logging.info(f'Running FhirWorkflow, starting state = {self.state}')
             await self.validate()
             await self.persist()
             await self.transmit()
