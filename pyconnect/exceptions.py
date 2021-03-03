@@ -34,3 +34,4 @@ class KafkaStorageError(Exception):
     """Raised when storing data in Kafka fails"""
     def __init__(self, msg):
         super(KafkaStorageError, self).__init__(msg)
+        
