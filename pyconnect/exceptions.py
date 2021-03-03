@@ -26,5 +26,12 @@ class FhirValidationTypeError(FhirValidationError):
 
     def __init__(self, expected_type, actual_type):
         super(FhirValidationTypeError, self).__init__(
-            msg=f"Expected an instance of {expected_type}, but got type {actual_type}"
+            msg=f'Expected an instance of {expected_type}, but got type {actual_type}'
         )
+
+
+class KafkaStorageError(Exception):
+    """Raised when storing data in Kafka fails"""
+    def __init__(self, msg):
+        super(KafkaStorageError, self).__init__(msg)
+        
