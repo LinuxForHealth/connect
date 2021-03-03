@@ -22,8 +22,9 @@ class FhirWorkflow(CoreWorkflow):
         Overridden to validate the incoming FHIR message by instantiating a fhir.resources
         class from the input data dictionary.  Adapted from fhir.resources fhirtypesvalidators.py
 
-        Result: If a validation error occurs, raises a MissingFhirResourceType or
-        FhirValidationTypeError, otherwise sets the workflow message to the validated resource.
+        input: self.message as a dict for FHIR-R4 json (e.g. Patient resource type)
+        output: self.message as an instantiated and validated fhir.resources resource class.
+        raises: MissingFhirResourceType, FhirValidationTypeError
         """
         message = self.message
         logging.debug("FhirWorkflow.validate: incoming message = ", message)

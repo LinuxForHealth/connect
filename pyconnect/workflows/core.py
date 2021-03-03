@@ -9,6 +9,7 @@ import uuid
 import xworkflows
 from datetime import datetime
 from pyconnect.clients import get_kafka_producer
+from pyconnect.exceptions import KafkaStorageError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 
 
@@ -176,9 +177,9 @@ def get_kafka_result(err, msg):
     global kafka_status
 
     if err is not None:
-        kafka_status = "error: failed to deliver message: %s: %s" % (str(msg), str(err))
-        kafka_result = 'None:0:0'
+        kafka_status = 'error'
         logging.debug(kafka_status)
+        raise KafkaStorageError("Failed to deliver message: %s: %s" % (str(msg), str(err)))
     else:
         kafka_status = 'success'
         kafka_result = "%s:%s:%s" % (msg.topic(), msg.partition(), msg.offset())
