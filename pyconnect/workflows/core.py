@@ -91,11 +91,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         message = {
             'uuid': str(uuid.uuid4()),
-            'creation_date': str(datetime.utcnow()),
+            'creation_date': str(datetime.utcnow().replace(microsecond=0))+'Z',
             'consuming_endpoint_url': f'{self.origin_url}',
             'data_format': f'{self.data_format}',
             'data': f'{data_str}',
-            'store_date': str(datetime.utcnow())
+            'store_date': str(datetime.utcnow().replace(microsecond=0))+'Z'
         }
         msg_str = json.dumps(message)
 
