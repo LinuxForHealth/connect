@@ -38,9 +38,10 @@ setuptools.setup(
         'xworkflows==1.0.4',
         'fhir.resources==6.1.0',
         'uvicorn[standard]==0.13.4',
+        'httpx==0.17.0'
     ],
     extras_require={
-        'test': ['pytest==6.1.2'],
+        'test': ['pytest==6.1.2', 'pytest-asyncio==0.14.0'],
         'dev': ['autopep8==1.5.5', 'pylint==2.6.0']
     },
     python_requires='>=3.7'

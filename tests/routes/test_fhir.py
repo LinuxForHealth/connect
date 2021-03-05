@@ -2,34 +2,35 @@
 test_fhir.py
 Tests the /fhir endpoint
 """
+import pytest
 import socket
-from pyconnect.config import get_settings
+from pyconnect import clients
 
 
-def test_fhir_post(test_client, settings, mock_client_socket, monkeypatch):
+@pytest.mark.asyncio
+async def test_fhir_post(async_test_client, mock_client_socket,
+                         mock_async_kafka_producer, monkeypatch):
     """
-    Tests /status [GET]
+    Tests /fhir [POST]
     :param test_client: Fast API test client
-    :param settings: Settings test fixture
     :param mock_client_socket: Mock Client Socket Fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
     """
-    test_client.app.dependency_overrides[get_settings] = lambda: settings
-
     with monkeypatch.context() as m:
         m.setattr(socket, 'socket', mock_client_socket)
+        m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
 
-        actual_response = test_client.post('/fhir',
-                                           json={
-                                               "resourceType": "Patient",
-                                               "id": "001",
-                                               "active": True,
-                                               "gender": "male"
-                                           })
-        # Temporary fix - should be 200, not 307 temp redirect
-        assert actual_response.status_code == 307
+        async with async_test_client as ac:
+            actual_response = await ac.post('/fhir',
+                                            json={
+                                                "resourceType": "Patient",
+                                                "id": "001",
+                                                "active": True,
+                                                "gender": "male"
+                                            })
 
-        # TODO: May need to mock the /fhir API to return expected json
+        print(f'actual_response = {actual_response}')
+        assert actual_response.status_code == 200
 
         # actual_json = actual_response.json()
         # assert 'id' in actual_json
