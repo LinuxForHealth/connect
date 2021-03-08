@@ -3,21 +3,18 @@ test_fhir.py
 Tests the /fhir endpoint
 """
 import pytest
-import socket
 from pyconnect import clients
 
 
 @pytest.mark.asyncio
-async def test_fhir_post(async_test_client, mock_client_socket,
-                         mock_async_kafka_producer, monkeypatch):
+async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypatch):
     """
     Tests /fhir [POST]
-    :param test_client: Fast API test client
-    :param mock_client_socket: Mock Client Socket Fixture
+    :param async_test_client: HTTPX test client fixture
+    :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
     """
     with monkeypatch.context() as m:
-        m.setattr(socket, 'socket', mock_client_socket)
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
 
         async with async_test_client as ac:
