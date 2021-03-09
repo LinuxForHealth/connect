@@ -100,13 +100,16 @@ def mock_async_kafka_producer() -> Callable:
             class CallbackMessage:
                 """ Message to send to producer callback"""
                 @staticmethod
-                def topic(): return topic
+                def topic():
+                    return topic
 
                 @staticmethod
-                def partition(): return 0
+                def partition():
+                    return 0
 
                 @staticmethod
-                def offset(): return 0
+                def offset():
+                    return 0
 
             on_delivery(None, CallbackMessage())
 
