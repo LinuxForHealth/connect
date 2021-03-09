@@ -6,10 +6,16 @@ Provides access to LinuxForHealth data records using the /data [GET] endpoint
 from pydantic import (BaseModel,
                       AnyUrl,
                       constr)
-from fastapi.routing import APIRouter
+from fastapi.routing import (APIRouter,
+                             HTTPException)
 from typing import Optional
+from pyconnect.clients import get_kafka_consumer
+from pyconnect.exceptions import KafkaMessageNotFoundError
+from confluent_kafka import KafkaException
+
 import uuid
 import datetime
+import json
 
 router = APIRouter()
 
@@ -36,51 +42,36 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     elapsed_transmit_time: Optional[float]
     elapsed_total_time: float
 
-    class Config:
-        schema_extra = {
-            'example': {
-                'uuid': 'dbe0e8dd-7b64-4d7b-aefc-d27e2664b94a',
-                'creation_date': '2021-02-12T18:13:17Z',
-                'store_date': '2021-02-12T18:14:17Z',
-                'transmit_date': '2021-02-12T18:15:17Z',
-                'consuming_endpoint_url': 'https://localhost:8080/endpoint',
-                'data_format': 'EXAMPLE',
-                'data': 'SGVsbG8gV29ybGQhIEl0J3MgbWUu',
-                'status': 'success',
-                'data_record_location': 'EXAMPLE:0:0',
-                'target_endpoint_url': 'http://externalhost/endpoint',
-                'elapsed_storage_time': 0.080413915000008,
-                'elapsed_transmit_time': 0.080413915000008,
-                'elapsed_total_time': 0.080413915000008
-            }
-        }
 
-
-@router.get('', response_model=LinuxForHealthDataRecordResponse)
-def get_data_record(dataformat: str, partition: int, offset: int):
+@router.get('/', response_model=LinuxForHealthDataRecordResponse)
+def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHealthDataRecordResponse:
     """
-    Returns a single data record from the LinuxForHealth data store
+    Returns a single data record from the LinuxForHealth data store.
+    Raises relevant HTTP exceptions for:
+      400 - BAD_REQUEST;
+      404 - NOT_FOUND and
+      500 - INTERNAL_SERVER_ERROR
 
     :param dataformat: The record's data format
     :param partition: The record partition
     :param offset: The record offset
     :return: LinuxForHealthDataRecordResponse
     """
-    # TODO: replace the mock response below with a working implementation (Kafka client)
-    data_fields = {
-        'uuid': 'dbe0e8dd-7b64-4d7b-aefc-d27e2664b94a',
-        'creation_date': '2021-02-12T18:13:17Z',
-        'store_date': '2021-02-12T18:14:17Z',
-        'transmit_date': '2021-02-12T18:15:17Z',
-        'consuming_endpoint_url': 'https://localhost:8080/endpoint',
-        'data_format': 'EXAMPLE',
-        'data': 'SGVsbG8gV29ybGQhIEl0J3MgbWUu',
-        'status': 'success',
-        'data_record_location': f'{dataformat}:{partition}:{offset}',
-        'target_endpoint_url': 'http://externalhost/endpoint',
-        'elapsed_storage_time': 0.080413915000008,
-        'elapsed_transmit_time': 0.080413915000008,
-        'elapsed_total_time': 0.080413915000008
-    }
-    data_record = LinuxForHealthDataRecordResponse(**data_fields)
+    try:
+        kafka_consumer = get_kafka_consumer(dataformat, partition, offset)
+        return await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
+    except KafkaException as ke:
+        raise HTTPException(status_code=500, detail=str(ke))
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    except KafkaMessageNotFoundError as kmnfe:
+        raise HTTPException(status_code=404, detail=str(kmnfe))
+
+
+async def _fetch_data_record_cb(kafka_consumer_msg) -> LinuxForHealthDataRecordResponse:
+    decoded_json_dict = json.loads(kafka_consumer_msg)  # Decode message here if necessary in the future
+    data_record = LinuxForHealthDataRecordResponse(**decoded_json_dict)
+
     return data_record

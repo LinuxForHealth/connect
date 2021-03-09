@@ -17,6 +17,7 @@ from nats.aio.client import Client as NatsClient
 from threading import Thread
 from pyconnect.config import get_settings
 from typing import Optional
+from pyconnect.exceptions import KafkaMessageNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -167,16 +168,13 @@ class ConfluentAsyncKafkaConsumer:
                 logger.info(f'Found message for topic_name - {self.topic_name}, partition - {self.partition} + \
                             and offset - {self.offset}. Invoking callback_method - {callback_method}')
 
-                await callback_method(message)
+                return await callback_method(message)
             else:
                 _msg_not_found_error = f'No message was found that could be fetched for + \
                 topic_name: {self.topic_name}, partition: {self.partition}, offset: {self.offset}'
 
                 logger.error(_msg_not_found_error)
-                raise KafkaException(_msg_not_found_error)
-
-        except Exception as e:
-            logger.exception(f'Exception occured in KafkaConsumer: {str(e)}', exc_info=True)
+                raise KafkaMessageNotFoundError(_msg_not_found_error)
         finally:
             self._close_consumer()
 
