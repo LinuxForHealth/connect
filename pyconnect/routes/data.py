@@ -44,7 +44,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
 
 
 @router.get('/', response_model=LinuxForHealthDataRecordResponse)
-def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHealthDataRecordResponse:
+async def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHealthDataRecordResponse:
     """
     Returns a single data record from the LinuxForHealth data store.
     Raises relevant HTTP exceptions for:
@@ -59,9 +59,8 @@ def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHea
     """
     try:
         kafka_consumer = get_kafka_consumer(dataformat, partition, offset)
-        data_record = await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
+        return await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
 
-        return data_record
     except KafkaException as ke:
         raise HTTPException(status_code=500, detail=str(ke))
 
