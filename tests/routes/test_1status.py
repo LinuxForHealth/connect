@@ -1,5 +1,5 @@
 """
-test1_status.py
+test_1status.py
 Tests the /status API endpoints
 """
 import socket
