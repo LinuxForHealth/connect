@@ -59,7 +59,9 @@ def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHea
     """
     try:
         kafka_consumer = get_kafka_consumer(dataformat, partition, offset)
-        return await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
+        data_record = await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
+
+        return data_record
     except KafkaException as ke:
         raise HTTPException(status_code=500, detail=str(ke))
 
