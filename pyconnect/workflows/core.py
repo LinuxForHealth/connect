@@ -3,6 +3,7 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
+import base64
 import json
 import logging
 import uuid
@@ -88,14 +89,14 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         data = self.message
         logging.debug(f'CoreWorkflow.persist: incoming message = {data}')
         logging.debug(f'CoreWorkflow.persist: incoming message type = {type(data)}')
-        data_str = json.dumps(data.dict())
+        data_encoded = str(base64.b64encode(bytes(json.dumps(data.dict()), 'utf-8')), 'utf-8')
 
         message = {
             'uuid': str(uuid.uuid4()),
             'creation_date': str(datetime.utcnow().replace(microsecond=0))+'Z',
-            'consuming_endpoint_url': f'{self.origin_url}',
-            'data_format': f'{self.data_format}',
-            'data': f'{data_str}',
+            'consuming_endpoint_url': self.origin_url,
+            'data_format': self.data_format,
+            'data': data_encoded,
             'store_date': str(datetime.utcnow().replace(microsecond=0))+'Z'
         }
         msg_str = json.dumps(message)

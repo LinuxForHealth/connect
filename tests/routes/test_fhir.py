@@ -2,6 +2,7 @@
 test_fhir.py
 Tests the /fhir endpoint
 """
+import base64
 import json
 import pytest
 from pyconnect import clients
@@ -46,8 +47,15 @@ async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypat
             "gender": "male",
             "resourceType": "Patient"
         }
-        expected_data_str = json.dumps(expected_data)
-        assert actual_json['data'] == expected_data_str
+
+        # encode the expected data and match
+        expected_data_encoded = str(base64.b64encode(bytes(json.dumps(expected_data), 'utf-8')), 'utf-8')
+        assert actual_json['data'] == expected_data_encoded
+
+        # decode the actual data and match
+        actual_data = json.loads(str(base64.b64decode(bytes(actual_json['data'], 'utf-8')), 'utf-8'))
+        assert actual_data == expected_data
+
         assert actual_json['consuming_endpoint_url'] == '/fhir'
         assert actual_json['data_format'] == 'PATIENT'
         assert actual_json['status'] == 'success'
