@@ -1,5 +1,5 @@
 """
-encoding_utils.py
+encoding.py
 
  pyConnect convenience functions for encoding/decoding data payloads in
  LinuxForHealth messages.
@@ -8,7 +8,7 @@ import base64
 import json
 
 
-def encode_data_from_dict(data: dict) -> str:
+def encode_from_dict(data: dict) -> str:
     """
     Base64-encodes an object for transmission and storage.
     :param data: The dict for an object to encode
@@ -21,7 +21,7 @@ def encode_data_from_dict(data: dict) -> str:
     return data_encoded_str
 
 
-def encode_data_from_str(data: str) -> str:
+def encode_from_str(data: str) -> str:
     """
     Base64-encodes a string for transmission and storage.
     :param data: The string to encode
@@ -33,7 +33,7 @@ def encode_data_from_str(data: str) -> str:
     return data_encoded_str
 
 
-def encode_data_from_bytes(data: bytes) -> str:
+def encode_from_bytes(data: bytes) -> str:
     """
     Base64-encodes a sequence of bytes for transmission and storage.
     :param data: The byte sequence to encode
@@ -44,11 +44,11 @@ def encode_data_from_bytes(data: bytes) -> str:
     return data_encoded_str
 
 
-def decode_data_to_str(data: str) -> str:
+def decode_to_str(data: str) -> str:
     """
     Decodes a base64-encoded string and returns the decoded string.
     :param data: The base64-encoded string to decode
-    :return: base64-decoded string
+    :return: decoded string
     """
     data_bytes = bytes(data, 'utf-8')
     data_decoded_bytes = base64.b64decode(data_bytes)
@@ -56,22 +56,22 @@ def decode_data_to_str(data: str) -> str:
     return data_decoded_str
 
 
-def decode_data_to_bytes(data: str) -> bytes:
+def decode_to_bytes(data: str) -> bytes:
     """
     Decodes a base64-encoded string and returns a sequence of bytes.
     :param data: The base64-encoded string to decode
-    :return: base64-decoded bytes
+    :return: decoded bytes
     """
     data_bytes = bytes(data, 'utf-8')
     data_decoded_bytes = base64.b64decode(data_bytes)
     return data_decoded_bytes
 
 
-def decode_data_to_dict(data: str) -> dict:
+def decode_to_dict(data: str) -> dict:
     """
     Decodes a base64-encoded string and returns a sequence of bytes.
     :param data: The base64-encoded string to decode
-    :return: dict for base64-decoded object
+    :return: a Python dict
     """
     data_bytes = bytes(data, 'utf-8')
     data_decoded_bytes = base64.b64decode(data_bytes)
