@@ -32,5 +32,13 @@ class FhirValidationTypeError(FhirValidationError):
 
 class KafkaStorageError(Exception):
     """Raised when storing data in Kafka fails"""
+
     def __init__(self, msg):
         super(KafkaStorageError, self).__init__(msg)
+
+
+class KafkaMessageNotFoundError(Exception):
+    """Raised when a message for the specified topic, partition and offset cannot be found"""
+
+    def __init__(self, msg):
+        super(KafkaMessageNotFoundError, self).__init__(msg)
