@@ -1,5 +1,5 @@
 """
-test_1data.py
+test_data.py
 Tests /data endpoints
 """
 import pytest
