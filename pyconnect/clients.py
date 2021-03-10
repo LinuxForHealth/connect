@@ -120,7 +120,6 @@ class ConfluentAsyncKafkaConsumer:
         self.topic_name = topic_name
         self.partition = partition
         self.offset = offset
-        self.poll_timeout_secs = consumer_conf['default.poll.timeout.secs']
 
     async def get_message_from_kafka_cb(self, callback_method) -> None:
         """
@@ -148,7 +147,7 @@ class ConfluentAsyncKafkaConsumer:
             self.consumer.assign([topic_partition])
 
             # polls for exactly one record - waits for a configurable max time (seconds)
-            msg = await loop.run_in_executor(None, self.consumer.poll, self.poll_timeout_secs)
+            msg = await loop.run_in_executor(None, self.consumer.poll, 1.0)
 
             if msg.error():
                 logger.error(f'Consumer error: {msg.error()}')
@@ -205,26 +204,20 @@ def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=Non
     :returns: a new instance of the ConfluentAsyncKafkaConsumer
     """
     settings = get_settings()
-
-    if not all(topic_name, partition):
+    if not all([topic_name, partition]):
         msg = 'Init Error: No topic_name or partition information provided.'
         logger.error(msg)
         raise ValueError(msg)
 
     # We pull default configs from config.py
-    settings = get_settings()
-
     consumer_conf = {
         'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
         'group.id': settings.kafka_consumer_default_group_id,
         'auto.offset.reset': 'smallest',
-        'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit,
-        'enable.auto.offset.store': settings.kafka_consumer_default_enable_auto_offset_store,
-        'default.poll.timeout.secs': settings.kafka_consumer_default_poll_timeout_secs
+        'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit
     }
 
     kafka_consumer = ConfluentAsyncKafkaConsumer(topic_name, partition, consumer_conf, offset, consumer_group_id)
-
     return kafka_consumer
 
 

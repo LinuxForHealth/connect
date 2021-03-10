@@ -41,7 +41,7 @@ setuptools.setup(
         'httpx==0.17.0'
     ],
     extras_require={
-        'test': ['pytest==6.1.2', 'pytest-asyncio==0.14.0'],
+        'test': ['pytest==6.1.2', 'pytest-asyncio==0.14.0', 'asynctest==0.13.0'],
         'dev': ['autopep8==1.5.5', 'pylint==2.6.0']
     },
     python_requires='>=3.7'

@@ -43,7 +43,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     elapsed_total_time: float
 
 
-@router.get('/', response_model=LinuxForHealthDataRecordResponse)
+@router.get('', response_model=LinuxForHealthDataRecordResponse)
 async def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHealthDataRecordResponse:
     """
     Returns a single data record from the LinuxForHealth data store.
