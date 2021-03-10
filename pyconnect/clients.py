@@ -214,7 +214,8 @@ def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=Non
         'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
         'group.id': settings.kafka_consumer_default_group_id,
         'auto.offset.reset': 'smallest',
-        'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit
+        'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit,
+        'enable.auto.offset.store': settings.kafka_consumer_default_enable_auto_offset_store
     }
 
     kafka_consumer = ConfluentAsyncKafkaConsumer(topic_name, partition, consumer_conf, offset, consumer_group_id)
