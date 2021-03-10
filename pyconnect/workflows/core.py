@@ -12,6 +12,7 @@ from datetime import datetime
 from pyconnect.clients import get_kafka_producer
 from pyconnect.exceptions import KafkaStorageError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
+from pyconnect.support.encoding_utils import encode_data_from_dict
 
 
 kafka_result = None
@@ -89,7 +90,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         data = self.message
         logging.debug(f'CoreWorkflow.persist: incoming message = {data}')
         logging.debug(f'CoreWorkflow.persist: incoming message type = {type(data)}')
-        data_encoded = str(base64.b64encode(bytes(json.dumps(data.dict()), 'utf-8')), 'utf-8')
+        data_encoded = encode_data_from_dict(data.dict())
 
         message = {
             'uuid': str(uuid.uuid4()),

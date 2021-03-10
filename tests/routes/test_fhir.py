@@ -6,6 +6,8 @@ import base64
 import json
 import pytest
 from pyconnect import clients
+from pyconnect.support.encoding_utils import (encode_data_from_dict,
+                                              decode_data_to_dict)
 
 
 @pytest.mark.asyncio
@@ -49,11 +51,11 @@ async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypat
         }
 
         # encode the expected data and match
-        expected_data_encoded = str(base64.b64encode(bytes(json.dumps(expected_data), 'utf-8')), 'utf-8')
+        expected_data_encoded = encode_data_from_dict(expected_data)
         assert actual_json['data'] == expected_data_encoded
 
         # decode the actual data and match
-        actual_data = json.loads(str(base64.b64decode(bytes(actual_json['data'], 'utf-8')), 'utf-8'))
+        actual_data = decode_data_to_dict(actual_json['data'])
         assert actual_data == expected_data
 
         assert actual_json['consuming_endpoint_url'] == '/fhir'
