@@ -1,5 +1,5 @@
 """
-test_1status.py
+test_status.py
 Tests the /status API endpoints
 """
 import socket
@@ -7,7 +7,7 @@ import pytest
 from pyconnect.config import get_settings
 
 
-@pytest.mark.skip(reason="No way of currently testing this")
+@pytest.mark.asyncio
 def test_status_get(test_client, settings, mock_client_socket, monkeypatch):
     """
     Tests /status [GET]
