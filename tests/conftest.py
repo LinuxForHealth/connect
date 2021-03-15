@@ -2,7 +2,6 @@
 conftest.py
 Contains global/common pytest fixtures
 """
-import starlette
 from confluent_kafka import Producer
 from pyconnect.config import (Settings,
                               get_settings)
@@ -103,12 +102,3 @@ def mock_async_kafka_producer() -> Callable:
             on_delivery(None, CallbackMessage())
 
     return MockKafkaProducer
-
-
-@pytest.fixture
-def mock_post_transmit():
-    """
-    mocks the requests.post method specifically for the transmit workflow step.
-    :return: starlette.responses.Response
-    """
-    return starlette.responses.Response('', status_code=201, headers=None)
