@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # general certificate settings
     # path to "standard" CA certificates
     certificate_authority_path: str = certifi.where()
+    certificate_verify: bool = False
 
     # kakfa
     kafka_bootstrap_servers: List[str] = ['localhost:9094']

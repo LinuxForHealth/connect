@@ -87,4 +87,4 @@ async def test_fhir_post_with_transmit(async_test_client2, mock_async_kafka_prod
                                         })
 
         assert actual_response.status_code == 201
-        assert actual_response.text is ''
+        assert actual_response.text == ''

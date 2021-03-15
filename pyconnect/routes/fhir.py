@@ -63,17 +63,17 @@ async def post_fhir_data(response: Response, settings=Depends(get_settings), req
     result of transmitting to an external server, if defined
     """
     try:
-        workflow = FhirWorkflow(request_data, '/fhir')
+        workflow = FhirWorkflow(request_data, '/fhir', settings.certificate_verify)
 
         # enable the transmit workflow step if defined
-        if settings.fhir_r4_externalserver != '':
+        if settings.fhir_r4_externalserver:
             resource_type = request_data['resourceType']
             workflow.transmit_server = settings.fhir_r4_externalserver+'/'+resource_type
 
         result = await workflow.run(response)
 
         if workflow.use_response:
-            if response.body == '':
+            if not response.body:
                 # properly return an empty response
                 new_response = Response(status_code=response.status_code)
                 new_response.headers.update(response.headers)
