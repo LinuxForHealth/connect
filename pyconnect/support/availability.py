@@ -1,28 +1,39 @@
 """
-http_utils.py
+availability.py
 
  pyConnect convenience functions for verifying host/service availability
   and fetching host:port lookups
 """
 
-import socket
 from typing import List
 from urllib.parse import urlsplit
+import asyncio
+from asyncio import StreamWriter
+import logging
 
 
-def ping_host(hostname: str, port: int) -> bool:
+logger = logging.getLogger(__name__)
+
+
+async def ping_host(hostname: str, port: int) -> bool:
     """
     Pings a host and connects to confirm its availability.
     :param hostname: The hostname or ip address
     :param port: The port to connect on
     :return: True if the host is available, False if an "address info" or ConnectionError occurs
     """
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.connect((hostname, port))
-        except (socket.gaierror, ConnectionError):
-            return False
-    return True
+    writer: StreamWriter = None
+    try :
+        _, writer = await asyncio.open_connection(hostname, port)
+    except Exception as ex:
+        logger.error(f'error connecting to {hostname}:{port}')
+        logger.exception(ex)
+        return False
+    else:
+        return True
+    finally:
+        if writer is not None:
+            writer.close()
 
 
 def get_host_ports(service_setting: List[str]) -> List[tuple]:
@@ -43,7 +54,7 @@ def get_host_ports(service_setting: List[str]) -> List[tuple]:
     return host_ports
 
 
-def is_service_available(service_setting: List[str]) -> bool:
+async def is_service_available(service_setting: List[str]) -> bool:
     """
     Tests one or more services for availability using a TCP socket connection.
     The service_setting contains one or more addresses defined as [host]:[port].
@@ -52,5 +63,5 @@ def is_service_available(service_setting: List[str]) -> bool:
     :return: True if all services can be reached, otherwise returns False
     """
     host_ports = get_host_ports(service_setting)
-    test_results = [ping_host(hp[0], hp[1]) for hp in host_ports]
+    test_results = [await ping_host(hp[0], hp[1]) for hp in host_ports]
     return all(test_results)

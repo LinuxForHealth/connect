@@ -9,7 +9,7 @@ from pydantic.main import BaseModel
 from pydantic import constr
 from pyconnect import __version__
 from pyconnect.config import get_settings
-from pyconnect.support.http_utils import is_service_available
+from pyconnect.support.availability import is_service_available
 from typing import List
 import time
 
@@ -44,12 +44,12 @@ class StatusResponse(BaseModel):
 
 
 @router.get('', response_model=StatusResponse)
-def get_status(settings=Depends(get_settings)):
+async def get_status(settings=Depends(get_settings)):
     """
     :return: the current system status
     """
-    def get_service_status(setting: List[str]) -> str:
-        is_available = is_service_available(setting)
+    async def get_service_status(setting: List[str]) -> str:
+        is_available = await is_service_available(setting)
         return 'AVAILABLE' if is_available else 'UNAVAILABLE'
 
     start_time = time.perf_counter()
@@ -57,8 +57,8 @@ def get_status(settings=Depends(get_settings)):
         'application': settings.uvicorn_app,
         'application_version': __version__,
         'is_reload_enabled': settings.uvicorn_reload,
-        'nats_status': get_service_status(settings.nats_servers),
-        'kafka_broker_status': get_service_status(settings.kafka_bootstrap_servers),
+        'nats_status': await get_service_status(settings.nats_servers),
+        'kafka_broker_status': await get_service_status(settings.kafka_bootstrap_servers),
         'elapsed_time': time.perf_counter() - start_time
     }
     return StatusResponse(**status_fields)

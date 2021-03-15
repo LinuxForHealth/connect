@@ -41,10 +41,11 @@ def test_client(monkeypatch) -> TestClient:
 
 
 @pytest.fixture
-def async_test_client(monkeypatch) -> AsyncClient:
+def async_test_client(monkeypatch, settings) -> AsyncClient:
     """
     Creates an HTTPX AsyncClient for async API testing
     :param monkeypatch: monkeypatch fixture
+    :param settings: the settings fixture used to override settings injected into an endpoint
     :return: HTTPX async test client
     """
     monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
@@ -52,33 +53,6 @@ def async_test_client(monkeypatch) -> AsyncClient:
     from pyconnect.main import app
     app.dependency_overrides[get_settings] = lambda: settings
     return AsyncClient(app=app, base_url='http://testserver')
-
-
-@pytest.fixture
-def mock_client_socket() -> Callable:
-    """
-    Defines a MockClientSocket class used to mock client socket connections.
-    The MockClientSocket class returns a positive result for addresses using port 8080.
-    :return: MockClientSocket class
-    """
-    class MockClientSocket:
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            pass
-
-        def __init__(self, family: int, type: int):
-            self.family = family
-            self.type = type
-
-        def connect(self, address: tuple):
-            """Is successful for any host on port 8080"""
-            if address is None or len(address) < 2 or address[1] != 8080:
-                raise ConnectionError
-
-    return MockClientSocket
 
 
 @pytest.fixture
