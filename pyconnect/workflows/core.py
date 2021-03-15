@@ -130,8 +130,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         if self.transmit_server is defined by the workflow.
 
         inputs: self.message as object instance (e.g. FHIR-R4 Patient)
-                self.transmit_server as the URL of the server to POST the fhir resource to, if defined
-        output: self.message as the result of the POST to the external fhir server.
+                self.transmit_server as the URL of the server to POST the data to, if defined
+        output: self.message as the result of the POST to the external server.
         """
         if hasattr(self, 'transmit_server'):
             resource_str = decode_to_str(self.message.data)
