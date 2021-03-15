@@ -136,10 +136,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         if hasattr(self, 'transmit_server'):
             resource_str = decode_to_str(self.message.data)
             resource = json.loads(resource_str)
-            resource_type = resource['resourceType']
-            url = self.transmit_server+'/'+resource_type
 
-            result = requests.post(url, json=resource, verify=False)
+            result = requests.post(self.transmit_server, json=resource, verify=False)
 
             # Set results from Starlette response in FASTAPI response
             response.body = result.text

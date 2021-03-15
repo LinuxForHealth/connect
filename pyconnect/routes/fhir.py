@@ -65,9 +65,10 @@ async def post_fhir_data(response: Response, settings=Depends(get_settings), req
     try:
         workflow = FhirWorkflow(request_data, '/fhir')
 
-        # enable the transmit workflow step
+        # enable the transmit workflow step if defined
         if settings.fhir_r4_externalserver != '':
-            workflow.transmit_server = settings.fhir_r4_externalserver
+            resource_type = request_data['resourceType']
+            workflow.transmit_server = settings.fhir_r4_externalserver+'/'+resource_type
 
         result = await workflow.run(response)
 
