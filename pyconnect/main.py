@@ -10,7 +10,8 @@ import uvicorn
 from pyconnect.config import get_settings
 from pyconnect.routes.api import router
 from pyconnect import __version__
-from pyconnect.server_handlers import (configure_internal_integrations,
+from pyconnect.server_handlers import (close_internal_clients,
+                                       configure_internal_integrations,
                                        configure_logging,
                                        http_exception_handler)
 
@@ -32,6 +33,7 @@ def get_app() -> FastAPI:
     app.include_router(router)
     app.add_event_handler('startup', configure_logging)
     app.add_event_handler('startup', configure_internal_integrations)
+    app.add_event_handler('shutdown', close_internal_clients)
     app.add_exception_handler(HTTPException, http_exception_handler)
 
     return app
