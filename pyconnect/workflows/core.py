@@ -5,13 +5,15 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
+import requests
 import uuid
 import xworkflows
 from datetime import datetime
 from pyconnect.clients import get_kafka_producer
 from pyconnect.exceptions import KafkaStorageError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
-from pyconnect.support.encoding import encode_from_dict
+from pyconnect.support.encoding import (encode_from_dict,
+                                        decode_to_str)
 
 
 kafka_result = None
@@ -49,11 +51,13 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     Implements the base LinuxForHealth workflow.
     """
 
-    def __init__(self, message, url):
+    def __init__(self, message, url, verify_certs):
         self.message = message
         self.data_format = None
         self.origin_url = url
         self.start_time = None
+        self.use_response = False
+        self.verify_certs = verify_certs
 
 
     state = CoreWorkflowDef()
@@ -120,12 +124,31 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_transmit')
-    async def transmit(self):
+    async def transmit(self, response: dict):
         """
-        Transmit the message to an external service via HTTP.
+        Transmit the message to an external service via HTTP,
+        if self.transmit_server is defined by the workflow.
+
+        inputs: self.message as object instance (e.g. FHIR-R4 Patient)
+                self.transmit_server as the URL of the server to POST the data to, if defined
+        output: self.message as the result of the POST to the external server.
         """
-        # TODO: Provide default http transmission in CoreWorkflow
-        pass
+        if hasattr(self, 'transmit_server'):
+            resource_str = decode_to_str(self.message.data)
+            resource = json.loads(resource_str)
+
+            result = requests.post(self.transmit_server, json=resource, verify=self.verify_certs)
+
+            # Set results from Starlette response in FASTAPI response
+            response.body = result.text
+            response.status_code = result.status_code
+
+            # Merge Starlette headers into FastAPI headers with overwrite
+            for key, value in result.headers.items():
+                if not key in ['Content-Length', 'Content-Language', 'Date']:
+                    response.headers[key] = value
+
+            self.use_response = True
 
 
     @xworkflows.transition('do_sync')
@@ -146,21 +169,21 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
 
-    async def run(self):
+    async def run(self, response: dict):
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
         for a particular implementation.
 
-        :return: the processed message
+        :return: the response instance, with updated body and status_code
         """
         self.start_time = datetime.utcnow()
 
         try:
-            logging.info("Running CoreWorkflow, starting state=", self.state)
+            logging.info(f'Running CoreWorkflow, message={self.message}')
             self.validate()
             self.transform()
             await self.persist()
-            self.transmit()
+            self.transmit(response)
             self.synchronize()
             return self.message
         except Exception as ex:

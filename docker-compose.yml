@@ -119,3 +119,9 @@ services:
       - ./ipfs-node-2:/data/ipfs
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
+  ibm-fhir:
+    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
+    networks:
+      - main
+    ports:
+      - 9443:9443

@@ -45,7 +45,7 @@ class FhirWorkflow(CoreWorkflow):
         self.data_format = resource_type.upper()
 
 
-    async def run(self):
+    async def run(self, response: dict):
         """
         Run the workflow according to the defined states.  Overridden to exclude the
         'transform' state from the FHIR workflow.
@@ -56,7 +56,7 @@ class FhirWorkflow(CoreWorkflow):
             logging.info(f'Running FhirWorkflow, starting state = {self.state}')
             await self.validate()
             await self.persist()
-            await self.transmit()
+            await self.transmit(response)
             await self.synchronize()
             return self.message
         except Exception as ex:

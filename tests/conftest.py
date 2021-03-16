@@ -22,7 +22,8 @@ def settings() -> Settings:
         'uvicorn_reload': False,
         'uvicorn_app': 'pyconnect.main:app',
         'pyconnect_cert_key': './mycert.key',
-        'pyconnect_cert': './mycert.pem'
+        'pyconnect_cert': './mycert.pem',
+        'fhir_r4_externalserver': 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     }
     return Settings(**settings_fields)
 
@@ -41,7 +42,20 @@ def test_client(monkeypatch) -> TestClient:
 
 
 @pytest.fixture
-def async_test_client(monkeypatch, settings) -> AsyncClient:
+def async_test_client(monkeypatch) -> AsyncClient:
+    """
+    Creates an HTTPX AsyncClient for async API testing
+    :param monkeypatch: monkeypatch fixture
+    :return: HTTPX async test client
+    """
+    monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
+    monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
+    from pyconnect.main import app
+    return AsyncClient(app=app, base_url='http://testserver')
+
+
+@pytest.fixture
+def async_test_client2(monkeypatch, settings) -> AsyncClient:
     """
     Creates an HTTPX AsyncClient for async API testing
     :param monkeypatch: monkeypatch fixture

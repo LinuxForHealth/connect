@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # general certificate settings
     # path to "standard" CA certificates
     certificate_authority_path: str = certifi.where()
+    certificate_verify: bool = False
 
     # kakfa
     kafka_bootstrap_servers: List[str] = ['localhost:9094']
@@ -58,6 +59,10 @@ class Settings(BaseSettings):
     uvicorn_host: str = '0.0.0.0'
     uvicorn_port: int = 5000
     uvicorn_reload: bool = False
+
+    # external FHIR server URL
+    # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
+    fhir_r4_externalserver: str = ''
 
     class Config:
         case_sensitive = False
