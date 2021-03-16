@@ -50,7 +50,7 @@ def test_get_host_ports():
     expected = [('localhost', 9090), ('localhost', 9091)]
     assert actual == expected
 
-    service_setting = ['localhost:9090',' localhost:9091']
+    service_setting = ['localhost:9090', 'localhost:9091']
     actual = get_host_ports(service_setting)
     expected = [('localhost', 9090), ('localhost', 9091)]
     assert actual == expected
