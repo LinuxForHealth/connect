@@ -3,26 +3,31 @@ test_fhir.py
 Tests the /fhir endpoint
 """
 import pytest
-import requests
-import starlette
 from pyconnect import clients
 from pyconnect.support.encoding import (encode_from_dict,
                                         decode_to_dict)
+from pyconnect.config import get_settings
+import pyconnect.workflows.core
 from unittest.mock import AsyncMock
 
 
 @pytest.mark.asyncio
-async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypatch):
+async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypatch, settings):
     """
-    Tests /fhir [POST]
+    Tests /fhir [POST] where data is not transmitted to an external server
     :param async_test_client: HTTPX test client fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
+    :param settings: pyConnect configuration settings fixture
     """
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
 
         async with async_test_client as ac:
+            # remove external server setting
+            settings.fhir_r4_externalserver = None
+            ac._transport.app.dependency_overrides[get_settings] = lambda : settings
+
             actual_response = await ac.post('/fhir',
                                             json={
                                                 "resourceType": "Patient",
@@ -64,9 +69,8 @@ async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypat
         assert actual_json['data_record_location'] == 'PATIENT:0:0'
 
 
-@pytest.mark.skip(reason="pending additional mocking of outbound post call")
 @pytest.mark.asyncio
-async def test_fhir_post_with_transmit(async_test_client2, mock_async_kafka_producer, monkeypatch):
+async def test_fhir_post_with_transmit(async_test_client, mock_async_kafka_producer, monkeypatch, settings):
     """
     Tests /fhir [POST] with an external FHIR server defined.
     :param async_test_client: HTTPX test client fixture
@@ -75,17 +79,32 @@ async def test_fhir_post_with_transmit(async_test_client2, mock_async_kafka_prod
     """
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
-        m.setattr(requests, 'post',
-                  AsyncMock(return_value=starlette.responses.Response('', status_code=201, headers=None)))
+        m.setattr(pyconnect.workflows.core, 'AsyncClient', AsyncMock(auto))
 
-    async with async_test_client2 as ac:
-        actual_response = await ac.post('/fhir',
-                                        json={
-                                            "resourceType": "Patient",
-                                            "id": "001",
-                                            "active": True,
-                                            "gender": "male"
-                                        })
+        async with async_test_client as ac:
+            actual_response = await ac.post('/fhir',
+                                            json={
+                                                "resourceType": "Patient",
+                                                "id": "001",
+                                                "active": True,
+                                                "gender": "male"
+                                            })
 
         assert actual_response.status_code == 201
-        assert actual_response.text == ''
+
+    # with monkeypatch.context() as m:
+    #     m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+    #     m.setattr(requests, 'post',
+    #               AsyncMock(return_value=starlette.responses.Response('', status_code=201, headers=None)))
+    #
+    # async with async_test_client2 as ac:
+    #     actual_response = await ac.post('/fhir',
+    #                                     json={
+    #                                         "resourceType": "Patient",
+    #                                         "id": "001",
+    #                                         "active": True,
+    #                                         "gender": "male"
+    #                                     })
+    #
+    #     assert actual_response.status_code == 201
+    #     assert actual_response.text == ''

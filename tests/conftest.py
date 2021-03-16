@@ -51,6 +51,7 @@ def async_test_client(monkeypatch) -> AsyncClient:
     monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
     monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
     from pyconnect.main import app
+    app.dependency_overrides[get_settings] = lambda: settings
     return AsyncClient(app=app, base_url='http://testserver')
 
 
