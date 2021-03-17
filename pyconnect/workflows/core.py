@@ -14,6 +14,7 @@ from pyconnect.exceptions import KafkaStorageError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
                                         decode_to_str)
+from starlette.responses import Response
 
 
 kafka_result = None
@@ -64,7 +65,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_validate')
-    async def validate(self):
+    def validate(self):
         """
         Override to provide data validation.
         """
@@ -72,7 +73,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_transform')
-    async def transform(self):
+    def transform(self):
         """
         Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
         or FHIR R3 to R4).
@@ -124,7 +125,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_transmit')
-    async def transmit(self, response: dict):
+    async def transmit(self, response: Response):
         """
         Transmit the message to an external service via HTTP,
         if self.transmit_server is defined by the workflow.
@@ -146,7 +147,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
             # Merge Starlette headers into FastAPI headers with overwrite
             for key, value in result.headers.items():
-                if not key in ['Content-Length', 'Content-Language', 'Date']:
+                if key not in ['Content-Length', 'Content-Language', 'Date']:
                     response.headers[key] = value
 
             self.use_response = True
@@ -181,8 +182,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         try:
             logging.info(f'Running {self.__class__.__name__}, message={self.message}')
-            await self.validate()
-            await self.transform()
+            self.validate()
+            self.transform()
             await self.persist()
             await self.transmit(response)
             await self.synchronize()

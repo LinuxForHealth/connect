@@ -58,6 +58,8 @@ async def post_fhir_data(response: Response, settings=Depends(get_settings), req
             Location header example:
                 'https://localhost:9443/fhir-server/api/v4/Patient/17836b8803d-87ab2979-2255-4a7b-acb8/_history/1'
 
+    :param response: The response object which will be returned to the client
+    :param settings: pyConnect configuration settings
     :param request_data: The incoming FHIR message
     :return: A LinuxForHealth message containing the resulting FHIR message or the
     result of transmitting to an external server, if defined

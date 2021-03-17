@@ -16,7 +16,7 @@ class FhirWorkflow(CoreWorkflow):
     Implements a FHIR validation and storage workflow for LinuxForHealth.
     """
     @xworkflows.transition('do_validate')
-    async def validate(self):
+    def validate(self):
         """
         Overridden to validate the incoming FHIR message by instantiating a fhir.resources
         class from the input data dictionary.  Adapted from fhir.resources fhirtypesvalidators.py

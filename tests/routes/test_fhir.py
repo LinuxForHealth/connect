@@ -7,8 +7,9 @@ from pyconnect import clients
 from pyconnect.support.encoding import (encode_from_dict,
                                         decode_to_dict)
 from pyconnect.config import get_settings
-import pyconnect.workflows.core
-from unittest.mock import AsyncMock
+from pyconnect.workflows.fhir import FhirWorkflow
+from starlette.responses import Response
+import asyncio
 
 
 @pytest.mark.asyncio
@@ -26,7 +27,7 @@ async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypat
         async with async_test_client as ac:
             # remove external server setting
             settings.fhir_r4_externalserver = None
-            ac._transport.app.dependency_overrides[get_settings] = lambda : settings
+            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post('/fhir',
                                             json={
@@ -76,12 +77,23 @@ async def test_fhir_post_with_transmit(async_test_client, mock_async_kafka_produ
     :param async_test_client: HTTPX test client fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
+    :param settings: pyConnect configuration settings
     """
+    async def mock_workflow_transmit(self, response: Response):
+        """
+        A mock workflow transmission method used to set a response returned to a client
+        """
+        await asyncio.sleep(.1)
+        response.status_code = 201
+        response.headers['location'] = 'fhir/v4/Patient/5d7dc79a-faf2-453d-9425-a0efe85032ea/_history/1'
+        self.use_response = True
+
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
-        m.setattr(pyconnect.workflows.core, 'AsyncClient', AsyncMock(auto))
+        m.setattr(FhirWorkflow, 'transmit', mock_workflow_transmit)
 
         async with async_test_client as ac:
+            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
             actual_response = await ac.post('/fhir',
                                             json={
                                                 "resourceType": "Patient",
@@ -90,21 +102,6 @@ async def test_fhir_post_with_transmit(async_test_client, mock_async_kafka_produ
                                                 "gender": "male"
                                             })
 
-        assert actual_response.status_code == 201
-
-    # with monkeypatch.context() as m:
-    #     m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
-    #     m.setattr(requests, 'post',
-    #               AsyncMock(return_value=starlette.responses.Response('', status_code=201, headers=None)))
-    #
-    # async with async_test_client2 as ac:
-    #     actual_response = await ac.post('/fhir',
-    #                                     json={
-    #                                         "resourceType": "Patient",
-    #                                         "id": "001",
-    #                                         "active": True,
-    #                                         "gender": "male"
-    #                                     })
-    #
-    #     assert actual_response.status_code == 201
-    #     assert actual_response.text == ''
+            assert actual_response.status_code == 201
+            assert actual_response.text == ''
+            assert 'location' in actual_response.headers
