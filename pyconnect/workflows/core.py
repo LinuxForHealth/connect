@@ -5,7 +5,7 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
-import requests
+from httpx import AsyncClient
 import uuid
 import xworkflows
 from datetime import datetime
@@ -14,6 +14,7 @@ from pyconnect.exceptions import KafkaStorageError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
                                         decode_to_str)
+from starlette.responses import Response
 
 
 kafka_result = None
@@ -64,7 +65,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_validate')
-    async def validate(self):
+    def validate(self):
         """
         Override to provide data validation.
         """
@@ -72,7 +73,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('do_transform')
-    async def transform(self):
+    def transform(self):
         """
         Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
         or FHIR R3 to R4).
@@ -91,8 +92,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
                 data field as stingified json.
         """
         data = self.message
-        logging.debug(f'CoreWorkflow.persist: incoming message = {data}')
-        logging.debug(f'CoreWorkflow.persist: incoming message type = {type(data)}')
+        logging.debug(f'{self.__class__.__name__}: incoming message = {data}')
+        logging.debug(f'{self.__class__.__name__}: incoming message type = {type(data)}')
         data_encoded = encode_from_dict(data.dict())
 
         message = {
@@ -110,7 +111,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         await kafka_producer.produce_with_callback(self.data_format, msg_str,
                                                    on_delivery=get_kafka_result)
         storage_delta = datetime.now() - storage_start
-        logging.debug(f'CoreWorkflow.persist: stored resource location = {kafka_result}')
+        logging.debug(f'{self.__class__.__name__}.persist: stored resource location = {kafka_result}')
 
         total_time = datetime.utcnow() - self.start_time
         message['elapsed_storage_time'] = str(storage_delta.total_seconds())
@@ -119,12 +120,12 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         message['status'] = kafka_status
 
         lfh_message = LinuxForHealthDataRecordResponse(**message)
-        logging.debug(f'CoreWorkflow.persist: outgoing message = {lfh_message}')
+        logging.debug(f'{self.__class__.__name__}: outgoing message = {lfh_message}')
         self.message = lfh_message
 
 
     @xworkflows.transition('do_transmit')
-    async def transmit(self, response: dict):
+    async def transmit(self, response: Response):
         """
         Transmit the message to an external service via HTTP,
         if self.transmit_server is defined by the workflow.
@@ -137,7 +138,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             resource_str = decode_to_str(self.message.data)
             resource = json.loads(resource_str)
 
-            result = requests.post(self.transmit_server, json=resource, verify=self.verify_certs)
+            async with AsyncClient(verify=self.verify_certs) as client:
+                result = await client.post(self.transmit_server, json=resource)
 
             # Set results from Starlette response in FASTAPI response
             response.body = result.text
@@ -145,7 +147,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
             # Merge Starlette headers into FastAPI headers with overwrite
             for key, value in result.headers.items():
-                if not key in ['Content-Length', 'Content-Language', 'Date']:
+                if key not in ['Content-Length', 'Content-Language', 'Date']:
                     response.headers[key] = value
 
             self.use_response = True
@@ -179,12 +181,12 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.start_time = datetime.utcnow()
 
         try:
-            logging.info(f'Running CoreWorkflow, message={self.message}')
+            logging.info(f'Running {self.__class__.__name__}, message={self.message}')
             self.validate()
             self.transform()
             await self.persist()
-            self.transmit(response)
-            self.synchronize()
+            await self.transmit(response)
+            await self.synchronize()
             return self.message
         except Exception as ex:
             self.error(ex)
