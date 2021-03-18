@@ -43,8 +43,8 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     elapsed_total_time: float
 
 
-@router.get('', response_model=LinuxForHealthDataRecordResponse)
-async def get_data_record(dataformat: str, partition: int, offset: int) -> LinuxForHealthDataRecordResponse:
+@router.get('')
+async def get_data_record(dataformat: str, partition: int, offset: int):
     """
     Returns a single data record from the LinuxForHealth data store.
     Raises relevant HTTP exceptions for:
@@ -71,8 +71,7 @@ async def get_data_record(dataformat: str, partition: int, offset: int) -> Linux
         raise HTTPException(status_code=404, detail=str(kmnfe))
 
 
-async def _fetch_data_record_cb(kafka_consumer_msg) -> LinuxForHealthDataRecordResponse:
+async def _fetch_data_record_cb(kafka_consumer_msg):
     decoded_json_dict = json.loads(kafka_consumer_msg)  # Decode message here if necessary in the future
-    data_record = LinuxForHealthDataRecordResponse(**decoded_json_dict)
 
-    return data_record
+    return decoded_json_dict
