@@ -147,8 +147,12 @@ class ConfluentAsyncKafkaConsumer:
             self.consumer.assign([topic_partition])
 
             # polls for exactly one record - waits for a configurable max time (seconds)
-            msg = await loop.run_in_executor(None, self.consumer.poll, 1.0)
+            msg = await loop.run_in_executor(None, self.consumer.poll, 5.0)
 
+            if msg is None:  # Handle timeout during poll
+                msg = 'Consumer error: timeout while polling message from Kafka'
+                logger.error(msg)
+                raise KafkaException(msg)
             if msg.error():
                 logger.error(f'Consumer error: {msg.error()}')
                 raise KafkaException(f'Consumer error: code: {msg.error.code()} - error: {msg.error()}')
@@ -164,13 +168,13 @@ class ConfluentAsyncKafkaConsumer:
             #     message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
 
             if message is not None:
-                logger.info(f'Found message for topic_name - {self.topic_name}, partition - {self.partition} + \
-                            and offset - {self.offset}. Invoking callback_method - {callback_method}')
+                logger.info(f'Found message for topic_name - {self.topic_name}, partition - {self.partition} '
+                            f'and offset - {self.offset}. Invoking callback_method - {callback_method}')
 
                 return await callback_method(message)
             else:
-                _msg_not_found_error = f'No message was found that could be fetched for + \
-                topic_name: {self.topic_name}, partition: {self.partition}, offset: {self.offset}'
+                _msg_not_found_error = 'No message was found that could be fetched for '
+                f'topic_name: {self.topic_name}, partition: {self.partition}, offset: {self.offset}'
 
                 logger.error(_msg_not_found_error)
                 raise KafkaMessageNotFoundError(_msg_not_found_error)
@@ -204,7 +208,7 @@ def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=Non
     :returns: a new instance of the ConfluentAsyncKafkaConsumer
     """
     settings = get_settings()
-    if not all([topic_name, partition]):
+    if topic_name is None or partition is None:
         msg = 'Init Error: No topic_name or partition information provided.'
         logger.error(msg)
         raise ValueError(msg)
