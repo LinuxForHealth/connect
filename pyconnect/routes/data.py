@@ -73,6 +73,5 @@ async def get_data_record(dataformat: str, partition: int, offset: int):
 
 async def _fetch_data_record_cb(kafka_consumer_msg):
     decoded_json_dict = json.loads(kafka_consumer_msg)  # Decode message here if necessary in the future
-    # data_record = LinuxForHealthDataRecordResponse(**decoded_json_dict)
 
     return decoded_json_dict
