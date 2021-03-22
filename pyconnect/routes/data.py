@@ -42,6 +42,24 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     elapsed_transmit_time: Optional[float]
     elapsed_total_time: float
 
+    def __iter__(self):
+        yield 'uuid', str(uuid.UUID(fields=self.uuid.fields))
+        yield 'creation_date', self.creation_date.strftime('%Y-%B-%d %H:%M:%SZ')
+        yield 'store_date', self.store_date.strftime('%Y-%B-%d %H:%M:%SZ')
+        if hasattr(self, 'transmit_date') and (self.transmit_date):
+            yield 'transmit_date', self.transmit_date.strftime('%Y-%B-%d %H:%M:%SZ')
+        yield 'consuming_endpoint_url', self.consuming_endpoint_url
+        yield 'data', self.data
+        yield 'data_format', self.data_format
+        yield 'status', self.status
+        yield 'data_record_location', self.data_record_location
+        if hasattr(self, 'target_endpoint_url'):
+            yield 'target_endpoint_url', str(self.target_endpoint_url)
+        yield 'elapsed_storage_time', str(self.elapsed_storage_time)
+        if hasattr(self, 'elapsed_transmit_time'):
+            yield 'elapsed_transmit_time', str(self.elapsed_transmit_time)
+        yield 'elapsed_total_time', str(self.elapsed_total_time)
+
 
 @router.get('')
 async def get_data_record(dataformat: str, partition: int, offset: int):

@@ -31,13 +31,13 @@ class FhirWorkflow(CoreWorkflow):
         resource_type = message.pop('resourceType', None)
         logging.debug(f'FhirWorkflow.validate: resource type = {resource_type}')
         if resource_type is None:
-            raise MissingFhirResourceType
+            raise MissingFhirResourceType(data=message.dict())
 
         model_class = get_fhir_model_class(resource_type)
         resource = model_class.parse_obj(message)
 
         if not isinstance(resource, model_class):
-            raise FhirValidationTypeError(model_class, type(resource))
+            raise FhirValidationTypeError(model_class, type(resource), message.dict())
 
         logging.debug(f'FhirWorkflow.validate: validated resource = {resource}')
         self.message = resource

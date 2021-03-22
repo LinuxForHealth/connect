@@ -43,10 +43,8 @@ async def test_fhir_post(async_test_client, mock_async_kafka_producer, monkeypat
         assert 'uuid' in actual_json
         assert 'creation_date' in actual_json
         assert 'store_date' in actual_json
-        assert 'transmit_date' in actual_json
         assert 'target_endpoint_url' in actual_json
         assert 'elapsed_storage_time' in actual_json
-        assert 'elapsed_transmit_time' in actual_json
         assert 'elapsed_total_time' in actual_json
 
         expected_data = {
