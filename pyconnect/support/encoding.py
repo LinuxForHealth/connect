@@ -6,6 +6,29 @@ encoding.py
 """
 import base64
 import json
+from json import JSONEncoder
+import datetime
+from typing import Any
+import uuid
+
+
+class PyConnectEncoder(JSONEncoder):
+    """
+    Provides additional encoding support for the following types:
+    - UUID fields
+    - date, datetime, and time fields
+    """
+    def default(self, o: Any) -> Any:
+        """
+        Overridden to customize the encoding process.
+        :param o: The current object to encode
+        """
+        if isinstance(o, (datetime.date, datetime.datetime, datetime.time)):
+            return o.isoformat()
+        elif isinstance(o, uuid.UUID):
+            return str(o)
+        else:
+            return super().default(o)
 
 
 def encode_from_dict(data: dict) -> str:
@@ -14,7 +37,7 @@ def encode_from_dict(data: dict) -> str:
     :param data: The dict for an object to encode
     :return: string representation of base64-encoded object
     """
-    data_str = json.dumps(data)
+    data_str = json.dumps(data, cls=PyConnectEncoder)
     data_bytes = bytes(data_str, 'utf-8')
     data_encoded_bytes = base64.b64encode(data_bytes)
     data_encoded_str = str(data_encoded_bytes, 'utf-8')
