@@ -20,7 +20,8 @@ class PyConnectEncoder(JSONEncoder):
     """
     def default(self, o: Any) -> Any:
         """
-
+        Overridden to customize the encoding process.
+        :param o: The current object to encode
         """
         if isinstance(o, (datetime.date, datetime.datetime, datetime.time)):
             return o.isoformat()
