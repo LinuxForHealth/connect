@@ -13,10 +13,11 @@ from fastapi import Response
 from httpx import AsyncClient
 from pyconnect.clients import get_kafka_producer
 from pyconnect.exceptions import (KafkaStorageError,
-                                  LFHException)
+                                  LFHError)
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
-                                        decode_to_str)
+                                        decode_to_str,
+                                        PyConnectEncoder)
 
 
 class CoreWorkflowDef(xworkflows.Workflow):
@@ -106,30 +107,31 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         message = {
             'uuid': str(uuid.uuid4()),
             'creation_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
+            'store_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
             'consuming_endpoint_url': self.origin_url,
             'data_format': self.data_format,
-            'data': data_encoded,
-            'store_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z'
+            'data': data_encoded
+
         }
-        msg_str = json.dumps(message)
+        response = LinuxForHealthDataRecordResponse(**message).json()
 
         kafka_producer = get_kafka_producer()
         kafka_cb = KafkaCallback()
         storage_start = datetime.now()
-        await kafka_producer.produce_with_callback(self.data_format, msg_str,
+        await kafka_producer.produce_with_callback(self.data_format, response,
                                                    on_delivery=kafka_cb.get_kafka_result)
+
         storage_delta = datetime.now() - storage_start
         logging.debug(f' {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}')
-
         total_time = datetime.utcnow() - self.start_time
         message['elapsed_storage_time'] = str(storage_delta.total_seconds())
         message['elapsed_total_time'] = str(total_time.total_seconds())
         message['data_record_location'] = kafka_cb.kafka_result
         message['status'] = kafka_cb.kafka_status
 
-        lfh_message = dict(LinuxForHealthDataRecordResponse(**message))
-        logging.debug(f'{self.__class__.__name__} persist: outgoing message = {lfh_message}')
-        self.message = lfh_message
+        response = LinuxForHealthDataRecordResponse(**message).dict()
+        logging.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
+        self.message = response
 
 
     @xworkflows.transition('do_transmit')
@@ -187,19 +189,28 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Output:
         self.message: The python dict for the error instance stored in Kafka
         """
-        logging.debug(f'{self.__class__.__name__} error: incoming error = {self.message}')
-        exception = dict(LFHException(str(error), self.message))
-        msg_str = json.dumps(exception)
+        logging.debug(f'{self.__class__.__name__} error: incoming error = {error}')
+        data_str = json.dumps(self.message, cls=PyConnectEncoder)
+        data = json.loads(data_str)
+
+        message = {
+            'uuid': uuid.uuid4(),
+            'error_date': datetime.utcnow().replace(microsecond=0),
+            'error_msg': str(error),
+            'data': data
+        }
+        error = LFHError(**message)
 
         kafka_producer = get_kafka_producer()
         kafka_cb = KafkaCallback()
-        await kafka_producer.produce_with_callback(self.lfh_exception_topic, msg_str,
+        await kafka_producer.produce_with_callback(self.lfh_exception_topic, error.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
-        logging.debug(f'{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}')
 
-        exception['data_record_location'] = kafka_cb.kafka_result
-        logging.debug(f'{self.__class__.__name__} error: outgoing message = {exception}')
-        self.message = exception
+        logging.debug(f'{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}')
+        message['data_record_location'] = kafka_cb.kafka_result
+        error = LFHError(**message).json()
+        logging.debug(f'{self.__class__.__name__} error: outgoing message = {error}')
+        return error
 
 
     async def run(self, response: Response):
