@@ -113,12 +113,12 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'data': data_encoded
 
         }
-        response = LinuxForHealthDataRecordResponse(**message).json()
+        response = LinuxForHealthDataRecordResponse(**message)
 
         kafka_producer = get_kafka_producer()
         kafka_cb = KafkaCallback()
         storage_start = datetime.now()
-        await kafka_producer.produce_with_callback(self.data_format, response,
+        await kafka_producer.produce_with_callback(self.data_format, response.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
 
         storage_delta = datetime.now() - storage_start
@@ -178,16 +178,16 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
 
     @xworkflows.transition('handle_error')
-    async def error(self, error):
+    async def error(self, error) -> str:
         """
-        Store the message in Kafka for persistence after converting it to the LinuxForHealth
-        message format.
+        On error, store the error message and the current message in
+        Kafka for persistence and further error handling.
 
         Input:
-        self.message: The python dict for the error object to be stored in Kafka
+        self.message: The python dict for the current message being processed
 
-        Output:
-        self.message: The python dict for the error instance stored in Kafka
+        :param error: The error message tp be stored in kafka
+        :return: The json string for the error message stored in Kafka
         """
         logging.debug(f'{self.__class__.__name__} error: incoming error = {error}')
         data_str = json.dumps(self.message, cls=PyConnectEncoder)
