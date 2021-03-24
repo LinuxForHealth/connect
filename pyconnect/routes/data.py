@@ -31,16 +31,16 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     uuid: uuid.UUID
     creation_date: datetime.datetime
     store_date: datetime.datetime
-    transmit_date: Optional[datetime.datetime]
     consuming_endpoint_url: str
     data: str
     data_format: str
-    status: str
-    data_record_location: constr(regex=data_record_regex)
+    status: Optional[str]
+    data_record_location: Optional[constr(regex=data_record_regex)]
     target_endpoint_url: Optional[AnyUrl]
-    elapsed_storage_time: float
+    elapsed_storage_time: Optional[float]
+    transmit_date: Optional[datetime.datetime]
     elapsed_transmit_time: Optional[float]
-    elapsed_total_time: float
+    elapsed_total_time: Optional[float]
 
 
 @router.get('')

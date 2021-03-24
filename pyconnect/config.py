@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     uvicorn_port: int = 5000
     uvicorn_reload: bool = False
 
-    # external FHIR server URL
+    # external FHIR server URL or None
     # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     fhir_r4_externalserver: str = None
 
