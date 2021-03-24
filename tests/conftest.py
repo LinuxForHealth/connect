@@ -3,12 +3,14 @@ conftest.py
 Contains global/common pytest fixtures
 """
 from confluent_kafka import Producer
-from pyconnect.config import (Settings,
-                              get_settings)
+
+from pyconnect.clients import ConfluentAsyncKafkaConsumer
+from pyconnect.config import Settings
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from typing import Callable
 import pytest
+from unittest.mock import AsyncMock
 
 
 @pytest.fixture
@@ -26,6 +28,26 @@ def settings() -> Settings:
         'fhir_r4_externalserver': 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     }
     return Settings(**settings_fields)
+
+
+@pytest.fixture
+def lfh_data_record():
+    """ A LFH Data Record Fixture"""
+    return {
+        'uuid': 'dbe0e8dd-7b64-4d7b-aefc-d27e2664b94a',
+        'creation_date': '2021-02-12T18:13:17Z',
+        'store_date': '2021-02-12T18:14:17Z',
+        'transmit_date': '2021-02-12T18:15:17Z',
+        'consuming_endpoint_url': 'https://localhost:8080/endpoint',
+        'data_format': 'EXAMPLE',
+        'data': 'SGVsbG8gV29ybGQhIEl0J3MgbWUu',
+        'status': 'success',
+        'data_record_location': 'EXAMPLE:100:4561',
+        'target_endpoint_url': 'http://externalhost/endpoint',
+        'elapsed_storage_time': 0.080413915000008,
+        'elapsed_transmit_time': 0.080413915000008,
+        'elapsed_total_time': 0.080413915000008
+    }
 
 
 @pytest.fixture
@@ -51,21 +73,6 @@ def async_test_client(monkeypatch) -> AsyncClient:
     monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
     monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
     from pyconnect.main import app
-    return AsyncClient(app=app, base_url='http://testserver')
-
-
-@pytest.fixture
-def async_test_client2(monkeypatch, settings) -> AsyncClient:
-    """
-    Creates an HTTPX AsyncClient for async API testing
-    :param monkeypatch: monkeypatch fixture
-    :param settings: the settings fixture used to override settings injected into an endpoint
-    :return: HTTPX async test client
-    """
-    monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
-    monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
-    from pyconnect.main import app
-    app.dependency_overrides[get_settings] = lambda: settings
     return AsyncClient(app=app, base_url='http://testserver')
 
 
@@ -102,3 +109,13 @@ def mock_async_kafka_producer() -> Callable:
             on_delivery(None, CallbackMessage())
 
     return MockKafkaProducer
+
+
+@pytest.fixture
+def mock_async_kafka_consumer(lfh_data_record):
+    """
+    A mock Kafka Consumer configured to return a LFH Data Record
+    """
+    mock = AsyncMock(spec=ConfluentAsyncKafkaConsumer)
+    mock.get_message_from_kafka_cb = AsyncMock(return_value=lfh_data_record)
+    return mock

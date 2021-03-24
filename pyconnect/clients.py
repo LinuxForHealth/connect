@@ -192,7 +192,10 @@ class ConfluentAsyncKafkaConsumer:
             self.consumer.close()
 
 
-def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=None) -> ConfluentAsyncKafkaConsumer:
+def get_kafka_consumer(topic_name: str,
+                       partition: int,
+                       offset: int = None,
+                       consumer_group_id: str = None) -> ConfluentAsyncKafkaConsumer:
     """
     Main method that allows for instantiation of an async KafkaConsumer client. Accepts optional offset(long)
     value and optional consumer_group_id(string) values. If an offset is not provided, the offset would begin
@@ -200,10 +203,10 @@ def get_kafka_consumer(topic_name, partition, offset=None, consumer_group_id=Non
 
     User is expected to call the get_message_from_kafka_cb() with a callback_method after calling this method.
 
-    :param topic_name(string): The topic name for which we would be looking up a message for.
-    :param partition(int): The partition id on which we want to look for a topic_name
-    :param Optional[offset(long)]: An optional parameter to lookup a single message that exists at a specified offset
-    :param Optional[consumer_group_id(string)]: An optional parameter to specify a consumer_group_id
+    :param topic_name: The topic name for which we would be looking up a message for.
+    :param partition: The partition id on which we want to look for a topic_name
+    :param offset: An optional parameter to lookup a single message that exists at a specified offset
+    :param consumer_group_id: An optional parameter to specify a consumer_group_id
 
     :returns: a new instance of the ConfluentAsyncKafkaConsumer
     """
