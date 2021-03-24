@@ -4,12 +4,6 @@ import os
 import sys
 import logging
 import yaml
-import logging
-import logging.config
-import os
-import sys
-import logging
-import yaml
 from yaml import YAMLError
 from fastapi import (HTTPException,
                      Request)
