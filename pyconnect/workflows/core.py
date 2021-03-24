@@ -50,17 +50,14 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     """
     Implements the base LinuxForHealth workflow.
     """
-    kafka_result = None
-    kafka_status = None
-
-    def __init__(self, message, url, settings):
+    def __init__(self, message, url, verify_certs):
         self.message = message
         self.data_format = None
         self.origin_url = url
         self.start_time = None
         self.use_response = False
-        self.verify_certs = settings.certificate_verify
-        self.lfh_exception_topic = settings.lfh_exception_topic
+        self.verify_certs = verify_certs
+        self.lfh_exception_topic = 'LFH_EXCEPTION'
 
 
     state = CoreWorkflowDef()
@@ -124,8 +121,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         storage_delta = datetime.now() - storage_start
         logging.debug(f' {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}')
         total_time = datetime.utcnow() - self.start_time
-        message['elapsed_storage_time'] = str(storage_delta.total_seconds())
-        message['elapsed_total_time'] = str(total_time.total_seconds())
+        message['elapsed_storage_time'] = storage_delta.total_seconds()
+        message['elapsed_total_time'] = total_time.total_seconds()
         message['data_record_location'] = kafka_cb.kafka_result
         message['status'] = kafka_cb.kafka_status
 
@@ -154,8 +151,17 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             resource_str = decode_to_str(self.message['data'])
             resource = json.loads(resource_str)
 
-            async with AsyncClient(verify=self.verify_certs) as client:
-                result = await client.post(self.transmit_server, json=resource)
+            transmit_start = datetime.now()
+            self.message['transmit_date'] = str(transmit_start.replace(microsecond=0)) + 'Z'
+            try:
+                async with AsyncClient(verify=self.verify_certs) as client:
+                    result = await client.post(self.transmit_server, json=resource)
+            except:
+                transmit_delta = datetime.now() - transmit_start
+                self.message['elapsed_transmit_time'] = transmit_delta.total_seconds()
+                raise
+            transmit_delta = datetime.now() - transmit_start
+            self.message['elapsed_transmit_time'] = transmit_delta.total_seconds()
 
             response.body = result.text
             response.status_code = result.status_code

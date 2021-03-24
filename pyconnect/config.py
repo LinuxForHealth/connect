@@ -64,9 +64,6 @@ class Settings(BaseSettings):
     # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     fhir_r4_externalserver: str = None
 
-    # exception handling
-    lfh_exception_topic: str = 'LFHEXCEPTION'
-
     class Config:
         case_sensitive = False
 
