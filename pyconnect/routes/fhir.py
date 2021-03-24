@@ -10,13 +10,14 @@ from fastapi import (Body,
 from fastapi.routing import APIRouter
 from pyconnect.config import get_settings
 from pyconnect.workflows.fhir import FhirWorkflow
+from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
 
 
 router = APIRouter()
 
 
-@router.post('')
-async def post_fhir_data(response: Response, settings=Depends(get_settings), request_data: dict = Body(...)):
+@router.post('/{resource_type}')
+async def post_fhir_data(resource_type: str, response: Response, settings=Depends(get_settings), request_data: dict = Body(...)):
     """
     Receive and process a single FHIR data record.  Any valid FHIR R4 may be submitted. To transmit the FHIR
     data to an external server, set fhir_r4_externalserver in pyconnect/config.py.
@@ -58,15 +59,23 @@ async def post_fhir_data(response: Response, settings=Depends(get_settings), req
             Location header example:
                 'https://localhost:9443/fhir-server/api/v4/Patient/17836b8803d-87ab2979-2255-4a7b-acb8/_history/1'
 
+    :param resource_type: Path parameter for the FHIR Resource type (Encounter, Patient, Practitioner, etc)
     :param response: The response object which will be returned to the client
     :param settings: pyConnect configuration settings
     :param request_data: The incoming FHIR message
     :return: A LinuxForHealth message containing the resulting FHIR message or the
     result of transmitting to an external server, if defined
+    :raise: HTTPException if the /{resource_type} is invalid or does not align with the request's resource type
     """
+    if resource_type not in FHIR_RESOURCES.keys():
+        raise HTTPException(status_code=404, detail=f'/{resource_type} not found')
+
+    if resource_type != request_data.get('resourceType'):
+        msg = f"request {request_data.get('resource_type')} does not match /{resource_type}"
+        raise HTTPException(status_code=422, detail=msg)
+
     try:
         workflow = FhirWorkflow(request_data, '/fhir', settings.certificate_verify)
-
         # enable the transmit workflow step if defined
         if settings.fhir_r4_externalserver:
             resource_type = request_data['resourceType']

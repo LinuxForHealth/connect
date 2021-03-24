@@ -5,9 +5,9 @@ Customizes the base LinuxForHealth workflow definition for FHIR resources.
 """
 import logging
 import xworkflows
-from fhir.resources.fhirtypesvalidators import get_fhir_model_class
-from pyconnect.exceptions import (MissingFhirResourceType,
-                                  FhirValidationTypeError)
+from fhir.resources import construct_fhir_element
+from pyconnect.exceptions import (FhirValidationError,
+                                  MissingFhirResourceType)
 from pyconnect.workflows.core import CoreWorkflow
 
 
@@ -25,20 +25,16 @@ class FhirWorkflow(CoreWorkflow):
         output: self.message as an instantiated and validated fhir.resources resource class.
         raises: MissingFhirResourceType, FhirValidationTypeError
         """
-        message = self.message
-        logging.debug(f'FhirWorkflow.validate: incoming message = {message}')
-
-        resource_type = message.pop('resourceType', None)
+        resource_type = self.message.get('resourceType')
         logging.debug(f'FhirWorkflow.validate: resource type = {resource_type}')
         if resource_type is None:
-            raise MissingFhirResourceType
+            raise MissingFhirResourceType()
 
-        model_class = get_fhir_model_class(resource_type)
-        resource = model_class.parse_obj(message)
+        try:
+            self.message = construct_fhir_element(resource_type, self.message)
+            self.data_format = resource_type.upper()
+        except LookupError as le:
+            logging.exception(le)
+            raise FhirValidationError(str(le))
 
-        if not isinstance(resource, model_class):
-            raise FhirValidationTypeError(model_class, type(resource))
-
-        logging.debug(f'FhirWorkflow.validate: validated resource = {resource}')
-        self.message = resource
-        self.data_format = resource_type.upper()
+        logging.debug(f'FhirWorkflow.validate: validated resource = {resource_type}')

@@ -28,7 +28,7 @@ class MissingFhirResourceType(Exception):
 
     def __init__(self, msg=None):
         if msg is None:
-            msg = "Input FHIR resource is missing resourceType"
+            msg = 'Input FHIR resource is missing resourceType'
         super(MissingFhirResourceType, self).__init__(msg)
 
 
