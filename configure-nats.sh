@@ -35,7 +35,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --tlsca="${TLSCA}" \
               con add EVENTS SUBSCRIBER \
               --ack none \
-              --target EVENTS.responses \
+              --target EVENTS.* \
               --deliver last \
               --replay instant \
               --filter '' > /dev/null
@@ -57,6 +57,19 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --max-msg-size=-1 \
               --discard old \
               --dupe-window=10s > /dev/null
+
+echo "Creating JetStream consumer for ACTIONS.persist"
+docker exec -it "${NATS_SERVICE_NAME}" \
+              nats --server="${NATS_SERVICE_NAME}":"${NATS_CLIENT_PORT}" \
+              --tlscert="${TLSCERT}" \
+              --tlskey="${TLSKEY}" \
+              --tlsca="${TLSCA}" \
+              con add ACTIONS SUBSCRIBER \
+              --ack none \
+              --target ACTIONS.persist \
+              --deliver last \
+              --replay instant \
+              --filter '' > /dev/null
 
 echo "JetStream EVENTS stream info"
 docker exec -it "${NATS_SERVICE_NAME}" \
