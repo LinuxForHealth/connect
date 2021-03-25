@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     kafka_consumer_default_enable_auto_commit: bool = False
     kafka_consumer_default_enable_auto_offset_store: bool = False
     kafka_consumer_default_poll_timeout_secs: float = 1.0
+    kafka_consumer_default_auto_offset_reset: str = 'error'
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']

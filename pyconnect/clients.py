@@ -12,6 +12,7 @@ from asyncio import (get_event_loop,
 from confluent_kafka import (Producer,
                              Consumer,
                              KafkaException,
+                             KafkaError,
                              TopicPartition)
 from nats.aio.client import Client as NatsClient
 from threading import Thread
@@ -154,8 +155,12 @@ class ConfluentAsyncKafkaConsumer:
                 logger.error(msg)
                 raise KafkaException(msg)
             if msg.error():
-                logger.error(f'Consumer error: {msg.error()}')
-                raise KafkaException(f'Consumer error: code: {msg.error.code()} - error: {msg.error()}')
+                error_msg = f'Consumer - error: {msg.error()}'
+                logger.error(error_msg)
+                if(msg.error().code() is KafkaError.OFFSET_OUT_OF_RANGE):
+                    raise KafkaMessageNotFoundError(error_msg)  # throw a 404 at the controller
+
+                raise KafkaException(error_msg)
 
             headers = msg.headers()
             message = None
@@ -220,7 +225,7 @@ def get_kafka_consumer(topic_name: str,
     consumer_conf = {
         'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
         'group.id': settings.kafka_consumer_default_group_id,
-        'auto.offset.reset': 'smallest',
+        'auto.offset.reset': settings.kafka_consumer_default_auto_offset_reset,
         'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit,
         'enable.auto.offset.store': settings.kafka_consumer_default_enable_auto_offset_store
     }
