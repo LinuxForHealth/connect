@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     # pyConnect
     pyconnect_cert: str
     pyconnect_cert_key: str
+    lfh_id: str = 'LFH-1'
 
     # logging
     logging_config_path: str = 'logging.yaml'

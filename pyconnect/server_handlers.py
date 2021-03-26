@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 import sys
-import logging
 import yaml
 from yaml import YAMLError
 from fastapi import (HTTPException,
@@ -11,6 +10,9 @@ from fastapi.responses import JSONResponse
 from pyconnect.config import get_settings
 from pyconnect.clients import (get_kafka_producer,
                                get_nats_client)
+from pyconnect.support.listeners import (create_kafka_listeners,
+                                         remove_kafka_listeners)
+from pyconnect.support.subscribers import create_nats_subscribers
 
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,8 @@ async def configure_internal_integrations() -> None:
     """
     get_kafka_producer()
     await get_nats_client()
+    await create_nats_subscribers()
+    create_kafka_listeners()
 
 
 def close_internal_clients() -> None:
@@ -107,6 +111,8 @@ def close_internal_clients() -> None:
 
     nats_client = get_nats_client()
     nats_client.close()
+
+    remove_kafka_listeners()
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):
