@@ -8,6 +8,7 @@ from pyconnect.config import get_settings
 from pyconnect.workflows.fhir import FhirWorkflow
 from starlette.responses import Response
 import asyncio
+from unittest.mock import AsyncMock
 
 
 @pytest.fixture
@@ -180,6 +181,7 @@ async def test_fhir_post(async_test_client,
     """
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             # remove external server setting
@@ -233,6 +235,7 @@ async def test_fhir_post_with_transmit(async_test_client,
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
         m.setattr(FhirWorkflow, 'transmit', mock_workflow_transmit)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
@@ -259,6 +262,7 @@ async def test_fhir_post_endpoints(async_test_client,
     """
     with monkeypatch.context() as m:
         m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             # remove external server setting
