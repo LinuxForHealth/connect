@@ -23,9 +23,11 @@ RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 
 USER lfh
 
+CMD ["./local-certs/install-certificates.sh"]
 WORKDIR /home/lfh
 
 COPY --chown=lfh:lfh ./pyconnect ./pyconnect
+COPY --chown=lfh:lfh ./local-certs ./local-certs
 COPY --chown=lfh:lfh ./setup.py setup.py
 COPY --chown=lfh:lfh ./README.md README.md
 COPY --chown=lfh:lfh ./logging.yaml logging.yaml
@@ -35,5 +37,7 @@ USER root
 RUN apk del .dev-packages
 
 USER lfh
+
+EXPOSE 5000
 
 CMD ["python", "/home/lfh/pyconnect/main.py"]
