@@ -19,7 +19,8 @@ from confluent_kafka.admin import (AdminClient,
                                    NewTopic)
 from pyconnect.config import (get_settings,
                               kafka_sync_topic)
-from pyconnect.exceptions import KafkaMessageNotFoundError
+from pyconnect.exceptions import (KafkaMessageNotFoundError,
+                                  KafkaStorageError)
 from pyconnect.support.encoding import decode_to_dict
 from threading import Thread
 from typing import (Callable,
