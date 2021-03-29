@@ -7,7 +7,9 @@ import logging
 from nats.aio.client import Msg
 from pyconnect.clients import (get_nats_client,
                                get_kafka_producer)
-from pyconnect.config import get_settings
+from pyconnect.config import (get_settings,
+                              nats_sync_subject,
+                              kafka_sync_topic)
 from pyconnect.workflows.core import KafkaCallback
 
 
@@ -28,7 +30,7 @@ async def start_sync_event_subscriber():
     and any defined remote LFH instances.
     """
     nats_client = await get_nats_client()
-    sid = await nats_client.subscribe('EVENTS.sync', cb=lfh_sync_event_handler)
+    sid = await nats_client.subscribe(nats_sync_subject, cb=lfh_sync_event_handler)
     return sid
 
 
@@ -51,6 +53,6 @@ async def lfh_sync_event_handler(msg: Msg):
     logger.debug(f'lfh_sync_event_handler: storing remote LFH message in Kafka')
     kafka_producer = get_kafka_producer()
     kafka_cb = KafkaCallback()
-    await kafka_producer.produce_with_callback(lfh_sync_topic, data,
+    await kafka_producer.produce_with_callback(kafka_sync_topic, data,
                                                on_delivery=kafka_cb.get_kafka_result)
     logger.debug(f'lfh_sync_event_handler: stored LFH message in Kafka for replay at {kafka_cb.kafka_result}')

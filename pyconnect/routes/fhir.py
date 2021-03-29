@@ -77,7 +77,7 @@ async def post_fhir_data(resource_type: str, response: Response,
 
     try:
         workflow = FhirWorkflow(message=request_data,
-                                origin_url='/fhir',
+                                origin_url='/fhir/'+resource_type,
                                 certificate_verify=settings.certificate_verify,
                                 lfh_id=settings.lfh_id)
 

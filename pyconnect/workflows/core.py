@@ -12,6 +12,7 @@ from fastapi import Response
 from httpx import AsyncClient
 from pyconnect.clients import (get_kafka_producer,
                                get_nats_client)
+from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import (KafkaStorageError,
                                   LFHError)
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
@@ -184,7 +185,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         nats_client = await get_nats_client()
         # self.message['lfh_id'] = 'LFH-2'
         msg_str = json.dumps(self.message, cls=PyConnectEncoder)
-        await nats_client.publish("EVENTS.sync", bytearray(msg_str, 'utf-8'))
+        await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
 
     @xworkflows.transition('handle_error')
