@@ -1,20 +1,23 @@
 """
-subscribers.py
-Subscriber services support internal and external transactions via NATS JetStream.
+nats.py
+NATS message subscribers and message handlers
 """
 import json
 import logging
-from nats.aio.client import Msg
-from pyconnect.clients import (get_nats_client,
-                               get_kafka_producer)
+import ssl
+from asyncio import get_running_loop
+from nats.aio.client import (Client as NatsClient,
+                             Msg)
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     KafkaCallback)
 from pyconnect.config import (get_settings,
                               nats_sync_subject,
                               kafka_sync_topic)
-from pyconnect.workflows.core import KafkaCallback
+from typing import Optional
 
 
-lfh_sync_topic = 'LFH_SYNC'
 logger = logging.getLogger(__name__)
+nats_client = None
 
 
 async def create_nats_subscribers():
@@ -56,3 +59,27 @@ async def lfh_sync_event_handler(msg: Msg):
     await kafka_producer.produce_with_callback(kafka_sync_topic, data,
                                                on_delivery=kafka_cb.get_kafka_result)
     logger.debug(f'lfh_sync_event_handler: stored LFH message in Kafka for replay at {kafka_cb.kafka_result}')
+
+
+async def get_nats_client() -> Optional[NatsClient]:
+    """
+    :return: a connected NATS client instance
+    """
+    global nats_client
+
+    if not nats_client:
+        settings = get_settings()
+
+        ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+        ssl_ctx.load_verify_locations(settings.nats_rootCA_file)
+        ssl_ctx.load_cert_chain(settings.nats_cert_file, settings.nats_key_file)
+
+        nats_client = NatsClient()
+        await nats_client.connect(
+            servers=settings.nats_servers,
+            loop=get_running_loop(),
+            tls=ssl_ctx,
+            allow_reconnect=settings.nats_allow_reconnect,
+            max_reconnect_attempts=settings.nats_max_reconnect_attempts)
+
+    return nats_client

@@ -10,8 +10,9 @@ import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
-from pyconnect.clients import (get_kafka_producer,
-                               get_nats_client)
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     KafkaCallback)
+from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import (KafkaStorageError,
                                   LFHError)
@@ -244,27 +245,3 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         except Exception as ex:
             msg = await self.error(ex)
             raise Exception(msg)
-
-
-class KafkaCallback():
-    """
-    Store returned data from the Kafka callback
-    """
-    kafka_status = None
-    kafka_result = None
-
-    def get_kafka_result(self, err: object, msg: object):
-        """
-        Kafka producer callback for persist workflow step.
-        :param err: If error, the error returned from Kafka.
-        :param msg: If success, the topic, partition and offset of the stored message.
-        """
-        if err is not None:
-            self.kafka_status = 'error'
-            logging.debug(self.kafka_status)
-            raise KafkaStorageError(f'Failed to deliver message: {str(msg)} {str(err)}')
-        else:
-            self.kafka_status = 'success'
-            self.kafka_result = f'{msg.topic()}:{msg.partition()}:{msg.offset()}'
-            logging.debug(f'Produced record to topic {msg.topic()} ' \
-                          f'partition [{msg.partition()}] @ offset {msg.offset()}')

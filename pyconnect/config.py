@@ -46,7 +46,6 @@ class Settings(BaseSettings):
     kafka_admin_new_topic_partitions: int = 1
     kafka_admin_new_topic_replication_factor: int = 1
 
-
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']
     nats_allow_reconnect: bool = True

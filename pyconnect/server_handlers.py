@@ -8,11 +8,11 @@ from fastapi import (HTTPException,
                      Request)
 from fastapi.responses import JSONResponse
 from pyconnect.config import get_settings
-from pyconnect.clients import (get_kafka_producer,
-                               get_nats_client)
-from pyconnect.support.listeners import (create_kafka_listeners,
-                                         remove_kafka_listeners)
-from pyconnect.support.subscribers import create_nats_subscribers
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     create_kafka_listeners,
+                                     remove_kafka_listeners)
+from pyconnect.clients.nats import (create_nats_subscribers,
+                                    get_nats_client)
 
 
 logger = logging.getLogger(__name__)
