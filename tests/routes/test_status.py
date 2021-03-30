@@ -29,7 +29,7 @@ async def test_status_get(async_test_client, monkeypatch):
             assert actual_json['elapsed_time'] > 0.0
 
             expected = {
-                'application': 'pyconnect.main:app',
+                'application': 'pyconnect.asgi:app',
                 'application_version': actual_json['application_version'],
                 'is_reload_enabled': False,
                 'nats_status': 'AVAILABLE',
