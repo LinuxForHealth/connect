@@ -17,13 +17,16 @@ from datetime import timedelta
 import os
 import certifi
 
-local_certs_path = os.path.join(Path(__file__).parents[1], 'local-certs')
-
 
 class Settings(BaseSettings):
     """
     pyconnect application settings
     """
+
+    # First preference to a defined env var 'LOCAL_CERTS_PATH'
+    local_certs_path: str = os.getenv('LOCAL_CERTS_PATH',
+                                      os.path.join(Path(__file__).parents[1], 'local-certs'))
+
     # general certificate settings
     # path to "standard" CA certificates
     certificate_authority_path: str = certifi.where()
@@ -49,8 +52,8 @@ class Settings(BaseSettings):
     nats_key_file: str = local_certs_path + '/nats-server.key'
 
     # pyConnect
-    pyconnect_cert: str
-    pyconnect_cert_key: str
+    pyconnect_cert: str = local_certs_path + '/lfh.pem'
+    pyconnect_cert_key: str = local_certs_path + '/lfh.key'
 
     # logging
     logging_config_path: str = 'logging.yaml'

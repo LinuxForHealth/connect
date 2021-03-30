@@ -59,10 +59,9 @@ openssl rand -hex 32
 ```shell
 docker-compose up -d
 docker-compose ps
-PYCONNECT_CERT=./local-certs/lfh.pem \
-  PYCONNECT_CERT_KEY=./local-certs/lfh.key \
+LOCAL_CERTS_PATH=./local-certs \
   UVICORN_RELOAD=True \
-  python pyconnect/main.py 
+  python pyconnect/main.py
 ```
 - To add IPFS support use the `ipfs` profile.
 ```
@@ -73,9 +72,14 @@ Browse to `https://localhost:5000/docs` to view the Open API documentation
 
 ### Docker Image
 The pyconnect docker image is an "incubating" feature. The image builds successfully but additional work is required to
-integrate certificates and supporting components such as NATS Jetstream, Kafka, etc. 
+integrate certificates and supporting components such as NATS Jetstream, Kafka, etc.
 
 #### Build the image
 ```shell
 docker build -t linuxforhealth/pyconnect:0.25.0 .
+```
+
+#### Run the image
+```shell
+docker run -v {absolute_path_to_local_certs}:/etc/ssl/certs -e LOCAL_CERTS_PATH=/etc/ssl/certs linuxforhealth/pyconnect:0.25.0
 ```
