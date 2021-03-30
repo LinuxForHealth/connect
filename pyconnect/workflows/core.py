@@ -184,7 +184,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
         nats_client = await get_nats_client()
-        # self.message['lfh_id'] = 'LFH-2'
         msg_str = json.dumps(self.message, cls=PyConnectEncoder)
         await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
