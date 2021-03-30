@@ -1,4 +1,4 @@
-# pyConnect
+## pyConnect
 LinuxForHealth Connectors for Inbound Data Processing
 
 ## Where to Contribute  
@@ -88,3 +88,8 @@ integrate certificates and supporting components such as NATS Jetstream, Kafka, 
 ```shell
 docker build -t linuxforhealth/pyconnect:0.25.0 .
 ```
+
+## Links and Resources 
+| Type      | Link |
+| ----------- | ----------- |
+| 📰 Documentation | [LinuxForHealth Docs Site](https://linuxforhealth.github.io/docs/) |  
