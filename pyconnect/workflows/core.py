@@ -3,7 +3,6 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
-
 import json
 import logging
 import uuid
@@ -11,7 +10,10 @@ import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
-from pyconnect.clients import get_kafka_producer
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     KafkaCallback)
+from pyconnect.clients.nats import get_nats_client
+from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import (KafkaStorageError,
                                   LFHError)
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
@@ -50,14 +52,15 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     """
     Implements the base LinuxForHealth workflow.
     """
-    def __init__(self, message, url, verify_certs):
-        self.message = message
+    def __init__(self, **kwargs):
+        self.message = kwargs['message']
         self.data_format = None
-        self.origin_url = url
+        self.origin_url = kwargs['origin_url']
         self.start_time = None
         self.use_response = False
-        self.verify_certs = verify_certs
+        self.verify_certs = kwargs['certificate_verify']
         self.lfh_exception_topic = 'LFH_EXCEPTION'
+        self.lfh_id = kwargs['lfh_id']
 
 
     state = CoreWorkflowDef()
@@ -103,6 +106,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         message = {
             'uuid': str(uuid.uuid4()),
+            'lfh_id': self.lfh_id,
             'creation_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
             'store_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
             'consuming_endpoint_url': self.origin_url,
@@ -179,8 +183,9 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
-        # TODO: Create default NATS subscriber for EVENTS.* and synchronize data to all subscribers
-        pass
+        nats_client = await get_nats_client()
+        msg_str = json.dumps(self.message, cls=PyConnectEncoder)
+        await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
 
     @xworkflows.transition('handle_error')
@@ -239,27 +244,3 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         except Exception as ex:
             msg = await self.error(ex)
             raise Exception(msg)
-
-
-class KafkaCallback():
-    """
-    Store returned data from the Kafka callback
-    """
-    kafka_status = None
-    kafka_result = None
-
-    def get_kafka_result(self, err: object, msg: object):
-        """
-        Kafka producer callback for persist workflow step.
-        :param err: If error, the error returned from Kafka.
-        :param msg: If success, the topic, partition and offset of the stored message.
-        """
-        if err is not None:
-            self.kafka_status = 'error'
-            logging.debug(self.kafka_status)
-            raise KafkaStorageError(f'Failed to deliver message: {str(msg)} {str(err)}')
-        else:
-            self.kafka_status = 'success'
-            self.kafka_result = f'{msg.topic()}:{msg.partition()}:{msg.offset()}'
-            logging.debug(f'Produced record to topic {msg.topic()} ' \
-                          f'partition [{msg.partition()}] @ offset {msg.offset()}')
