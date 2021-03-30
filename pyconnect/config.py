@@ -16,8 +16,12 @@ from typing import List
 from datetime import timedelta
 import os
 import certifi
+import socket
 
 local_certs_path = os.path.join(Path(__file__).parents[1], 'local-certs')
+host_name = socket.gethostname()
+nats_sync_subject = 'EVENTS.sync'
+kafka_sync_topic = 'LFH_SYNC'
 
 
 class Settings(BaseSettings):
@@ -39,6 +43,8 @@ class Settings(BaseSettings):
     kafka_consumer_default_enable_auto_offset_store: bool = False
     kafka_consumer_default_poll_timeout_secs: float = 1.0
     kafka_consumer_default_auto_offset_reset: str = 'error'
+    kafka_admin_new_topic_partitions: int = 1
+    kafka_admin_new_topic_replication_factor: int = 1
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']
@@ -51,6 +57,7 @@ class Settings(BaseSettings):
     # pyConnect
     pyconnect_cert: str
     pyconnect_cert_key: str
+    lfh_id: str = host_name
 
     # logging
     logging_config_path: str = 'logging.yaml'

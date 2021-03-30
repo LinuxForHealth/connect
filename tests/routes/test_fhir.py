@@ -2,12 +2,13 @@
 test_fhir.py
 Tests the /fhir endpoint
 """
+import asyncio
 import pytest
-from pyconnect import clients
+from pyconnect.clients import kafka
 from pyconnect.config import get_settings
 from pyconnect.workflows.fhir import FhirWorkflow
 from starlette.responses import Response
-import asyncio
+from unittest.mock import AsyncMock
 
 
 @pytest.fixture
@@ -179,7 +180,8 @@ async def test_fhir_post(async_test_client,
     :param settings: pyConnect configuration settings fixture
     """
     with monkeypatch.context() as m:
-        m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(kafka, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             # remove external server setting
@@ -200,7 +202,7 @@ async def test_fhir_post(async_test_client,
         assert 'elapsed_transmit_time' in actual_json
         assert 'elapsed_total_time' in actual_json
 
-        assert actual_json['consuming_endpoint_url'] == '/fhir'
+        assert actual_json['consuming_endpoint_url'] == '/fhir/Encounter'
         assert actual_json['data_format'] == 'ENCOUNTER'
         assert actual_json['status'] == 'success'
         assert actual_json['data_record_location'] == 'ENCOUNTER:0:0'
@@ -231,8 +233,9 @@ async def test_fhir_post_with_transmit(async_test_client,
         self.use_response = True
 
     with monkeypatch.context() as m:
-        m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(kafka, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
         m.setattr(FhirWorkflow, 'transmit', mock_workflow_transmit)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
@@ -258,7 +261,8 @@ async def test_fhir_post_endpoints(async_test_client,
     :param settings: pyConnect configuration settings fixture
     """
     with monkeypatch.context() as m:
-        m.setattr(clients, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(kafka, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
+        m.setattr(FhirWorkflow, 'synchronize', AsyncMock())
 
         async with async_test_client as ac:
             # remove external server setting
