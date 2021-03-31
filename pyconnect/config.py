@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     logging_config_path: str = 'logging.yaml'
 
     # uvicorn settings
-    uvicorn_app: str = 'pyconnect.main:app'
+    uvicorn_app: str = 'pyconnect.asgi:app'
     uvicorn_host: str = '0.0.0.0'
     uvicorn_port: int = 5000
     uvicorn_reload: bool = False

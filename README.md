@@ -1,4 +1,4 @@
-# pyConnect
+## pyConnect
 LinuxForHealth Connectors for Inbound Data Processing
 
 ## Where to Contribute  
@@ -92,3 +92,8 @@ docker build -t linuxforhealth/pyconnect:0.25.0 .
 ```shell
 docker run -v {absolute_path_to_local_certs}:/etc/ssl/certs -e LOCAL_CERTS_PATH=/etc/ssl/certs linuxforhealth/pyconnect:0.25.0
 ```
+
+## Links and Resources 
+| Type      | Link |
+| ----------- | ----------- |
+| 📰 Documentation | [LinuxForHealth Docs Site](https://linuxforhealth.github.io/docs/) |  
