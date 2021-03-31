@@ -17,7 +17,8 @@ router = APIRouter()
 
 
 @router.post('/{resource_type}')
-async def post_fhir_data(resource_type: str, response: Response, settings=Depends(get_settings), request_data: dict = Body(...)):
+async def post_fhir_data(resource_type: str, response: Response,
+                         settings=Depends(get_settings), request_data: dict = Body(...)):
     """
     Receive and process a single FHIR data record.  Any valid FHIR R4 may be submitted. To transmit the FHIR
     data to an external server, set fhir_r4_externalserver in pyconnect/config.py.
@@ -75,7 +76,11 @@ async def post_fhir_data(resource_type: str, response: Response, settings=Depend
         raise HTTPException(status_code=422, detail=msg)
 
     try:
-        workflow = FhirWorkflow(request_data, '/fhir', settings.certificate_verify)
+        workflow = FhirWorkflow(message=request_data,
+                                origin_url='/fhir/'+resource_type,
+                                certificate_verify=settings.certificate_verify,
+                                lfh_id=settings.lfh_id)
+
         # enable the transmit workflow step if defined
         if settings.fhir_r4_externalserver:
             resource_type = request_data['resourceType']

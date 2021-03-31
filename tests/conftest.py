@@ -3,8 +3,7 @@ conftest.py
 Contains global/common pytest fixtures
 """
 from confluent_kafka import Producer
-
-from pyconnect.clients import ConfluentAsyncKafkaConsumer
+from pyconnect.clients.kafka import ConfluentAsyncKafkaConsumer
 from pyconnect.config import Settings
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
