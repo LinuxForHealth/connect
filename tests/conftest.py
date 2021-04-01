@@ -10,6 +10,7 @@ from httpx import AsyncClient
 from typing import Callable
 import pytest
 from unittest.mock import AsyncMock
+from pyconnect.main import get_app
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def settings() -> Settings:
         'kafka_bootstrap_servers': ['localhost:8080'],
         'nats_servers': ['tls://localhost:8080'],
         'uvicorn_reload': False,
-        'uvicorn_app': 'pyconnect.main:app',
+        'uvicorn_app': 'pyconnect.asgi:app',
         'pyconnect_cert_key': './mycert.key',
         'pyconnect_cert': './mycert.pem',
         'fhir_r4_externalserver': 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
@@ -58,8 +59,7 @@ def test_client(monkeypatch) -> TestClient:
     """
     monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
     monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
-    from pyconnect.main import app
-    return TestClient(app)
+    return TestClient(get_app())
 
 
 @pytest.fixture
@@ -71,8 +71,8 @@ def async_test_client(monkeypatch) -> AsyncClient:
     """
     monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
     monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
-    from pyconnect.main import app
-    return AsyncClient(app=app, base_url='http://testserver')
+
+    return AsyncClient(app=get_app(), base_url='http://testserver')
 
 
 @pytest.fixture
