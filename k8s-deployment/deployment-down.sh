@@ -35,14 +35,33 @@ fi
 
 
 ### Delete Kubernetes resources for Nats, Kafka, ZK and IBM FHIR Server
-
-echo ### Deleting NATS with Jetstream Service ###
+echo
+echo "### Tearing down NATS with Jetstream Service ###"
 kubectl delete -f ./nats-js/nats-with-jetstream.yml --namespace=$k8s_ns
-echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-echo ### Deleting Kafka & Zookeeper Service ###
+sleep 5
+echo
+
+echo "### Tearing down Kafka & Zookeeper Service ###"
+kubectl delete -f ./kafka-zk/kafka-zookeeper.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sleep 5
+echo
+
+echo "### Tearing down IBM FHIR Server ###"
+kubectl delete -f ./ibm-fhir/ibm-fhir-server.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sleep 5
+echo
+
+echo "### Tearing down pyconnect Application ###"
+kubectl delete -f ./pyconnect/pyconnect-deployment.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
+echo
 echo "Manually delete K8S namespace or run delete-k8s-ns.sh script"
 echo

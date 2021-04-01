@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ibm-fhir-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ibm-fhir-server
+  template:
+    metadata:
+      labels:
+        app: ibm-fhir-server
+    spec:
+      containers:
+      - name: ibm-fhir-server
+        image: docker.io/ibmcom/ibm-fhir-server:4.4.0
+        ports:
+        - containerPort: 9443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ibm-fhir-server-svc
+spec:
+  selector:
+    app: ibm-fhir-server
+  ports:
+    - protocol: TCP
+      port: 9443
+      targetPort: 9443

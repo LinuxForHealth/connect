@@ -55,7 +55,7 @@ spec:
   selector:
     matchLabels:
       app: nats-js
-  replicas: 3
+  replicas: 1
   serviceName: "nats-js"
   volumeClaimTemplates:
   - metadata:

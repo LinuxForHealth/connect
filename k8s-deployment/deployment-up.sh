@@ -46,5 +46,24 @@ echo ### Deploying NATS with Jetstream Service ###
 kubectl apply -f ./nats-js/nats-with-jetstream.yml --namespace=$k8s_ns
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+sleep 5
+echo
+
 echo ### Deploying Kafka & Zookeeper Service ###
+kubectl apply -f ./kafka-zk/kafka-zookeeper.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sleep 5
+echo
+
+echo ### Deploying IBM FHIR Server ###
+kubectl apply -f ./ibm-fhir/ibm-fhir-server.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sleep 5
+echo
+
+echo ### Deploying pyconnect application ###
+kubectl apply -f ./pyconnect/pyconnect-deployment.yml --namespace=$k8s_ns
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
