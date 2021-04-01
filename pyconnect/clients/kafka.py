@@ -263,7 +263,10 @@ class ConfluentAsyncKafkaListener:
         self._poll_thread.start()
 
     def _poll_loop(self):
-        while self.topics and not self._cancelled:
+        while not self._cancelled:
+            if not self.topics:
+               continue
+
             msg = self._consumer.poll(timeout=1.0)
             if msg is None: continue
 
@@ -284,8 +287,8 @@ class ConfluentAsyncKafkaListener:
 
     def listen(self, topics: List[str], callback: Callable):
         self._consumer.subscribe(topics)
-        self.topics = topics
         self.callback = callback
+        self.topics = topics
 
 
 def create_kafka_listeners():
@@ -311,16 +314,16 @@ def start_sync_event_listener():
         logger.debug(f'start_sync_event_listener: created topic = {kafka_sync_topic}')
 
     kafka_listener = get_kafka_listener()
-    kafka_listener.listen([kafka_sync_topic], lfh_sync_msg_handler)
+    kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
     return kafka_listener
 
 
-def lfh_sync_msg_handler(msg: Message):
+def kafka_sync_msg_handler(msg: Message):
     """
     Process NATS synchronization messages stored in Kafka in kafka_sync_topic
     """
     settings = get_settings()
-    logger.debug(f'lfh_sync_msg_handler: received message = {msg.value()}from topic={msg.topic()}')
+    logger.debug(f'kafka_sync_msg_handler: received message = {msg.value()}from topic={msg.topic()}')
     msg_str = msg.value().decode()
     message = json.loads(msg_str)
 
@@ -328,9 +331,11 @@ def lfh_sync_msg_handler(msg: Message):
     data = decode_to_dict(data_encoded)
     origin_url = message['consuming_endpoint_url']
     destination_url = 'https://localhost:'+str(settings.uvicorn_port)+origin_url
+    # headers = {'replay': 'true'}
+    # httpx.get(url, headers=headers)
 
     result = httpx.post(destination_url, json=data, verify=settings.certificate_verify)
-    logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
+    logger.debug(f'kafka_sync_msg_handler: posted message to {destination_url}  result = {result}')
 
 
 def remove_kafka_listeners():

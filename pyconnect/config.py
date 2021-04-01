@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     kafka_admin_new_topic_replication_factor: int = 1
 
     # nats
-    nats_servers: List[str] = ['tls://localhost:4222']
+    nats_servers: List[str] = ['tls://localhost:4222', 'tls://192.168.1.218:4222']
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_rootCA_file: str = local_certs_path + '/rootCA.pem'

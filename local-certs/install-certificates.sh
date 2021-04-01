@@ -17,13 +17,13 @@ echo ""
 CA_ROOT_LOCATION=$(mkcert -CAROOT)
 cp "$CA_ROOT_LOCATION"/rootCA.pem "$SCRIPT_DIRECTORY"
 
-echo "create NATS development certificate"
+echo "create NATS development certificates"
 echo ""
 mkcert -cert-file "$SCRIPT_DIRECTORY"/nats-server.pem \
        -key-file "$SCRIPT_DIRECTORY"/nats-server.key \
-       nats-server pyconnect_nats-server_1 localhost 127.0.0.1 ::1 \
+       192.168.1.205 nats-server pyconnect_nats-server_1 localhost 127.0.0.1 ::1
 
 echo "create LinuxForHealth development certificate"
 mkcert -cert-file "$SCRIPT_DIRECTORY"/lfh.pem \
        -key-file "$SCRIPT_DIRECTORY"/lfh.key \
-       lfh compose_lfh_1 localhost 127.0.0.1 ::1 \
+       lfh compose_lfh_1 localhost 127.0.0.1 ::1
