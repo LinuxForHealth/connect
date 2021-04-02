@@ -4,14 +4,11 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
-import asyncio
 import json
 import logging
 from asgiref.sync import async_to_sync
 from asyncio import (get_event_loop,
-                     get_running_loop,
-                     new_event_loop,
-                     set_event_loop)
+                     get_running_loop)
 from confluent_kafka import (Producer,
                              Consumer,
                              KafkaException,
