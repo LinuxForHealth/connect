@@ -116,6 +116,8 @@ async def close_internal_clients() -> None:
 
     remove_kafka_listeners()
 
+    remove_kafka_listeners()
+
 
 async def http_exception_handler(request: Request, exc: HTTPException):
     """

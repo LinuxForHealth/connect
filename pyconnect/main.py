@@ -16,9 +16,6 @@ from pyconnect.server_handlers import (close_internal_clients,
                                        http_exception_handler)
 
 
-settings = get_settings()
-
-
 def get_app() -> FastAPI:
     """
     Creates the Fast API application instance
@@ -39,9 +36,9 @@ def get_app() -> FastAPI:
     return app
 
 
-app = get_app()
-
 if __name__ == '__main__':
+    settings = get_settings()
+
     uvicorn_params = {
         'app': settings.uvicorn_app,
         'host': settings.uvicorn_host,

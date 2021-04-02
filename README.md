@@ -1,5 +1,14 @@
-# pyConnect
+## pyConnect
 LinuxForHealth Connectors for Inbound Data Processing
+
+## Where to Contribute  
+| Type      | Link |
+| ----------- | ----------- |
+| 🚨 Bug Reports | [GitHub Issues Tracker](https://github.com/LinuxForHealth/pyconnect/labels/bug) |  
+| 🎁 Feature Requests & Ideas | [GitHub Issues Tracker](https://github.com/LinuxForHealth/pyconnect/issues)  | 
+| ❔ Questions | [LFH Slack Channel](https://ibm-watsonhealth.slack.com/archives/G01639WJEMA) |   
+| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/pyconnect/projects/1) |
+
 
 ## Getting Started
 
@@ -79,3 +88,8 @@ integrate certificates and supporting components such as NATS Jetstream, Kafka, 
 ```shell
 docker build -t linuxforhealth/pyconnect:0.25.0 .
 ```
+
+## Links and Resources 
+| Type      | Link |
+| ----------- | ----------- |
+| 📰 Documentation | [LinuxForHealth Docs Site](https://linuxforhealth.github.io/docs/) |  
