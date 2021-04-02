@@ -76,15 +76,18 @@ async def post_fhir_data(resource_type: str, response: Response,
         raise HTTPException(status_code=422, detail=msg)
 
     try:
+        # enable the transmit workflow step if defined
+        transmit_server = None
+        if settings.fhir_r4_externalserver:
+            resource_type = request_data['resourceType']
+            transmit_server = settings.fhir_r4_externalserver + '/' + resource_type
+
         workflow = FhirWorkflow(message=request_data,
                                 origin_url='/fhir/'+resource_type,
                                 certificate_verify=settings.certificate_verify,
-                                lfh_id=settings.lfh_id)
-
-        # enable the transmit workflow step if defined
-        if settings.fhir_r4_externalserver:
-            resource_type = request_data['resourceType']
-            workflow.transmit_server = settings.fhir_r4_externalserver+'/'+resource_type
+                                lfh_id=settings.lfh_id,
+                                transmit_server=transmit_server,
+                                do_sync=True)
 
         result = await workflow.run(response)
 

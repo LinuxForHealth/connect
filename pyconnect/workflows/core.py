@@ -5,21 +5,22 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
+import pyconnect.clients.kafka as kafka
+import pyconnect.routes.data as record
 import uuid
 import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     KafkaCallback)
 from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
-from pyconnect.exceptions import (KafkaStorageError,
-                                  LFHError)
-from pyconnect.routes.data import LinuxForHealthDataRecordResponse
+from pyconnect.exceptions import LFHError
 from pyconnect.support.encoding import (encode_from_dict,
                                         decode_to_str,
                                         PyConnectEncoder)
+
+
+logger = logging.getLogger(__name__)
 
 
 class CoreWorkflowDef(xworkflows.Workflow):
@@ -54,13 +55,15 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     """
     def __init__(self, **kwargs):
         self.message = kwargs['message']
-        self.data_format = None
+        self.data_format = kwargs['data_format']
         self.origin_url = kwargs['origin_url']
         self.start_time = None
         self.use_response = False
         self.verify_certs = kwargs['certificate_verify']
         self.lfh_exception_topic = 'LFH_EXCEPTION'
         self.lfh_id = kwargs['lfh_id']
+        self.transmit_server = kwargs['transmit_server']
+        self.do_sync = kwargs['do_sync']
 
 
     state = CoreWorkflowDef()
@@ -100,9 +103,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             the original object instance in the data field as a byte string
         """
         data = self.message
-        logging.debug(f'{self.__class__.__name__}: incoming message = {data}')
-        logging.debug(f'{self.__class__.__name__}: incoming message type = {type(data)}')
-        data_encoded = encode_from_dict(data.dict())
+        logger.debug(f'{self.__class__.__name__}: incoming message = {data}')
+        logger.debug(f'{self.__class__.__name__}: incoming message type = {type(data)}')
+        if type(data) is not dict:
+            data = data.dict()
+        data_encoded = encode_from_dict(data)
 
         message = {
             'uuid': str(uuid.uuid4()),
@@ -114,24 +119,24 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'data': data_encoded
 
         }
-        response = LinuxForHealthDataRecordResponse(**message)
+        response = record.LinuxForHealthDataRecordResponse(**message)
 
-        kafka_producer = get_kafka_producer()
-        kafka_cb = KafkaCallback()
+        kafka_producer = kafka.get_kafka_producer()
+        kafka_cb = kafka.KafkaCallback()
         storage_start = datetime.now()
         await kafka_producer.produce_with_callback(self.data_format, response.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
 
         storage_delta = datetime.now() - storage_start
-        logging.debug(f' {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}')
+        logger.debug(f' {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}')
         total_time = datetime.utcnow() - self.start_time
         message['elapsed_storage_time'] = storage_delta.total_seconds()
         message['elapsed_total_time'] = total_time.total_seconds()
         message['data_record_location'] = kafka_cb.kafka_result
         message['status'] = kafka_cb.kafka_status
 
-        response = LinuxForHealthDataRecordResponse(**message).dict()
-        logging.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
+        response = record.LinuxForHealthDataRecordResponse(**message).dict()
+        logger.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
         self.message = response
 
 
@@ -151,7 +156,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Output:
         The updated Response object
         """
-        if hasattr(self, 'transmit_server'):
+        if self.transmit_server and response:
             resource_str = decode_to_str(self.message['data'])
             resource = json.loads(resource_str)
 
@@ -183,9 +188,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
-        nats_client = await get_nats_client()
-        msg_str = json.dumps(self.message, cls=PyConnectEncoder)
-        await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
+        if self.do_sync:
+            nats_client = await get_nats_client()
+            msg_str = json.dumps(self.message, cls=PyConnectEncoder)
+            await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
 
     @xworkflows.transition('handle_error')
@@ -200,7 +206,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         :param error: The error message tp be stored in kafka
         :return: The json string for the error message stored in Kafka
         """
-        logging.debug(f'{self.__class__.__name__} error: incoming error = {error}')
+        logger.debug(f'{self.__class__.__name__} error: incoming error = {error}')
         data_str = json.dumps(self.message, cls=PyConnectEncoder)
         data = json.loads(data_str)
 
@@ -212,19 +218,19 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         }
         error = LFHError(**message)
 
-        kafka_producer = get_kafka_producer()
-        kafka_cb = KafkaCallback()
+        kafka_producer = kafka.get_kafka_producer()
+        kafka_cb = kafka.KafkaCallback()
         await kafka_producer.produce_with_callback(self.lfh_exception_topic, error.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
 
-        logging.debug(f'{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}')
+        logger.debug(f'{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}')
         message['data_record_location'] = kafka_cb.kafka_result
         error = LFHError(**message).json()
-        logging.debug(f'{self.__class__.__name__} error: outgoing message = {error}')
+        logger.debug(f'{self.__class__.__name__} error: outgoing message = {error}')
         return error
 
 
-    async def run(self, response: Response):
+    async def run(self, response: Response = None):
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
         for a particular implementation.
@@ -234,7 +240,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.start_time = datetime.utcnow()
 
         try:
-            logging.info(f'Running {self.__class__.__name__}, message={self.message}')
+            logger.info(f'Running {self.__class__.__name__}, message={self.message}')
             self.validate()
             self.transform()
             await self.persist()

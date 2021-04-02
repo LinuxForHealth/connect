@@ -4,11 +4,14 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
-import httpx
+import asyncio
 import json
 import logging
+from asgiref.sync import async_to_sync
 from asyncio import (get_event_loop,
-                     get_running_loop)
+                     get_running_loop,
+                     new_event_loop,
+                     set_event_loop)
 from confluent_kafka import (Producer,
                              Consumer,
                              KafkaException,
@@ -22,6 +25,7 @@ from pyconnect.config import (get_settings,
 from pyconnect.exceptions import (KafkaMessageNotFoundError,
                                   KafkaStorageError)
 from pyconnect.support.encoding import decode_to_dict
+from pyconnect.workflows.core import CoreWorkflow
 from threading import Thread
 from typing import (Callable,
                     List,
@@ -315,6 +319,7 @@ def start_sync_event_listener():
 
     kafka_listener = get_kafka_listener()
     kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
+    logger.debug(f'start_sync_event_listener: listening for events on topic = {kafka_sync_topic}')
     return kafka_listener
 
 
@@ -323,19 +328,21 @@ def kafka_sync_msg_handler(msg: Message):
     Process NATS synchronization messages stored in Kafka in kafka_sync_topic
     """
     settings = get_settings()
-    logger.debug(f'kafka_sync_msg_handler: received message = {msg.value()}from topic={msg.topic()}')
+    logger.debug(f'kafka_sync_msg_handler: received message={msg.value()} from topic={msg.topic()}')
     msg_str = msg.value().decode()
     message = json.loads(msg_str)
+    data = decode_to_dict(message['data'])
 
-    data_encoded = message['data']
-    data = decode_to_dict(data_encoded)
-    origin_url = message['consuming_endpoint_url']
-    destination_url = 'https://localhost:'+str(settings.uvicorn_port)+origin_url
-    # headers = {'replay': 'true'}
-    # httpx.get(url, headers=headers)
+    workflow = CoreWorkflow(message=data,
+                            origin_url=message['consuming_endpoint_url'],
+                            certificate_verify=settings.certificate_verify,
+                            lfh_id=message['lfh_id'],
+                            data_format=message['data_format'],
+                            transmit_server=None,
+                            do_sync=False)
 
-    result = httpx.post(destination_url, json=data, verify=settings.certificate_verify)
-    logger.debug(f'kafka_sync_msg_handler: posted message to {destination_url}  result = {result}')
+    result = async_to_sync(workflow.run)()
+    logger.debug(f'kafka_sync_msg_handler: handled replay message, result = {result}')
 
 
 def remove_kafka_listeners():
@@ -378,10 +385,9 @@ class KafkaCallback():
         """
         if err is not None:
             self.kafka_status = 'error'
-            logging.debug(self.kafka_status)
             raise KafkaStorageError(f'Failed to deliver message: {str(msg)} {str(err)}')
         else:
             self.kafka_status = 'success'
             self.kafka_result = f'{msg.topic()}:{msg.partition()}:{msg.offset()}'
-            logging.debug(f'Produced record to topic {msg.topic()} ' \
-                          f'partition [{msg.partition()}] @ offset {msg.offset()}')
+            logger.debug(f'Produced record to topic {msg.topic()} ' \
+                         f'partition [{msg.partition()}] @ offset {msg.offset()}')
