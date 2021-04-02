@@ -4,6 +4,7 @@ metadata:
   name: pyconnect-config
 data:
   LOCAL_CERTS_PATH: /etc/ssl/certs
+  KAFKA_BOOTSTRAP_SERVERS: localhost:9092
 ---
 apiVersion: apps/v1
 kind: Deployment
