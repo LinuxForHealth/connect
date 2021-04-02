@@ -92,7 +92,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       - name: lfh-nats
-        image: synadia/nats-server:nightly
+        image: synadia/nats-server:nightly 
         ports:
         - containerPort: 4222
           name: client

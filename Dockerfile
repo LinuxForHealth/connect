@@ -26,11 +26,17 @@ WORKDIR /home/lfh
 
 COPY --chown=lfh:lfh ./pyconnect ./pyconnect
 COPY --chown=lfh:lfh ./setup.py setup.py
+COPY --chown=lfh:lfh ./local-certs /etc/ssl/certs
 COPY --chown=lfh:lfh ./README.md README.md
 COPY --chown=lfh:lfh ./logging.yaml logging.yaml
 RUN pip install --user -e .
 
 USER root
+
+ADD ./local-certa/lfh.pem /usr/local/share/ca-certificates/lfh.pem
+RUN chmod 644 /usr/local/share/ca-certificates/lfh.pem
+RUN update-ca-certificates
+
 RUN apk del .dev-packages
 
 USER lfh
