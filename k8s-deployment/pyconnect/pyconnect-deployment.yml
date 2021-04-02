@@ -4,7 +4,7 @@ metadata:
   name: pyconnect-config
 data:
   LOCAL_CERTS_PATH: /etc/ssl/certs
-  KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+  KAFKA_BOOTSTRAP_SERVERS: localhost:9094
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,23 +27,23 @@ spec:
         volumeMounts:
         - name: lfh-pemstore
           mountPath: /etc/ssl/certs/lfh.pem
-          subPath: /lfh.pem
+          subPath: ./lfh.pem
           readOnly: false
         - name: lfh-keystore
           mountPath: /etc/ssl/certs/lfh.key
-          subPath: /lfh.key
+          subPath: ./lfh.key
           readOnly: false
         - name: ca-nats
           mountPath: /etc/ssl/certs/rootCA.pem
-          subPath: /rootCA.pem
+          subPath: ./rootCA.pem
           readOnly: false
         - name: nats-pemstore
           mountPath: /etc/ssl/certs/nats-server.pem
-          subPath: /nats-server.pem
+          subPath: ./nats-server.pem
           readOnly: false
         - name: nats-keystore
           mountPath: /etc/ssl/certs/nats-server.key
-          subPath: /nats-server.key
+          subPath: ./nats-server.key
           readOnly: false
         envFrom:
         - configMapRef:

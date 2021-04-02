@@ -79,6 +79,9 @@ spec:
           name: nats-js-config
       - name: pid
         emptyDir: {}
+      - name: nats-js-certs
+        hostPath:
+          path: /path/to/nats-server/certs
 
       # Required to be able to HUP signal and apply config reload
       # to the server without restarting the pod.
@@ -130,8 +133,8 @@ spec:
             mountPath: /var/run/nats
           - name: nats-js-sts-vol
             mountPath: /data/jetstream
-          # - name: nats-js-certs
-          #   mountPath: /certs
+          - name: nats-js-certs
+            mountPath: /certs
 
         # Liveness/Readiness probes against the monitoring
         #
