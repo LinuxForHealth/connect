@@ -3,14 +3,17 @@ fhir.py
 
 Receive and store any valid FHIR data record using the /fhir [POST] endpoint.
 """
+from datetime import datetime
 from fastapi import (Body,
                      Depends,
+                     Header,
                      HTTPException,
                      Response)
 from fastapi.routing import APIRouter
 from pyconnect.config import get_settings
 from pyconnect.workflows.fhir import FhirWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
+from typing import Optional
 
 
 router = APIRouter()
@@ -18,7 +21,8 @@ router = APIRouter()
 
 @router.post('/{resource_type}')
 async def post_fhir_data(resource_type: str, response: Response,
-                         settings=Depends(get_settings), request_data: dict = Body(...)):
+                         settings=Depends(get_settings), request_data: dict = Body(...),
+                         replay: Optional[bool] = Header(None)):
     """
     Receive and process a single FHIR data record.  Any valid FHIR R4 may be submitted. To transmit the FHIR
     data to an external server, set fhir_r4_externalserver in pyconnect/config.py.
@@ -75,11 +79,21 @@ async def post_fhir_data(resource_type: str, response: Response,
         msg = f"request {request_data.get('resource_type')} does not match /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
+    transmit_server = None
+    if settings.fhir_r4_externalserver:
+        resource_type = request_data['resourceType']
+        transmit_server = settings.fhir_r4_externalserver + '/' + resource_type
+
+    # don't sync if we're replaying a transaction
+    do_sync = False if replay else True
+
     try:
         workflow = FhirWorkflow(message=request_data,
-                                origin_url='/fhir/'+resource_type,
+                                origin_url='/fhir/' + resource_type,
                                 certificate_verify=settings.certificate_verify,
-                                lfh_id=settings.lfh_id)
+                                lfh_id=settings.lfh_id,
+                                transmit_server=transmit_server,
+                                do_sync=do_sync)
 
         # enable the transmit workflow step if defined
         if settings.fhir_r4_externalserver:
