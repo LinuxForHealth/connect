@@ -2,11 +2,13 @@
 conftest.py
 Contains global/common pytest fixtures
 """
+
 from confluent_kafka import Producer
 from pyconnect.clients.kafka import ConfluentAsyncKafkaConsumer
 from pyconnect.config import Settings
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
+from httpx import (AsyncClient,
+                   Response)
 from typing import Callable
 import pytest
 from unittest.mock import AsyncMock
@@ -118,3 +120,41 @@ def mock_async_kafka_consumer(lfh_data_record):
     mock = AsyncMock(spec=ConfluentAsyncKafkaConsumer)
     mock.get_message_from_kafka_cb = AsyncMock(return_value=lfh_data_record)
     return mock
+
+
+@pytest.fixture
+def mock_httpx_client():
+    """
+    Returns a mock HTTPX Client instance which supports use as a context manager
+    """
+    class MockHttpxClient:
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def _return_mock_response(self):
+            """
+            Returns an AsyncMock "response" object supporting:
+            - status_code
+            - text
+            - headers
+            """
+            mock_response = AsyncMock(spec=Response)
+            mock_response.status_code = 200
+            mock_response.text = 'response-text'
+            mock_response.headers = {}
+            return mock_response
+
+        async def post(self, *args, **kwargs):
+            return self._return_mock_response()
+
+        async def get(self, *args, **kwargs):
+            return self._return_mock_response()
+
+    return MockHttpxClient
