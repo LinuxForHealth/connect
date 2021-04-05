@@ -281,6 +281,8 @@ class ConfluentAsyncKafkaListener:
                 else:
                     self.callback(msg)
             else:
+                # On startup, until the topic to listen on is set,
+                # we need to yield to enable proper startup.
                 time.sleep(self.poll_yield)
                 continue
 
