@@ -16,6 +16,7 @@ from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import LFHError
 from pyconnect.support.encoding import (encode_from_dict,
+                                        encode_from_str,
                                         decode_to_str,
                                         PyConnectEncoder)
 
@@ -55,7 +56,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     """
     def __init__(self, **kwargs):
         self.message = kwargs['message']
-        self.data_format = kwargs['data_format']
+        self.data_format = kwargs.get('data_format', None)
         self.origin_url = kwargs['origin_url']
         self.start_time = None
         self.use_response = False
@@ -105,9 +106,12 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         data = self.message
         logger.debug(f'{self.__class__.__name__}: incoming message = {data}')
         logger.debug(f'{self.__class__.__name__}: incoming message type = {type(data)}')
-        if type(data) is not dict:
-            data = data.dict()
-        data_encoded = encode_from_dict(data)
+        if hasattr(self.message, 'dict'):
+            encoded_data = encode_from_dict(self.message.dict())
+        elif isinstance(self.message, dict):
+            encoded_data = encode_from_dict(self.message)
+        else:
+            encoded_data = encode_from_str(self.message)
 
         message = {
             'uuid': str(uuid.uuid4()),
@@ -116,7 +120,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'store_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
             'consuming_endpoint_url': self.origin_url,
             'data_format': self.data_format,
-            'data': data_encoded
+            'data': encoded_data
 
         }
         response = record.LinuxForHealthDataRecordResponse(**message)

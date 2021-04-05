@@ -4,9 +4,10 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
+import httpx
 import json
 import logging
-from asgiref.sync import async_to_sync
+import time
 from asyncio import (get_event_loop,
                      get_running_loop)
 from confluent_kafka import (Producer,
@@ -22,7 +23,6 @@ from pyconnect.config import (get_settings,
 from pyconnect.exceptions import (KafkaMessageNotFoundError,
                                   KafkaStorageError)
 from pyconnect.support.encoding import decode_to_dict
-from pyconnect.workflows.core import CoreWorkflow
 from threading import Thread
 from typing import (Callable,
                     List,
@@ -255,6 +255,9 @@ class ConfluentAsyncKafkaListener:
     Adapted from https://github.com/confluentinc/confluent-kafka-python
     """
     def __init__(self, configs, loop=None):
+        settings = get_settings()
+        self.poll_timeout = settings.kafka_listener_timeout
+        self.poll_yield = settings.kafka_topics_timeout
         self.topics = None
         self.callback = None
         self._loop = loop or get_event_loop()
@@ -265,24 +268,25 @@ class ConfluentAsyncKafkaListener:
 
     def _poll_loop(self):
         while not self._cancelled:
-            if not self.topics:
-               continue
+            if self.topics:
+                msg = self._consumer.poll(self.poll_timeout)
+                if msg is None: continue
 
-            msg = self._consumer.poll(timeout=1.0)
-            if msg is None: continue
-
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
-                    logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
-                elif msg.error():
-                    raise KafkaException(msg.error())
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # End of partition event
+                        logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
+                    elif msg.error():
+                        raise KafkaException(msg.error())
+                else:
+                    self.callback(msg)
             else:
-                self.callback(msg)
+                time.sleep(self.poll_yield)
+                continue
 
     def close(self):
-        self.topics = None
         self._cancelled = True
+        self.topics = None
         self.callback = None
         self._poll_thread.join()
 
@@ -329,17 +333,11 @@ def kafka_sync_msg_handler(msg: Message):
     msg_str = msg.value().decode()
     message = json.loads(msg_str)
     data = decode_to_dict(message['data'])
+    destination_url = 'https://localhost:' + str(settings.uvicorn_port) + message['consuming_endpoint_url']
 
-    workflow = CoreWorkflow(message=data,
-                            origin_url=message['consuming_endpoint_url'],
-                            certificate_verify=settings.certificate_verify,
-                            lfh_id=message['lfh_id'],
-                            data_format=message['data_format'],
-                            transmit_server=None,
-                            do_sync=False)
-
-    result = async_to_sync(workflow.run)()
-    logger.debug(f'kafka_sync_msg_handler: handled replay message, result = {result}')
+    headers = {'replay': 'True'}
+    result = httpx.post(destination_url, json=data, headers=headers, verify=settings.certificate_verify)
+    logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
 
 
 def remove_kafka_listeners():
