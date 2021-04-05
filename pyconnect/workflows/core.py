@@ -64,8 +64,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.verify_certs = kwargs['certificate_verify']
         self.lfh_exception_topic = 'LFH_EXCEPTION'
         self.lfh_id = kwargs['lfh_id']
-        self.transmit_server = kwargs['transmit_server']
-        self.do_sync = kwargs['do_sync']
+        self.transmit_server = kwargs.get('transmit_server', None)
+        self.do_sync = kwargs.get('do_sync', True)
 
     state = CoreWorkflowDef()
 
