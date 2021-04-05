@@ -369,8 +369,10 @@ class KafkaCallback():
     """
     Store returned data from the Kafka callback
     """
-    kafka_status = None
-    kafka_result = None
+
+    def __init__(self):
+        self.kafka_status = None
+        self.kafka_result = None
 
     def get_kafka_result(self, err: object, msg: object):
         """

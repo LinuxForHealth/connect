@@ -15,6 +15,7 @@ from httpx import AsyncClient
 from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import LFHError
+from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
                                         encode_from_str,
                                         decode_to_str,
@@ -66,9 +67,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.transmit_server = kwargs['transmit_server']
         self.do_sync = kwargs['do_sync']
 
-
     state = CoreWorkflowDef()
-
 
     @xworkflows.transition('do_validate')
     def validate(self):
@@ -77,7 +76,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         pass
 
-
     @xworkflows.transition('do_transform')
     def transform(self):
         """
@@ -85,7 +83,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         or FHIR R3 to R4).
         """
         pass
-
 
     @xworkflows.transition('do_persist')
     async def persist(self):
@@ -103,9 +100,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.message: The python dict for LinuxForHealthDataRecordResponse instance with
             the original object instance in the data field as a byte string
         """
-        data = self.message
-        logger.debug(f'{self.__class__.__name__}: incoming message = {data}')
-        logger.debug(f'{self.__class__.__name__}: incoming message type = {type(data)}')
+
+        logging.debug(f'{self.__class__.__name__}: incoming message = {self.message}')
+        logging.debug(f'{self.__class__.__name__}: incoming message type = {type(self.message)}')
+
         if hasattr(self.message, 'dict'):
             encoded_data = encode_from_dict(self.message.dict())
         elif isinstance(self.message, dict):
@@ -142,7 +140,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         response = record.LinuxForHealthDataRecordResponse(**message).dict()
         logger.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
         self.message = response
-
 
     @xworkflows.transition('do_transmit')
     async def transmit(self, response: Response):
@@ -186,7 +183,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
             self.use_response = True
 
-
     @xworkflows.transition('do_sync')
     async def synchronize(self):
         """
@@ -196,7 +192,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             nats_client = await get_nats_client()
             msg_str = json.dumps(self.message, cls=PyConnectEncoder)
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
-
 
     @xworkflows.transition('handle_error')
     async def error(self, error) -> str:
@@ -233,8 +228,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         logger.debug(f'{self.__class__.__name__} error: outgoing message = {error}')
         return error
 
-
-    async def run(self, response: Response = None):
+    async def run(self, response: Response):
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
         for a particular implementation.
