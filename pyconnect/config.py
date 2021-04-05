@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     kafka_consumer_default_auto_offset_reset: str = 'error'
     kafka_admin_new_topic_partitions: int = 1
     kafka_admin_new_topic_replication_factor: int = 1
+    kafka_listener_timeout: float = 1.0
+    kafka_topics_timeout: float = .5
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']

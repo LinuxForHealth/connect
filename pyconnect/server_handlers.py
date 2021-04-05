@@ -12,7 +12,8 @@ from pyconnect.clients.kafka import (get_kafka_producer,
                                      create_kafka_listeners,
                                      remove_kafka_listeners)
 from pyconnect.clients.nats import (create_nats_subscribers,
-                                    get_nats_client)
+                                    get_nats_client,
+                                    remove_nats_subscribers)
 
 
 logger = logging.getLogger(__name__)
@@ -100,7 +101,7 @@ async def configure_internal_integrations() -> None:
     create_kafka_listeners()
 
 
-def close_internal_clients() -> None:
+async def close_internal_clients() -> None:
     """
     Closes internal pyConnect client connections:
     - Kafka
@@ -109,8 +110,9 @@ def close_internal_clients() -> None:
     kafka_producer = get_kafka_producer()
     kafka_producer.close()
 
-    nats_client = get_nats_client()
-    nats_client.close()
+    await remove_nats_subscribers()
+    nats_client = await get_nats_client()
+    await nats_client.close()
 
     remove_kafka_listeners()
 

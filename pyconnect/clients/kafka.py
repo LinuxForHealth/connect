@@ -7,6 +7,7 @@ Service instances are bound to data attributes and accessed through "get" functi
 import httpx
 import json
 import logging
+import time
 from asyncio import (get_event_loop,
                      get_running_loop)
 from confluent_kafka import (Producer,
@@ -254,6 +255,9 @@ class ConfluentAsyncKafkaListener:
     Adapted from https://github.com/confluentinc/confluent-kafka-python
     """
     def __init__(self, configs, loop=None):
+        settings = get_settings()
+        self.poll_timeout = settings.kafka_listener_timeout
+        self.poll_yield = settings.kafka_topics_timeout
         self.topics = None
         self.callback = None
         self._loop = loop or get_event_loop()
@@ -263,29 +267,33 @@ class ConfluentAsyncKafkaListener:
         self._poll_thread.start()
 
     def _poll_loop(self):
-        while self.topics and not self._cancelled:
-            msg = self._consumer.poll(timeout=1.0)
-            if msg is None: continue
+        while not self._cancelled:
+            if self.topics:
+                msg = self._consumer.poll(self.poll_timeout)
+                if msg is None: continue
 
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
-                    logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
-                elif msg.error():
-                    raise KafkaException(msg.error())
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # End of partition event
+                        logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
+                    elif msg.error():
+                        raise KafkaException(msg.error())
+                else:
+                    self.callback(msg)
             else:
-                self.callback(msg)
+                time.sleep(self.poll_yield)
+                continue
 
     def close(self):
-        self.topics = None
         self._cancelled = True
+        self.topics = None
         self.callback = None
         self._poll_thread.join()
 
     def listen(self, topics: List[str], callback: Callable):
         self._consumer.subscribe(topics)
-        self.topics = topics
         self.callback = callback
+        self.topics = topics
 
 
 def create_kafka_listeners():
@@ -311,25 +319,25 @@ def start_sync_event_listener():
         logger.debug(f'start_sync_event_listener: created topic = {kafka_sync_topic}')
 
     kafka_listener = get_kafka_listener()
-    kafka_listener.listen([kafka_sync_topic], lfh_sync_msg_handler)
+    kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
+    logger.debug(f'start_sync_event_listener: listening for events on topic = {kafka_sync_topic}')
     return kafka_listener
 
 
-def lfh_sync_msg_handler(msg: Message):
+def kafka_sync_msg_handler(msg: Message):
     """
     Process NATS synchronization messages stored in Kafka in kafka_sync_topic
     """
     settings = get_settings()
-    logger.debug(f'lfh_sync_msg_handler: received message = {msg.value()}from topic={msg.topic()}')
+    logger.debug(f'kafka_sync_msg_handler: received message={msg.value()} from topic={msg.topic()}')
     msg_str = msg.value().decode()
     message = json.loads(msg_str)
 
-    data_encoded = message['data']
-    data = decode_to_dict(data_encoded)
-    origin_url = message['consuming_endpoint_url']
-    destination_url = 'https://localhost:'+str(settings.uvicorn_port)+origin_url
+    data = decode_to_dict(message['data'])
+    destination_url = 'https://localhost:' + str(settings.uvicorn_port) + message['consuming_endpoint_url']
 
-    result = httpx.post(destination_url, json=data, verify=settings.certificate_verify)
+    headers = {'replay': 'True'}
+    result = httpx.post(destination_url, json=data, headers=headers, verify=settings.certificate_verify)
     logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
 
 
@@ -380,5 +388,5 @@ class KafkaCallback():
         else:
             self.kafka_status = 'success'
             self.kafka_result = f'{msg.topic()}:{msg.partition()}:{msg.offset()}'
-            logging.debug(f'Produced record to topic {msg.topic()} ' \
-                          f'partition [{msg.partition()}] @ offset {msg.offset()}')
+            logger.debug(f'Produced record to topic {msg.topic()} '\
+                         f'partition [{msg.partition()}] @ offset {msg.offset()}')
