@@ -254,10 +254,9 @@ class ConfluentAsyncKafkaListener:
     Confluent's AsyncIO Wrapper for a Kafka topic listener
     Adapted from https://github.com/confluentinc/confluent-kafka-python
     """
-    def __init__(self, configs, loop=None):
-        settings = get_settings()
-        self.poll_timeout = settings.kafka_listener_timeout
-        self.poll_yield = settings.kafka_topics_timeout
+    def __init__(self, configs, params, loop=None):
+        self.poll_timeout = params['poll_timeout']
+        self.poll_yield = params['poll_yield']
         self.topics = None
         self.callback = None
         self._loop = loop or get_event_loop()
@@ -356,12 +355,17 @@ def get_kafka_listener() -> Optional[ConfluentAsyncKafkaListener]:
     :return: a new connected ConfluentAsyncKafkaListener instance
     """
     settings = get_settings()
-    listener_config = {
+    consumer_conf = {
         'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers),
         'group.id': settings.kafka_consumer_default_group_id,
         'enable.auto.commit': settings.kafka_consumer_default_enable_auto_commit
     }
-    return ConfluentAsyncKafkaListener(configs=listener_config,
+    listener_params = {
+        'poll_timeout':  settings.kafka_listener_timeout,
+        'poll_yield': settings.kafka_topics_timeout
+    }
+    return ConfluentAsyncKafkaListener(configs=consumer_conf,
+                                       params=listener_params,
                                        loop=get_running_loop())
 
 
