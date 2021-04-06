@@ -81,7 +81,7 @@ spec:
         emptyDir: {}
       - name: nats-js-certs
         hostPath:
-          path: /path/to/nats-server/certs
+          path: /path/to/nats-server-certs/
 
       # Required to be able to HUP signal and apply config reload
       # to the server without restarting the pod.
