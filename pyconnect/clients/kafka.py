@@ -342,7 +342,7 @@ def kafka_sync_msg_handler(msg: Message):
     logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
 
 
-def remove_kafka_listeners():
+def stop_kafka_listeners():
     """
     Stop all Kafka listeners
     """

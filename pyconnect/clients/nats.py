@@ -13,7 +13,8 @@ from pyconnect.clients.kafka import (get_kafka_producer,
 from pyconnect.config import (get_settings,
                               nats_sync_subject,
                               kafka_sync_topic)
-from typing import (List,
+from typing import (Callable,
+                    List,
                     Optional)
 
 
@@ -31,15 +32,32 @@ async def create_nats_subscribers():
 
 async def start_sync_event_subscribers():
     """
-    Create a NATS subscriber for 'nats_sync_subject' for each NATS server defined by
-    'nats_sync_subscribers' in config.py.
+    Create a NATS subscriber for 'nats_sync_subject' for the local NATS server/cluster and
+    for each NATS server defined by 'nats_sync_subscribers' in config.py.
     """
     settings = get_settings()
+
+    # subscribe to nats_sync_subject from the local NATS server or cluster
+    nats_client = await get_nats_client()
+    await subscribe(nats_client, nats_sync_subject, nats_sync_event_handler, ''.join(settings.nats_servers))
+
+    # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
         nats_client = await create_nats_client(server)
-        await nats_client.subscribe(nats_sync_subject, cb=nats_sync_event_handler)
-        nats_clients.append(nats_client)
-        logger.debug(f'start_sync_event_subscribers: subscribed {server} to NATS subject {nats_sync_subject}')
+        await subscribe(nats_client, nats_sync_subject, nats_sync_event_handler, server)
+
+
+async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
+    """
+    Subscribe a NATS client to a subject.
+
+    :param client: a connected NATS client
+    :param subject: the NATS subject to subscribe to
+    :param callback: the callback to call when a message is received on the subscription
+    """
+    await client.subscribe(subject, cb=callback)
+    nats_clients.append(client)
+    logger.debug(f'subscribe: subscribed {servers} to NATS subject {subject}')
 
 
 async def nats_sync_event_handler(msg: Msg):
@@ -72,7 +90,7 @@ async def stop_nats_clients():
     unsubscribing from all subscriptions.
     '''
     for client in nats_clients:
-        await client.drain()
+        await client.close()
 
 
 async def get_nats_client() -> Optional[NatsClient]:

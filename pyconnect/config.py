@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     # nats
     nats_servers: List[str] = ['tls://localhost:4222']
-    nats_sync_subscribers: List[str] = ['tls://localhost:4222']
+    nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_rootCA_file: str = local_certs_path + '/rootCA.pem'

@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from pyconnect.config import get_settings
 from pyconnect.clients.kafka import (get_kafka_producer,
                                      create_kafka_listeners,
-                                     remove_kafka_listeners)
+                                     stop_kafka_listeners)
 from pyconnect.clients.nats import (create_nats_subscribers,
                                     get_nats_client,
                                     stop_nats_clients)
@@ -111,7 +111,7 @@ async def close_internal_clients() -> None:
     kafka_producer.close()
 
     await stop_nats_clients()
-    remove_kafka_listeners()
+    stop_kafka_listeners()
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):
