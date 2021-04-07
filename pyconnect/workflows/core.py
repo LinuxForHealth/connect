@@ -5,6 +5,7 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
+import pyconnect.clients.nats as nats
 import uuid
 import xworkflows
 from datetime import datetime
@@ -12,7 +13,6 @@ from fastapi import Response
 from httpx import AsyncClient
 from pyconnect.clients.kafka import (get_kafka_producer,
                                      KafkaCallback)
-from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import LFHError
 from pyconnect.routes.data import LinuxForHealthDataRecordResponse
@@ -189,7 +189,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
         if self.do_sync:
-            nats_client = await get_nats_client()
+            nats_client = await nats.get_nats_client()
             msg_str = json.dumps(self.message, cls=PyConnectEncoder)
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 

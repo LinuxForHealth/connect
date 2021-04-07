@@ -4,8 +4,6 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
-import httpx
-import json
 import logging
 import time
 from asyncio import (get_event_loop,
@@ -14,7 +12,6 @@ from confluent_kafka import (Producer,
                              Consumer,
                              KafkaException,
                              KafkaError,
-                             Message,
                              TopicPartition)
 from confluent_kafka.admin import (AdminClient,
                                    NewTopic)
@@ -22,7 +19,6 @@ from pyconnect.config import (get_settings,
                               kafka_sync_topic)
 from pyconnect.exceptions import (KafkaMessageNotFoundError,
                                   KafkaStorageError)
-from pyconnect.support.encoding import decode_to_dict
 from threading import Thread
 from typing import (Callable,
                     List,
@@ -300,14 +296,18 @@ class ConfluentAsyncKafkaListener:
 def create_kafka_listeners():
     """
     Create an instance of each Kafka listener.  Add additional listeners as needed.
+    Call the method to start each listener, then add the listener to the list for shutdown.
+
+    Example:
+            listener = start_sync_event_listener()
+            kafka_listeners.append(listener)
     """
-    listener = start_sync_event_listener()
-    kafka_listeners.append(listener)
+    create_topics()
 
 
-def start_sync_event_listener():
+def create_topics():
     """
-    Listen on the Kafka kafka_sync_topic for NATS sync messages.  Create the topic if it doesn't exist.
+    Create any required kafka topics if they don't exist.
     """
     settings = get_settings()
     client = AdminClient({'bootstrap.servers': ''.join(settings.kafka_bootstrap_servers)})
@@ -317,29 +317,7 @@ def start_sync_event_listener():
                              num_partitions=settings.kafka_admin_new_topic_partitions,
                              replication_factor=settings.kafka_admin_new_topic_replication_factor)
         client.create_topics([new_topic])
-        logger.debug(f'start_sync_event_listener: created topic = {kafka_sync_topic}')
-
-    kafka_listener = get_kafka_listener()
-    kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
-    logger.debug(f'start_sync_event_listener: listening for events on topic = {kafka_sync_topic}')
-    return kafka_listener
-
-
-def kafka_sync_msg_handler(msg: Message):
-    """
-    Process NATS synchronization messages stored in Kafka in kafka_sync_topic
-    """
-    settings = get_settings()
-    logger.debug(f'kafka_sync_msg_handler: received message={msg.value()} from topic={msg.topic()}')
-    msg_str = msg.value().decode()
-    message = json.loads(msg_str)
-
-    data = decode_to_dict(message['data'])
-    destination_url = 'https://localhost:' + str(settings.uvicorn_port) + message['consuming_endpoint_url']
-
-    headers = {'replay': 'True'}
-    result = httpx.post(destination_url, json=data, headers=headers, verify=settings.certificate_verify)
-    logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
+        logger.debug(f'create_topics: created topic = {kafka_sync_topic}')
 
 
 def stop_kafka_listeners():
