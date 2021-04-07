@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pyconnect-config
+data:
+  LOCAL_CERTS_PATH: /etc/ssl/certs
+  KAFKA_BOOTSTRAP_SERVERS: localhost:9094
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyconnect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyconnect
+  template:
+    metadata:
+      labels:
+        app: pyconnect
+    spec:
+      containers:
+      - name: pyconnect
+        image: docker.io/linuxforhealth/pyconnect:0.25.0
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: lfh-pemstore
+          mountPath: /etc/ssl/certs/lfh.pem
+          subPath: ./lfh.pem
+          readOnly: false
+        - name: lfh-keystore
+          mountPath: /etc/ssl/certs/lfh.key
+          subPath: ./lfh.key
+          readOnly: false
+        - name: ca-nats
+          mountPath: /etc/ssl/certs/rootCA.pem
+          subPath: ./rootCA.pem
+          readOnly: false
+        - name: nats-pemstore
+          mountPath: /etc/ssl/certs/nats-server.pem
+          subPath: ./nats-server.pem
+          readOnly: false
+        - name: nats-keystore
+          mountPath: /etc/ssl/certs/nats-server.key
+          subPath: ./nats-server.key
+          readOnly: false
+        envFrom:
+        - configMapRef:
+            name: pyconnect-config
+      volumes:
+      - name: lfh-pemstore
+        configMap:
+          name: lfh-pemstore 
+      - name: lfh-keystore
+        configMap:
+          name: lfh-keystore
+      - name: ca-nats
+        configMap:
+          name: ca-nats
+      - name: nats-pemstore
+        configMap:
+          name: nats-pemstore
+      - name: nats-keystore
+        configMap:
+          name: nats-keystore
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyconnect-service
+spec:
+  type: NodePort
+  selector:
+    app: pyconnect
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30888

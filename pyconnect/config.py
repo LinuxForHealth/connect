@@ -18,7 +18,6 @@ import os
 import certifi
 import socket
 
-local_certs_path = os.path.join(Path(__file__).parents[1], 'local-certs')
 host_name = socket.gethostname()
 nats_sync_subject = 'EVENTS.sync'
 kafka_sync_topic = 'LFH_SYNC'
@@ -28,6 +27,11 @@ class Settings(BaseSettings):
     """
     pyconnect application settings
     """
+
+    # First preference to a defined env var 'LOCAL_CERTS_PATH'
+    application_cert_path: str = os.getenv('APPLICATION_CERT_PATH',
+                                           os.path.join(Path(__file__).parents[1], 'local-certs'))
+
     # general certificate settings
     # path to "standard" CA certificates
     certificate_authority_path: str = certifi.where()
@@ -53,13 +57,13 @@ class Settings(BaseSettings):
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
-    nats_rootCA_file: str = local_certs_path + '/rootCA.pem'
-    nats_cert_file: str = local_certs_path + '/nats-server.pem'
-    nats_key_file: str = local_certs_path + '/nats-server.key'
+    nats_rootCA_file: str = application_cert_path + '/rootCA.pem'
+    nats_cert_file: str = application_cert_path + '/nats-server.pem'
+    nats_key_file: str = application_cert_path + '/nats-server.key'
 
     # pyConnect
-    pyconnect_cert: str
-    pyconnect_cert_key: str
+    pyconnect_cert: str = application_cert_path + '/lfh.pem'
+    pyconnect_cert_key: str = application_cert_path + '/lfh.key'
     lfh_id: str = host_name
 
     # logging

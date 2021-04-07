@@ -7,6 +7,22 @@ networks:
         - subnet: 172.18.0.0/24
       driver: default
 services:
+  connect:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APPLICATION_BUILD_CERT_PATH: ./local-certs
+    profiles: ["deployment"]
+    networks:
+      - main
+    image: linuxforhealth/pyconnect:local-tag
+    ports:
+      - "5000:5000"
+    environment:
+      APPLICATION_CERT_PATH: /usr/local/share/ca-certificates
+      KAFKA_BOOTSTRAP_SERVERS: '["kafka:9092"]'
+      NATS_SERVERS: '["tls://nats-server:4222"]'
   nats-server:
     networks:
       - main
@@ -120,6 +136,7 @@ services:
       - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ibm-fhir:
+    profiles: ["fhir"]
     image: docker.io/ibmcom/ibm-fhir-server:4.4.0
     networks:
       - main

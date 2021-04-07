@@ -3,6 +3,7 @@
 
 # now include specific items as our inclusions < our exclusions
 !pyconnect
+!local-certs
 !setup.py
 !README.md
 !LICENSE

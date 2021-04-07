@@ -1,4 +1,4 @@
-## pyConnect
+# pyConnect
 LinuxForHealth Connectors for Inbound Data Processing
 
 ## Where to Contribute  
@@ -22,7 +22,7 @@ The LinuxForHealth pyConnect development environment requires the following:
 
 For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
 
-### Getting Started
+### Set Up A Local Environment
 #### Clone the project and navigate to the root directory
 ```shell
 git clone https://github.com/LinuxForHealth/pyconnect
@@ -44,52 +44,51 @@ pip install -e .[dev,test]
 ```
 
 #### Generate trusted local certs for pyConnect and supporting services
-
 ```shell
 ./local-certs/install-certificates.sh
 ```
 For more information on pyConnect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
 
-#### Create Swarm Key for a private IPFS peer network
-```shell
-docker run --rm golang:1.9 sh -c 'go get github.com/Kubuxu/go-ipfs-swarm-key-gen/ipfs-swarm-key-gen && ipfs-swarm-key-gen'
-/key/swarm/psk/1.0.0/
-/base16/
-f744ccf21ef090407977a33e01deb0a0c6a3397ae0366ff6f3c749e200f2510d
-```
-Persist the generated output (example above) to `./private-ipfs-network/.ipfs/swarm.key`
 
-#### Create IPFS Cluster Secret (32-bit hex-encoded string) and update `CLUSTER_SECRET` in `docker-compose.yml`
-```shell
-openssl rand -hex 32
-```
-
-#### Start supporting services and pyconnect
+#### Start pyConnect and supporting services
 ```shell
 docker-compose up -d
 docker-compose ps
-PYCONNECT_CERT=./local-certs/lfh.pem \
-  PYCONNECT_CERT_KEY=./local-certs/lfh.key \
+
+APPLICATION_CERT_PATH=./local-certs \
   UVICORN_RELOAD=True \
-  python pyconnect/main.py 
-```
-- To add IPFS support use the `ipfs` profile.
-```
-docker-compose --profile ipfs up -d
+  python pyconnect/main.py
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
 
 ### Docker Image
-The pyconnect docker image is an "incubating" feature. The image builds successfully but additional work is required to
-integrate certificates and supporting components such as NATS Jetstream, Kafka, etc. 
+The pyConnect docker image is an "incubating" feature and is subject to change. The image is associated with the "deployment" profile to provide separation from core services.
 
 #### Build the image
+The pyconnect image build integrates the application's x509 certificate (PEM encoded) into the image.
+
+The `APPLICATION_CERT_PATH` build argument is used to specify the location of the certificate on the host machine.
+If the `APPLICATION_CERT_PATH` build argument is not provided, a default value of ./local-certs/lfh.pem is used.
+
+#### Build the image with Docker CLI
 ```shell
-docker build -t linuxforhealth/pyconnect:0.25.0 .
+docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-certs/ -t linuxforhealth/pyconnect:0.25.0 .
+```
+
+#### Build the image with Docker-Compose
+The docker-compose command below parses the build context, arguments, and image tag from the docker-compose.yaml file.
+```shell
+docker-compose build connect
+```
+
+#### Run pyConnect and Supporting Services
+```shell
+docker-compose --profile deployment up -d
 ```
 
 ## Links and Resources 
 | Type      | Link |
 | ----------- | ----------- |
 | 📰 Documentation | [LinuxForHealth Docs Site](https://linuxforhealth.github.io/docs/) |  
+| 📰 Documentation | [IPFS](./IPFS.md) |  
