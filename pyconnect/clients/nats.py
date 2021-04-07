@@ -4,12 +4,13 @@ NATS message subscribers and message handlers
 """
 import json
 import logging
-import pyconnect.clients.kafka as kafka
 import pyconnect.workflows.core as core
 import ssl
 from asyncio import get_running_loop
 from nats.aio.client import (Client as NatsClient,
                              Msg)
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     KafkaCallback)
 from pyconnect.config import (get_settings,
                               nats_sync_subject,
                               kafka_sync_topic)
@@ -77,8 +78,8 @@ async def nats_sync_event_handler(msg: Msg):
         return
 
     # store the message in kafka
-    kafka_producer = kafka.get_kafka_producer()
-    kafka_cb = kafka.KafkaCallback()
+    kafka_producer = get_kafka_producer()
+    kafka_cb = KafkaCallback()
     await kafka_producer.produce_with_callback(kafka_sync_topic, data,
                                                on_delivery=kafka_cb.get_kafka_result)
     logger.debug(f'nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}')
