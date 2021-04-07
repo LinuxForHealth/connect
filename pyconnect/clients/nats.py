@@ -4,15 +4,16 @@ NATS message subscribers and message handlers
 """
 import json
 import logging
+import pyconnect.clients.kafka as kafka
+import pyconnect.workflows.core as core
 import ssl
 from asyncio import get_running_loop
 from nats.aio.client import (Client as NatsClient,
                              Msg)
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     KafkaCallback)
 from pyconnect.config import (get_settings,
                               nats_sync_subject,
                               kafka_sync_topic)
+from pyconnect.support.encoding import decode_to_dict
 from typing import (Callable,
                     List,
                     Optional)
@@ -70,18 +71,33 @@ async def nats_sync_event_handler(msg: Msg):
     logger.debug(f'nats_sync_event_handler: received a message on {subject} {reply}: {data}')
 
     # if the message is from our local LFH, don't store in kafka
-    logger.debug(f'nats_sync_event_handler: checking LFH uuid')
-    data_obj = json.loads(data)
-    if (get_settings().lfh_id == data_obj['lfh_id']):
+    logger.debug(f'nats_sync_event_handler: checking LFH id')
+    message = json.loads(data)
+    if (get_settings().lfh_id == message['lfh_id']):
         logger.debug('nats_sync_event_handler: detected local LFH message, not storing in kafka')
         return
 
-    logger.debug(f'nats_sync_event_handler: storing remote LFH message in Kafka')
-    kafka_producer = get_kafka_producer()
-    kafka_cb = KafkaCallback()
+    logger.debug(f'nats_sync_event_handler: storing msg in kafka')
+    kafka_producer = kafka.get_kafka_producer()
+    kafka_cb = kafka.KafkaCallback()
     await kafka_producer.produce_with_callback(kafka_sync_topic, data,
                                                on_delivery=kafka_cb.get_kafka_result)
-    logger.debug(f'nats_sync_event_handler: stored LFH message in Kafka for replay at {kafka_cb.kafka_result}')
+    logger.debug(f'nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}')
+
+    logger.debug('nats_sync_event_handler: executing workflow to replay message')
+    settings = get_settings()
+    msg_data = decode_to_dict(message['data'])
+    workflow = core.CoreWorkflow(message=msg_data,
+                                 origin_url=message['consuming_endpoint_url'],
+                                 certificate_verify=settings.certificate_verify,
+                                 lfh_id=message['lfh_id'],
+                                 data_format=message['data_format'],
+                                 transmit_server=None,
+                                 do_sync=False)
+
+    result = await workflow.run(None)
+    location = result['data_record_location']
+    logger.debug(f'nats_sync_event_handler: replayed nats sync message, data record location = {location}')
 
 
 async def stop_nats_clients():
@@ -95,7 +111,7 @@ async def stop_nats_clients():
 
 async def get_nats_client() -> Optional[NatsClient]:
     """
-    Create or return a NATS client for publishing NATS messages to the local
+    Create or return a NATS client connected to the local
     NATS server or cluster defined by 'nats_servers' in config.py.
 
     :return: a connected NATS client instance

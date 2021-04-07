@@ -5,17 +5,16 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
+import pyconnect.clients.kafka as kafka
+import pyconnect.routes.data as record
+import pyconnect.clients.nats as nats
 import uuid
 import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     KafkaCallback)
-from pyconnect.clients.nats import get_nats_client
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import LFHError
-from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
                                         encode_from_str,
                                         decode_to_str,
@@ -121,10 +120,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'data': encoded_data
 
         }
-        response = LinuxForHealthDataRecordResponse(**message)
+        response = record.LinuxForHealthDataRecordResponse(**message)
 
-        kafka_producer = get_kafka_producer()
-        kafka_cb = KafkaCallback()
+        kafka_producer = kafka.get_kafka_producer()
+        kafka_cb = kafka.KafkaCallback()
         storage_start = datetime.now()
         await kafka_producer.produce_with_callback(self.data_format, response.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
@@ -137,7 +136,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         message['data_record_location'] = kafka_cb.kafka_result
         message['status'] = kafka_cb.kafka_status
 
-        response = LinuxForHealthDataRecordResponse(**message).dict()
+        response = record.LinuxForHealthDataRecordResponse(**message).dict()
         logger.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
         self.message = response
 
@@ -189,7 +188,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
         if self.do_sync:
-            nats_client = await get_nats_client()
+            nats_client = await nats.get_nats_client()
             msg_str = json.dumps(self.message, cls=PyConnectEncoder)
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
@@ -217,8 +216,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         }
         error = LFHError(**message)
 
-        kafka_producer = get_kafka_producer()
-        kafka_cb = KafkaCallback()
+        kafka_producer = kafka.get_kafka_producer()
+        kafka_cb = kafka.KafkaCallback()
         await kafka_producer.produce_with_callback(self.lfh_exception_topic, error.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
 

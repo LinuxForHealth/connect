@@ -4,8 +4,6 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
-import httpx
-import json
 import logging
 import time
 from asyncio import (get_event_loop,
@@ -22,7 +20,6 @@ from pyconnect.config import (get_settings,
                               kafka_sync_topic)
 from pyconnect.exceptions import (KafkaMessageNotFoundError,
                                   KafkaStorageError)
-from pyconnect.support.encoding import decode_to_dict
 from threading import Thread
 from typing import (Callable,
                     List,
@@ -319,27 +316,34 @@ def start_sync_event_listener():
         client.create_topics([new_topic])
         logger.debug(f'start_sync_event_listener: created topic = {kafka_sync_topic}')
 
-    kafka_listener = get_kafka_listener()
-    kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
-    logger.debug(f'start_sync_event_listener: listening for events on topic = {kafka_sync_topic}')
-    return kafka_listener
+    #kafka_listener = get_kafka_listener()
+    #kafka_listener.listen([kafka_sync_topic], kafka_sync_msg_handler)
+    #logger.debug(f'start_sync_event_listener: listening for events on topic = {kafka_sync_topic}')
+    #return kafka_listener
 
 
 def kafka_sync_msg_handler(msg: Message):
     """
     Process NATS synchronization messages stored in Kafka in kafka_sync_topic
     """
+    """
     settings = get_settings()
     logger.debug(f'kafka_sync_msg_handler: received message={msg.value()} from topic={msg.topic()}')
     msg_str = msg.value().decode()
     message = json.loads(msg_str)
-
     data = decode_to_dict(message['data'])
-    destination_url = 'https://localhost:' + str(settings.uvicorn_port) + message['consuming_endpoint_url']
 
-    headers = {'replay': 'True'}
-    result = httpx.post(destination_url, json=data, headers=headers, verify=settings.certificate_verify)
-    logger.debug(f'lfh_sync_msg_handler: posted message to {destination_url}  result = {result}')
+    workflow = CoreWorkflow(message=data,
+                            origin_url=message['consuming_endpoint_url'],
+                            certificate_verify=settings.certificate_verify,
+                            lfh_id=message['lfh_id'],
+                            data_format=message['data_format'],
+                            transmit_server=None,
+                            do_sync=False)
+
+    result = async_to_sync(workflow.run)(None)
+    logger.debug(f'kafka_sync_msg_handler: handled sync message from kafka, result = {result}')
+    """
 
 
 def stop_kafka_listeners():
