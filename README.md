@@ -68,7 +68,7 @@ openssl rand -hex 32
 ```shell
 docker-compose up -d
 docker-compose ps
-LOCAL_CERTS_PATH=./local-certs \
+APPLICATION_CERT_PATH=./local-certs \
   UVICORN_RELOAD=True \
   python pyconnect/main.py
 ```
@@ -85,7 +85,7 @@ integrate certificates and supporting components such as NATS Jetstream, Kafka, 
 
 #### Build the image
 ```shell
-docker build --build-arg APPLICATION_CERT_PATH=/etc/ssl/certs -t linuxforhealth/pyconnect:0.25.0 .
+docker build --build-arg APPLICATION_CERT_PATH=./local-certs -t linuxforhealth/pyconnect:0.25.0 .
 ```
 
 #### Run the image
