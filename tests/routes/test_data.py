@@ -3,8 +3,9 @@ test_data.py
 Tests /data endpoints
 """
 import pytest
-import pyconnect.clients.kafka as kafka
+
 from pyconnect.exceptions import KafkaMessageNotFoundError
+from pyconnect.routes import data
 from unittest.mock import Mock
 
 
@@ -27,7 +28,7 @@ async def test_get_data_ok(mock_async_kafka_consumer, async_test_client, endpoin
     :param monkeypatch: pyTest monkeypatch fixture
     """
     with monkeypatch.context() as m:
-        m.setattr(kafka, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
+        m.setattr(data, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
         async with async_test_client as atc:
             actual_response = await atc.get('/data', params=endpoint_parameters)
             assert actual_response.status_code == 200
@@ -46,7 +47,7 @@ async def test_get_data_bad_request(mock_async_kafka_consumer, async_test_client
     """
     mock_async_kafka_consumer.get_message_from_kafka_cb.side_effect = ValueError('Test bad request')
     with monkeypatch.context() as m:
-        m.setattr(kafka, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
+        m.setattr(data, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
         async with async_test_client as atc:
             actual_response = await atc.get('/data', params=endpoint_parameters)
             assert actual_response.status_code == 400
@@ -65,7 +66,7 @@ async def test_get_data_not_found(mock_async_kafka_consumer, async_test_client, 
     """
     mock_async_kafka_consumer.get_message_from_kafka_cb.side_effect = KafkaMessageNotFoundError('Data record not found')
     with monkeypatch.context() as m:
-        m.setattr(kafka, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
+        m.setattr(data, 'get_kafka_consumer', Mock(return_value=mock_async_kafka_consumer))
         async with async_test_client as atc:
             actual_response = await atc.get('/data', params=endpoint_parameters)
             assert actual_response.status_code == 404

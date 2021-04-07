@@ -3,13 +3,13 @@ data.py
 
 Provides access to LinuxForHealth data records using the /data [GET] endpoint
 """
-import pyconnect.clients.kafka as kafka
 from pydantic import (BaseModel,
                       AnyUrl,
                       constr)
 from fastapi.routing import (APIRouter,
                              HTTPException)
 from typing import Optional
+from pyconnect.clients.kafka import get_kafka_consumer
 from pyconnect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
 
@@ -59,7 +59,7 @@ async def get_data_record(dataformat: str, partition: int, offset: int):
     :return: LinuxForHealthDataRecordResponse
     """
     try:
-        kafka_consumer = kafka.get_kafka_consumer(dataformat, partition, offset)
+        kafka_consumer = get_kafka_consumer(dataformat, partition, offset)
         return await kafka_consumer.get_message_from_kafka_cb(_fetch_data_record_cb)
 
     except KafkaException as ke:

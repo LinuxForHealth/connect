@@ -5,16 +5,17 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
-import pyconnect.clients.kafka as kafka
-import pyconnect.routes.data as record
 import pyconnect.clients.nats as nats
 import uuid
 import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
+from pyconnect.clients.kafka import (get_kafka_producer,
+                                     KafkaCallback)
 from pyconnect.config import nats_sync_subject
 from pyconnect.exceptions import LFHError
+from pyconnect.routes.data import LinuxForHealthDataRecordResponse
 from pyconnect.support.encoding import (encode_from_dict,
                                         encode_from_str,
                                         decode_to_str,
@@ -120,10 +121,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'data': encoded_data
 
         }
-        response = record.LinuxForHealthDataRecordResponse(**message)
+        response = LinuxForHealthDataRecordResponse(**message)
 
-        kafka_producer = kafka.get_kafka_producer()
-        kafka_cb = kafka.KafkaCallback()
+        kafka_producer = get_kafka_producer()
+        kafka_cb = KafkaCallback()
         storage_start = datetime.now()
         await kafka_producer.produce_with_callback(self.data_format, response.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
@@ -136,7 +137,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         message['data_record_location'] = kafka_cb.kafka_result
         message['status'] = kafka_cb.kafka_status
 
-        response = record.LinuxForHealthDataRecordResponse(**message).dict()
+        response = LinuxForHealthDataRecordResponse(**message).dict()
         logger.debug(f'{self.__class__.__name__} persist: outgoing message = {response}')
         self.message = response
 
@@ -216,8 +217,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         }
         error = LFHError(**message)
 
-        kafka_producer = kafka.get_kafka_producer()
-        kafka_cb = kafka.KafkaCallback()
+        kafka_producer = get_kafka_producer()
+        kafka_cb = KafkaCallback()
         await kafka_producer.produce_with_callback(self.lfh_exception_topic, error.json(),
                                                    on_delivery=kafka_cb.get_kafka_result)
 
