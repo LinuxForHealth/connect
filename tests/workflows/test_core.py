@@ -3,6 +3,8 @@ test_core.py
 
 Tests the processes and transitions defined within the Core Workflow implementation.
 """
+import pyconnect.clients.kafka as kafka
+import pyconnect.clients.nats as nats
 import pytest
 from pyconnect.workflows import core
 from pyconnect.workflows.core import CoreWorkflow
@@ -75,10 +77,10 @@ async def test_manual_flow(workflow: CoreWorkflow,
     nats_mock = AsyncMock()
 
     with monkeypatch.context() as m:
-        m.setattr(core, 'get_kafka_producer', Mock(return_value=AsyncMock()))
-        m.setattr(core, 'KafkaCallback', kafka_callback)
+        m.setattr(kafka, 'get_kafka_producer', Mock(return_value=AsyncMock()))
+        m.setattr(kafka, 'KafkaCallback', kafka_callback)
         m.setattr(core, 'AsyncClient', mock_httpx_client)
-        m.setattr(core, 'get_nats_client', AsyncMock(return_value=nats_mock))
+        m.setattr(nats, 'get_nats_client', AsyncMock(return_value=nats_mock))
 
         workflow.validate()
         assert workflow.state.name == 'validate'
@@ -125,8 +127,8 @@ async def test_manual_flow_transmit_disabled(workflow: CoreWorkflow,
     workflow.start_time = datetime.datetime.utcnow()
 
     with monkeypatch.context() as m:
-        m.setattr(core, 'get_kafka_producer', Mock(return_value=AsyncMock()))
-        m.setattr(core, 'KafkaCallback', kafka_callback)
+        m.setattr(kafka, 'get_kafka_producer', Mock(return_value=AsyncMock()))
+        m.setattr(kafka, 'KafkaCallback', kafka_callback)
         m.setattr(core, 'AsyncClient', mock_httpx_client)
 
         workflow.validate()
@@ -161,10 +163,10 @@ async def test_run_flow(workflow: CoreWorkflow,
     workflow.start_time = datetime.datetime.utcnow()
 
     with monkeypatch.context() as m:
-        m.setattr(core, 'get_kafka_producer', Mock(return_value=AsyncMock()))
-        m.setattr(core, 'KafkaCallback', kafka_callback)
+        m.setattr(kafka, 'get_kafka_producer', Mock(return_value=AsyncMock()))
+        m.setattr(kafka, 'KafkaCallback', kafka_callback)
         m.setattr(core, 'AsyncClient', mock_httpx_client)
-        m.setattr(core, 'get_nats_client', AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, 'get_nats_client', AsyncMock(return_value=AsyncMock()))
 
         actual_value = await workflow.run(Mock())
         assert actual_value['consuming_endpoint_url'] == 'http://localhost:5000/data'
@@ -200,10 +202,10 @@ async def test_run_flow_error(workflow: CoreWorkflow,
     workflow.validate = Mock(side_effect=Exception('test exception'))
 
     with monkeypatch.context() as m:
-        m.setattr(core, 'get_kafka_producer', Mock(return_value=AsyncMock()))
-        m.setattr(core, 'KafkaCallback', kafka_callback)
+        m.setattr(kafka, 'get_kafka_producer', Mock(return_value=AsyncMock()))
+        m.setattr(kafka, 'KafkaCallback', kafka_callback)
         m.setattr(core, 'AsyncClient', mock_httpx_client)
-        m.setattr(core, 'get_nats_client', AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, 'get_nats_client', AsyncMock(return_value=AsyncMock()))
 
         with pytest.raises(Exception):
             await workflow.run(Mock())

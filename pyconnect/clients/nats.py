@@ -58,7 +58,7 @@ async def subscribe(client: NatsClient, subject: str, callback: Callable, server
     """
     await client.subscribe(subject, cb=callback)
     nats_clients.append(client)
-    logger.debug(f'subscribe: subscribed {servers} to NATS subject {subject}')
+    logger.debug(f'Subscribed {servers} to NATS subject {subject}')
 
 
 async def nats_sync_event_handler(msg: Msg):
@@ -71,20 +71,19 @@ async def nats_sync_event_handler(msg: Msg):
     logger.debug(f'nats_sync_event_handler: received a message on {subject} {reply}: {data}')
 
     # if the message is from our local LFH, don't store in kafka
-    logger.debug(f'nats_sync_event_handler: checking LFH id')
     message = json.loads(data)
     if (get_settings().lfh_id == message['lfh_id']):
         logger.debug('nats_sync_event_handler: detected local LFH message, not storing in kafka')
         return
 
-    logger.debug(f'nats_sync_event_handler: storing msg in kafka')
+    # store the message in kafka
     kafka_producer = kafka.get_kafka_producer()
     kafka_cb = kafka.KafkaCallback()
     await kafka_producer.produce_with_callback(kafka_sync_topic, data,
                                                on_delivery=kafka_cb.get_kafka_result)
     logger.debug(f'nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}')
 
-    logger.debug('nats_sync_event_handler: executing workflow to replay message')
+    # process the message into the local store
     settings = get_settings()
     msg_data = decode_to_dict(message['data'])
     workflow = core.CoreWorkflow(message=msg_data,
@@ -146,6 +145,6 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
         tls=ssl_ctx,
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts)
-    logger.debug(f'create_nats_client: NATS client created for servers = {servers}')
+    logger.debug(f'Created NATS client for servers = {servers}')
 
     return nats_client
