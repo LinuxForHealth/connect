@@ -85,12 +85,12 @@ integrate certificates and supporting components such as NATS Jetstream, Kafka, 
 
 #### Build the image
 ```shell
-docker build -t linuxforhealth/pyconnect:0.25.0 .
+docker build --build-arg APPLICATION_CERT_PATH=/etc/ssl/certs -t linuxforhealth/pyconnect:0.25.0 .
 ```
 
 #### Run the image
 ```shell
-docker run -v {absolute_path_to_local_certs}:/etc/ssl/certs -e LOCAL_CERTS_PATH=/etc/ssl/certs linuxforhealth/pyconnect:0.25.0
+docker run linuxforhealth/pyconnect:0.25.0
 ```
 
 ## Links and Resources 

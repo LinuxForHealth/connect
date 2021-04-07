@@ -1,6 +1,8 @@
 FROM python:3.9-alpine
 
 ENV LIBRDKAFKA_VERSION v1.6.1
+ARG APPLICATION_CERT_PATH "./local-certs/lfh.pem"
+ENV APPLICATION_CERT_PATH="${APPLICATION_CERT_PATH}"
 
 RUN apk update && \
     apk add --no-cache --virtual .dev-packages build-base curl bash
@@ -26,16 +28,14 @@ WORKDIR /home/lfh
 
 COPY --chown=lfh:lfh ./pyconnect ./pyconnect
 COPY --chown=lfh:lfh ./setup.py setup.py
-COPY --chown=lfh:lfh ./local-certs /etc/ssl/certs
 COPY --chown=lfh:lfh ./README.md README.md
 COPY --chown=lfh:lfh ./logging.yaml logging.yaml
 RUN pip install --user -e .
 
 USER root
 
-ADD ./local-certa/lfh.pem /usr/local/share/ca-certificates/lfh.pem
-RUN chmod 644 /usr/local/share/ca-certificates/lfh.pem
-RUN update-ca-certificates
+COPY $APPLICATION_CERT_PATH /usr/local/share/ca-certificates/lfh.pem
+RUN chmod 644 /usr/local/share/ca-certificates/lfh.pem && update-ca-certificates
 
 RUN apk del .dev-packages
 
