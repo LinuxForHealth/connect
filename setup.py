@@ -34,7 +34,7 @@ setuptools.setup(
         'pyaml==20.4.0',
         'requests==2.25.1',
         'pyaml==20.4.0',
-        'xworkflows==1.0.4',
+        'linuxforhealth-xworkflows==1.0.0',
         'fhir.resources==6.1.0',
         'uvicorn[standard]==0.13.4',
         'httpx==0.17.0',
