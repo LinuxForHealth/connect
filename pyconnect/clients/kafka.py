@@ -263,23 +263,26 @@ class ConfluentAsyncKafkaListener:
 
     def _poll_loop(self):
         while not self._cancelled:
-            if self.topics:
-                msg = self._consumer.poll(self.poll_timeout)
-                if msg is None: continue
-
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        # End of partition event
-                        logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
-                    elif msg.error():
-                        raise KafkaException(msg.error())
-                else:
-                    self.callback(msg)
-            else:
+            if not self.topics:
                 # On startup, until the topic to listen on is set,
                 # we need to yield to enable proper startup.
                 time.sleep(self.poll_yield)
                 continue
+
+            msg = self._consumer.poll(self.poll_timeout)
+            if msg is None:
+                continue
+
+            error_code = msg.error().code() if msg and msg.error() else None
+            if error_code == KafkaError._PARTITION_EOF:
+                # End of partition event
+                logger.debug(f'Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}')
+            elif error_code:
+                # other error
+                raise KafkaException(msg.error())
+            else:
+                # no error - process callback
+                self.callback(msg)
 
     def close(self):
         self._cancelled = True
