@@ -57,7 +57,7 @@ def test_get_host_ports():
 
 
 @pytest.mark.asyncio
-def test_is_service_available(monkeypatch):
+async def test_is_service_available(monkeypatch):
     """
     Validates that is_service_available returns True for valid connections, False when an error occurs.
     The underlying function used to confirm availability, asyncio.open_connection,
@@ -68,11 +68,12 @@ def test_is_service_available(monkeypatch):
         mock = AsyncMock(return_value=(AsyncMock(), AsyncMock()))
         m.setattr(asyncio, 'open_connection', mock)
         service_setting = ['https://localhost:8080', 'tls://otherhost:8080']
-        actual_result = asyncio.run(is_service_available(service_setting))
+        actual_result = await is_service_available(service_setting)
+        # actual_result = asyncio.run(is_service_available(service_setting))
         assert actual_result is True
 
         mock = AsyncMock(side_effect=OSError)
         m.setattr(asyncio, 'open_connection', mock)
         service_setting = ['https://localhost:9090', 'tls://otherhost:8080']
-        actual_result = asyncio.run(is_service_available(service_setting))
+        actual_result = await is_service_available(service_setting)
         assert actual_result is False
