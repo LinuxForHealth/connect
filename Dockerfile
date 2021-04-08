@@ -36,7 +36,7 @@ COPY --chown=lfh:lfh ./pyconnect ./pyconnect
 COPY --chown=lfh:lfh ./setup.py setup.py
 COPY --chown=lfh:lfh ./README.md README.md
 COPY --chown=lfh:lfh ./logging.yaml logging.yaml
-RUN pip install --user -e .
+RUN python -m pip install --user -e .
 
 USER root
 RUN apk del .dev-packages
