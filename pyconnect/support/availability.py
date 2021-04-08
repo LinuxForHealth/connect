@@ -33,7 +33,7 @@ async def ping_host(hostname: str, port: int) -> bool:
         return True
     finally:
         if writer is not None:
-            writer.close()
+            await writer.close()
 
 
 def get_host_ports(service_setting: List[str]) -> List[tuple]:
