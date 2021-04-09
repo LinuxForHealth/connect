@@ -27,7 +27,7 @@ def test_validate(workflow: FhirWorkflow):
     Tests FhirWorkflow.validate where the resource is valid
     """
     workflow.validate()
-    assert workflow.data_format == 'PATIENT'
+    assert workflow.data_format == 'FHIR-R4_PATIENT'
 
 
 def test_validate_missing_resource_type(workflow: FhirWorkflow):
