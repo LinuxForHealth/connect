@@ -4,7 +4,8 @@ test_availability.py
 Tests pyConnect service/host availability functions
 """
 import asyncio
-from unittest.mock import AsyncMock
+from unittest.mock import (AsyncMock,
+                           Mock)
 import pytest
 from pyconnect.support.availability import (get_host_ports,
                                             is_service_available,
@@ -20,7 +21,7 @@ def test_ping_host(monkeypatch):
     :param monkeypatch:
     """
     with monkeypatch.context() as m:
-        mock = AsyncMock(return_value=(AsyncMock(), AsyncMock()))
+        mock = AsyncMock(return_value=(Mock(), Mock()))
         m.setattr(asyncio, 'open_connection', mock)
         actual_result = asyncio.run(ping_host('some-server', 8080))
         assert actual_result is True
@@ -65,11 +66,10 @@ async def test_is_service_available(monkeypatch):
     """
     with monkeypatch.context() as m:
 
-        mock = AsyncMock(return_value=(AsyncMock(), AsyncMock()))
+        mock = AsyncMock(return_value=(Mock(), Mock()))
         m.setattr(asyncio, 'open_connection', mock)
         service_setting = ['https://localhost:8080', 'tls://otherhost:8080']
         actual_result = await is_service_available(service_setting)
-        # actual_result = asyncio.run(is_service_available(service_setting))
         assert actual_result is True
 
         mock = AsyncMock(side_effect=OSError)
