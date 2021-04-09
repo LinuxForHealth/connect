@@ -32,7 +32,7 @@ class FhirWorkflow(CoreWorkflow):
 
         try:
             self.message = construct_fhir_element(resource_type, self.message)
-            self.data_format = resource_type.upper()
+            self.data_format = f'FHIR-R4_{resource_type.upper()}'
         except LookupError as le:
             logging.exception(le)
             raise FhirValidationError(str(le))

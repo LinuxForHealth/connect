@@ -203,9 +203,9 @@ async def test_fhir_post(async_test_client,
         assert 'elapsed_total_time' in actual_json
 
         assert actual_json['consuming_endpoint_url'] == '/fhir/Encounter'
-        assert actual_json['data_format'] == 'ENCOUNTER'
+        assert actual_json['data_format'] == 'FHIR-R4_ENCOUNTER'
         assert actual_json['status'] == 'success'
-        assert actual_json['data_record_location'] == 'ENCOUNTER:0:0'
+        assert actual_json['data_record_location'] == 'FHIR-R4_ENCOUNTER:0:0'
 
 
 @pytest.mark.asyncio
