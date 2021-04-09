@@ -9,9 +9,13 @@ RUN apk update && \
 
 # install certificates and keys
 # certificates are in base64-encoded (PEM) format
-COPY ${APPLICATION_BUILD_CERT_PATH}/*.pem ${APPLICATION_CERT_PATH}
-COPY ${APPLICATION_BUILD_CERT_PATH}/*.key ${APPLICATION_CERT_PATH}
-RUN chmod 644 ${APPLICATION_CERT_PATH}/* && update-ca-certificates
+COPY $APPLICATION_BUILD_CERT_PATH/*.pem $APPLICATION_CERT_PATH
+RUN chmod 644 $APPLICATION_CERT_PATH/*.pem
+
+COPY $APPLICATION_BUILD_CERT_PATH/*.key $APPLICATION_CERT_PATH
+RUN chmod 644 $APPLICATION_CERT_PATH/*.key
+
+RUN update-ca-certificates
 
 # installing librdkafka from source as alpine package repositories may lag behind python confluent kafka requirements
 # librdkafka installation procedure is attributed to https://github.com/confluentinc/confluent-kafka-python
