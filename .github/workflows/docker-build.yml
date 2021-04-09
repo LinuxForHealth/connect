@@ -1,5 +1,5 @@
-# builds a multi-platform pyConnect image
-name: pyConnect Multi-Platform Image Build
+# validates the pyConnect image build process
+name: Validates the pyConnect image build process
 
 on:
   push:
