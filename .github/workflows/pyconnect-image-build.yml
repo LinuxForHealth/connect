@@ -30,7 +30,6 @@ jobs:
         with:
           context: .
           build-args: APPLICATION_BUILD_CERT_PATH=./local-certs
-          platforms: linux/amd64,linux/arm64,linux/s390x
           push: false
           tags: linuxforhealth/connect:latest
           cache-from: type=local,src=/tmp/.buildx-cache
