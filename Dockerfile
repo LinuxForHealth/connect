@@ -2,7 +2,7 @@ FROM python:3.9.4-alpine3.13
 
 ARG APPLICATION_BUILD_CERT_PATH="./local-certs"
 ENV LIBRDKAFKA_VERSION="v1.6.1"
-ENV APPLICATION_CERT_PATH="/usr/local/share/ca-certificates"
+ENV APPLICATION_CERT_PATH="/usr/local/share/ca-certificates/"
 
 RUN apk update && \
     apk add --no-cache --virtual .dev-packages build-base curl bash
