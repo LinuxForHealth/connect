@@ -1,17 +1,21 @@
-FROM python:3.9-alpine
+FROM python:3.9.4-alpine3.13
 
 ARG APPLICATION_BUILD_CERT_PATH="./local-certs"
 ENV LIBRDKAFKA_VERSION="v1.6.1"
-ENV APPLICATION_CERT_PATH="/usr/local/share/ca-certificates"
+ENV APPLICATION_CERT_PATH="/usr/local/share/ca-certificates/"
 
 RUN apk update && \
     apk add --no-cache --virtual .dev-packages build-base curl bash
 
 # install certificates and keys
 # certificates are in base64-encoded (PEM) format
-COPY ${APPLICATION_BUILD_CERT_PATH}/*.pem ${APPLICATION_CERT_PATH}
-COPY ${APPLICATION_BUILD_CERT_PATH}/*.key ${APPLICATION_CERT_PATH}
-RUN chmod 644 ${APPLICATION_CERT_PATH}/* && update-ca-certificates
+COPY $APPLICATION_BUILD_CERT_PATH/*.pem $APPLICATION_CERT_PATH
+RUN chmod 644 $APPLICATION_CERT_PATH/*.pem
+
+COPY $APPLICATION_BUILD_CERT_PATH/*.key $APPLICATION_CERT_PATH
+RUN chmod 644 $APPLICATION_CERT_PATH/*.key
+
+RUN update-ca-certificates
 
 # installing librdkafka from source as alpine package repositories may lag behind python confluent kafka requirements
 # librdkafka installation procedure is attributed to https://github.com/confluentinc/confluent-kafka-python
@@ -36,7 +40,7 @@ COPY --chown=lfh:lfh ./pyconnect ./pyconnect
 COPY --chown=lfh:lfh ./setup.py setup.py
 COPY --chown=lfh:lfh ./README.md README.md
 COPY --chown=lfh:lfh ./logging.yaml logging.yaml
-RUN pip install --user -e .
+RUN python -m pip install --user -e .
 
 USER root
 RUN apk del .dev-packages
