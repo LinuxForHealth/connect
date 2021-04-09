@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.9.4-alpine3.13
 
 ARG APPLICATION_BUILD_CERT_PATH="./local-certs"
 ENV LIBRDKAFKA_VERSION="v1.6.1"
