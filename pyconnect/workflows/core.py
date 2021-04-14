@@ -163,6 +163,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
             transmit_start = datetime.now()
             self.message['transmit_date'] = str(transmit_start.replace(microsecond=0)) + 'Z'
+            self.message['target_endpoint_url'] = self.transmit_server
             try:
                 async with AsyncClient(verify=self.verify_certs) as client:
                     result = await client.post(self.transmit_server, json=resource)
