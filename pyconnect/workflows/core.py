@@ -182,6 +182,9 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
                 if key not in ['Content-Length', 'Content-Language', 'Date']:
                     response.headers[key] = value
 
+            # Set original LFH message uuid in response header
+            response.headers['LinuxForHealth-MessageId'] = str(self.message['uuid'])
+
             self.use_response = True
 
     @xworkflows.transition('do_sync')
