@@ -35,11 +35,9 @@ RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 
 USER lfh
 WORKDIR /home/lfh
-
 COPY --chown=lfh:lfh ./pyconnect ./pyconnect
-COPY --chown=lfh:lfh ./setup.py setup.py
-COPY --chown=lfh:lfh ./README.md README.md
-COPY --chown=lfh:lfh ./logging.yaml logging.yaml
+COPY --chown=lfh:lfh setup.* README.md logging.yaml .
+RUN python -m pip install --upgrade pip setuptools
 RUN python -m pip install --user -e .
 
 USER root
