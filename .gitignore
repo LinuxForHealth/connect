@@ -82,3 +82,6 @@ ipfs-*
 # IDE configurations
 .idea
 *.iml
+
+# OS Specific
+.DS_Store
