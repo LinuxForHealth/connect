@@ -3,6 +3,7 @@ test_core.py
 
 Tests the processes and transitions defined within the Core Workflow implementation.
 """
+from fastapi import Response
 import pyconnect.clients.nats as nats
 import pytest
 from pyconnect.workflows import core
@@ -95,7 +96,7 @@ async def test_manual_flow(workflow: CoreWorkflow,
         assert workflow.message['status'] == 'success'
 
         workflow.transmit_server = 'https://external-server.com/data'
-        await workflow.transmit(Mock())
+        await workflow.transmit(Response())
         assert workflow.state.name == 'transmit'
         assert workflow.message['transmit_date'] is not None
         assert workflow.message['elapsed_transmit_time'] > 0
