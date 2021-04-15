@@ -118,7 +118,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             'store_date': str(datetime.utcnow().replace(microsecond=0)) + 'Z',
             'consuming_endpoint_url': self.origin_url,
             'data_format': self.data_format,
-            'data': encoded_data
+            'data': encoded_data,
+            'target_endpoint_url': self.transmit_server
 
         }
         response = LinuxForHealthDataRecordResponse(**message)
