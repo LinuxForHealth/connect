@@ -7,7 +7,7 @@ Example:
     override uvicorn_port default setting
     export UVICORN_PORT=5050
     or
-    UVICORN_PORT=5050 python pyconnect/main.py
+    UVICORN_PORT=5050 python connect/main.py
 """
 from pydantic import BaseSettings
 from functools import lru_cache
@@ -25,7 +25,7 @@ kafka_sync_topic = 'LFH_SYNC'
 
 class Settings(BaseSettings):
     """
-    pyconnect application settings
+    connect application settings
     """
 
     # First preference to a defined env var 'LOCAL_CERTS_PATH'
@@ -61,16 +61,16 @@ class Settings(BaseSettings):
     nats_cert_file: str = application_cert_path + '/nats-server.pem'
     nats_key_file: str = application_cert_path + '/nats-server.key'
 
-    # pyConnect
-    pyconnect_cert: str = application_cert_path + '/lfh.pem'
-    pyconnect_cert_key: str = application_cert_path + '/lfh.key'
+    # Connect
+    connect_cert: str = application_cert_path + '/lfh.pem'
+    connect_cert_key: str = application_cert_path + '/lfh.key'
     lfh_id: str = host_name
 
     # logging
     logging_config_path: str = 'logging.yaml'
 
     # uvicorn settings
-    uvicorn_app: str = 'pyconnect.asgi:app'
+    uvicorn_app: str = 'connect.asgi:app'
     uvicorn_host: str = '0.0.0.0'
     uvicorn_port: int = 5000
     uvicorn_reload: bool = False

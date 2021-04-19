@@ -3,7 +3,7 @@
 # installs LinuxForHealth locally trusted Root CA and development certificates.
 # certificates generated include:
 # - Root CA
-# - pyConnect development certificate
+# - Connect development certificate
 # - NATS development certificate
 
 SCRIPT_DIRECTORY=$(dirname "$0")
@@ -21,7 +21,7 @@ echo "create NATS development certificate"
 echo ""
 mkcert -cert-file "$SCRIPT_DIRECTORY"/nats-server.pem \
        -key-file "$SCRIPT_DIRECTORY"/nats-server.key \
-       nats-server pyconnect_nats-server_1 localhost 127.0.0.1 ::1 \
+       nats-server connect_nats-server_1 localhost 127.0.0.1 ::1 \
 
 echo "create LinuxForHealth development certificate"
 mkcert -cert-file "$SCRIPT_DIRECTORY"/lfh.pem \

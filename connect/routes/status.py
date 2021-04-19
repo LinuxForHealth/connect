@@ -7,9 +7,9 @@ from fastapi import Depends
 from fastapi.routing import APIRouter
 from pydantic.main import BaseModel
 from pydantic import constr
-from pyconnect import __version__
-from pyconnect.config import get_settings
-from pyconnect.support.availability import is_service_available
+from connect import __version__
+from connect.config import get_settings
+from connect.support.availability import is_service_available
 from typing import List
 import time
 
@@ -33,7 +33,7 @@ class StatusResponse(BaseModel):
     class Config:
         schema_extra = {
             'example': {
-                'application': 'pyconnect.main:app',
+                'application': 'connect.main:app',
                 'application_version': '0.25.0',
                 'is_reload_enabled': False,
                 'nats_status': 'AVAILABLE',

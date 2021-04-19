@@ -1,7 +1,7 @@
 # IPFS
 
 ## Overview
-pyConnect IPFS Support is an incubating feature. IPFS is not integrated but is available for research purposes.
+Connect IPFS Support is an incubating feature. IPFS is not integrated but is available for research purposes.
 
 ### Create Swarm Key for a private IPFS peer network
 ```shell

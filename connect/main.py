@@ -7,13 +7,13 @@ from fastapi import (FastAPI,
                      HTTPException)
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import uvicorn
-from pyconnect.config import get_settings
-from pyconnect.routes.api import router
-from pyconnect import __version__
-from pyconnect.server_handlers import (close_internal_clients,
-                                       configure_internal_integrations,
-                                       configure_logging,
-                                       http_exception_handler)
+from connect.config import get_settings
+from connect.routes.api import router
+from connect import __version__
+from connect.server_handlers import (close_internal_clients,
+                                     configure_internal_integrations,
+                                     configure_logging,
+                                     http_exception_handler)
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -26,7 +26,7 @@ def get_app() -> FastAPI:
     :return: The application instance
     """
     app = FastAPI(
-        title='LinuxForHealth pyConnect',
+        title='LinuxForHealth Connect',
         description='LinuxForHealth Connectors for Inbound Data Processing',
         version=__version__,
     )
@@ -55,8 +55,8 @@ if __name__ == '__main__':
         'log_config': None,
         'port': settings.uvicorn_port,
         'reload': settings.uvicorn_reload,
-        'ssl_keyfile': settings.pyconnect_cert_key,
-        'ssl_certfile': settings.pyconnect_cert
+        'ssl_keyfile': settings.connect_cert_key,
+        'ssl_certfile': settings.connect_cert
     }
 
     uvicorn.run(**uvicorn_params)

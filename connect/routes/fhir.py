@@ -8,8 +8,8 @@ from fastapi import (Body,
                      HTTPException,
                      Response)
 from fastapi.routing import APIRouter
-from pyconnect.config import get_settings
-from pyconnect.workflows.fhir import FhirWorkflow
+from connect.config import get_settings
+from connect.workflows.fhir import FhirWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
 
 
@@ -21,7 +21,7 @@ async def post_fhir_data(resource_type: str, response: Response,
                          settings=Depends(get_settings), request_data: dict = Body(...)):
     """
     Receive and process a single FHIR data record.  Any valid FHIR R4 may be submitted. To transmit the FHIR
-    data to an external server, set fhir_r4_externalserver in pyconnect/config.py.
+    data to an external server, set fhir_r4_externalserver in connect/config.py.
 
     Example configuration setting:
         fhir_r4_externalserver = 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
@@ -62,7 +62,7 @@ async def post_fhir_data(resource_type: str, response: Response,
 
     :param resource_type: Path parameter for the FHIR Resource type (Encounter, Patient, Practitioner, etc)
     :param response: The response object which will be returned to the client
-    :param settings: pyConnect configuration settings
+    :param settings: Connect configuration settings
     :param request_data: The incoming FHIR message
     :return: A LinuxForHealth message containing the resulting FHIR message or the
     result of transmitting to an external server, if defined

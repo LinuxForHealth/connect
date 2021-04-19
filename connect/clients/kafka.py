@@ -15,10 +15,10 @@ from confluent_kafka import (Producer,
                              TopicPartition)
 from confluent_kafka.admin import (AdminClient,
                                    NewTopic)
-from pyconnect.config import (get_settings,
-                              kafka_sync_topic)
-from pyconnect.exceptions import (KafkaMessageNotFoundError,
-                                  KafkaStorageError)
+from connect.config import (get_settings,
+                            kafka_sync_topic)
+from connect.exceptions import (KafkaMessageNotFoundError,
+                                KafkaStorageError)
 from threading import Thread
 from typing import (Callable,
                     List,

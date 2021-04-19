@@ -57,8 +57,8 @@ echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sleep 5
 echo
 
-echo "### Tearing down pyconnect Application ###"
-kubectl delete -f ./pyconnect/pyconnect-deployment.yml --namespace=$k8s_ns
+echo "### Tearing down connect Application ###"
+kubectl delete -f ./connect/connect-deployment.yml --namespace=$k8s_ns
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

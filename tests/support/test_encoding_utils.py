@@ -1,15 +1,15 @@
 """
 test_encoding_utils.py
 
-Tests pyConnect support base64 encoding convenience functions
+Tests Connect support base64 encoding convenience functions
 """
-from pyconnect.support.encoding import (encode_from_dict,
-                                        encode_from_str,
-                                        encode_from_bytes,
-                                        decode_to_str,
-                                        decode_to_bytes,
-                                        decode_to_dict,
-                                        PyConnectEncoder)
+from connect.support.encoding import (encode_from_dict,
+                                      encode_from_str,
+                                      encode_from_bytes,
+                                      decode_to_str,
+                                      decode_to_bytes,
+                                      decode_to_dict,
+                                      ConnectEncoder)
 import pytest
 import datetime
 import uuid
@@ -114,12 +114,12 @@ def test_decode_to_dict(decoded_dictionary_data):
     assert decoded_dictionary_data == decoded_data
 
 
-def test_pyconnect_encoder(dictionary_data, encoded_dictionary_data):
+def test_connect_encoder(dictionary_data, encoded_dictionary_data):
     """
-    Tests the custom PyConnect encoder
+    Tests the custom connect encoder
     :param dictionary_data: The fixture used as the encoding input
     :param encoded_dictionary_data: The fixture used as the expected encoding result
     """
-    encoder = PyConnectEncoder()
+    encoder = ConnectEncoder()
     actual_value = encoder.encode(dictionary_data)
     assert encoded_dictionary_data == actual_value

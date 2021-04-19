@@ -35,7 +35,7 @@ RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 
 USER lfh
 WORKDIR /home/lfh
-COPY --chown=lfh:lfh ./pyconnect ./pyconnect
+COPY --chown=lfh:lfh ./connect ./connect
 COPY --chown=lfh:lfh setup.* README.md logging.yaml .
 RUN python -m pip install --upgrade pip setuptools
 RUN python -m pip install --user -e .
@@ -45,4 +45,4 @@ RUN apk del .dev-packages
 
 USER lfh
 EXPOSE 5000
-CMD ["python", "/home/lfh/pyconnect/main.py"]
+CMD ["python", "/home/lfh/connect/main.py"]

@@ -4,9 +4,9 @@ api.py
 Configures the API Router for the Fast API application
 """
 from fastapi import APIRouter
-from pyconnect.routes import (data,
-                              status,
-                              fhir)
+from connect.routes import (data,
+                            status,
+                            fhir)
 
 router = APIRouter()
 router.include_router(data.router, prefix='/data')

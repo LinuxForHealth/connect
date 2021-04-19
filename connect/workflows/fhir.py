@@ -6,9 +6,9 @@ Customizes the base LinuxForHealth workflow definition for FHIR resources.
 import logging
 import xworkflows
 from fhir.resources import construct_fhir_element
-from pyconnect.exceptions import (FhirValidationError,
-                                  MissingFhirResourceType)
-from pyconnect.workflows.core import CoreWorkflow
+from connect.exceptions import (FhirValidationError,
+                                MissingFhirResourceType)
+from connect.workflows.core import CoreWorkflow
 
 
 class FhirWorkflow(CoreWorkflow):

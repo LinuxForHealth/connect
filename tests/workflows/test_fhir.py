@@ -6,8 +6,8 @@ Tests the processes and transitions defined within the FHIR Workflow implementat
 import pytest
 from pydantic import ValidationError
 
-from pyconnect.exceptions import MissingFhirResourceType, FhirValidationError
-from pyconnect.workflows.fhir import FhirWorkflow
+from connect.exceptions import MissingFhirResourceType, FhirValidationError
+from connect.workflows.fhir import FhirWorkflow
 
 
 @pytest.fixture

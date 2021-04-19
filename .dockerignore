@@ -2,7 +2,7 @@
 *
 
 # now include specific items as our inclusions < our exclusions
-!pyconnect
+!connect
 !local-certs
 !setup.*
 !README.md
