@@ -12,6 +12,9 @@ LinuxForHealth Connectors for Inbound Data Processing
 
 ## Getting Started
 
+### Read the Documentation
+The [LinuxForHealth documentation](https://linuxforhealth.github.io/docs/) includes architectural overviews, development guidelines, and deployment options.
+
 ### Required Software
 The LinuxForHealth Connect development environment requires the following:
 
