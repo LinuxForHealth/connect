@@ -7,13 +7,13 @@ from yaml import YAMLError
 from fastapi import (HTTPException,
                      Request)
 from fastapi.responses import JSONResponse
-from pyconnect.config import get_settings
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     create_kafka_listeners,
-                                     stop_kafka_listeners)
-from pyconnect.clients.nats import (create_nats_subscribers,
-                                    get_nats_client,
-                                    stop_nats_clients)
+from connect.config import get_settings
+from connect.clients.kafka import (get_kafka_producer,
+                                   create_kafka_listeners,
+                                   stop_kafka_listeners)
+from connect.clients.nats import (create_nats_subscribers,
+                                  get_nats_client,
+                                  stop_nats_clients)
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def configure_logging() -> None:
     """
-    Configures logging for the pyconnect application.
+    Configures logging for the connect application.
     Logging configuration is parsed from the setting/environment variable LOGGING_CONFIG_PATH, if present.
     If LOGGING_CONFIG_PATH is not found, a basic config is applied.
     """
@@ -50,7 +50,7 @@ def configure_logging() -> None:
 
 def log_configuration() -> None:
     """
-    Logs pyConnect configuration settings.
+    Logs Connect configuration settings.
     "General" settings are logged at an INFO level.
     "Internal" settings for clients/components are logged at a DEBUG level.
     """
@@ -58,7 +58,7 @@ def log_configuration() -> None:
     header_footer_length = 50
 
     logger.info('*' * header_footer_length)
-    logger.info('pyConnect Configuration Settings')
+    logger.info('Connect Configuration Settings')
     logger.info('=' * header_footer_length)
     logger.info(f'UVICORN_APP: {settings.uvicorn_app}')
     logger.info(f'UVICORN_HOST: {settings.uvicorn_host}')
@@ -82,8 +82,8 @@ def log_configuration() -> None:
     logger.debug(f'NATS_KEY_FILE: {settings.nats_key_file}')
     logger.debug('=' * header_footer_length)
 
-    logger.debug(f'PYCONNECT_CERT: {settings.pyconnect_cert}')
-    logger.debug(f'PYCONNECT_CERT_KEY: {settings.pyconnect_cert_key}')
+    logger.debug(f'CONNECT_CERT: {settings.connect_cert}')
+    logger.debug(f'CONNECT_CERT_KEY: {settings.connect_cert_key}')
     logger.debug('=' * header_footer_length)
 
     logger.info('*' * header_footer_length)
@@ -103,7 +103,7 @@ async def configure_internal_integrations() -> None:
 
 async def close_internal_clients() -> None:
     """
-    Closes internal pyConnect client connections:
+    Closes internal Connect client connections:
     - Kafka
     - NATS
     """

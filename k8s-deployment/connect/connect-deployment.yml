@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pyconnect-config
+  name: connect-config
 data:
   LOCAL_CERTS_PATH: /etc/ssl/certs
   KAFKA_BOOTSTRAP_SERVERS: localhost:9094
@@ -9,20 +9,20 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pyconnect
+  name: connect
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pyconnect
+      app: connect
   template:
     metadata:
       labels:
-        app: pyconnect
+        app: connect
     spec:
       containers:
-      - name: pyconnect
-        image: docker.io/linuxforhealth/pyconnect:0.25.0
+      - name: connect
+        image: docker.io/linuxforhealth/connect:0.25.0
         imagePullPolicy: Always
         volumeMounts:
         - name: lfh-pemstore
@@ -47,7 +47,7 @@ spec:
           readOnly: false
         envFrom:
         - configMapRef:
-            name: pyconnect-config
+            name: connect-config
       volumes:
       - name: lfh-pemstore
         configMap:
@@ -68,11 +68,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pyconnect-service
+  name: connect-service
 spec:
   type: NodePort
   selector:
-    app: pyconnect
+    app: connect
   ports:
   - port: 5000
     targetPort: 5000

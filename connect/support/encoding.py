@@ -1,7 +1,7 @@
 """
 encoding.py
 
- pyConnect convenience functions for encoding/decoding data payloads in
+ Connect convenience functions for encoding/decoding data payloads in
  LinuxForHealth messages.
 """
 import base64
@@ -12,7 +12,7 @@ from typing import Any
 import uuid
 
 
-class PyConnectEncoder(JSONEncoder):
+class ConnectEncoder(JSONEncoder):
     """
     Provides additional encoding support for the following types:
     - UUID fields
@@ -37,7 +37,7 @@ def encode_from_dict(data: dict) -> str:
     :param data: The dict for an object to encode
     :return: string representation of base64-encoded object
     """
-    data_str = json.dumps(data, cls=PyConnectEncoder)
+    data_str = json.dumps(data, cls=ConnectEncoder)
     data_bytes = bytes(data_str, 'utf-8')
     data_encoded_bytes = base64.b64encode(data_bytes)
     data_encoded_str = str(data_encoded_bytes, 'utf-8')

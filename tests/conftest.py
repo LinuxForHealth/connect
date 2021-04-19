@@ -4,15 +4,15 @@ Contains global/common pytest fixtures
 """
 
 from confluent_kafka import Producer
-from pyconnect.clients.kafka import ConfluentAsyncKafkaConsumer
-from pyconnect.config import Settings
+from connect.clients.kafka import ConfluentAsyncKafkaConsumer
+from connect.config import Settings
 from fastapi.testclient import TestClient
 from httpx import (AsyncClient,
                    Response)
 from typing import Callable
 import pytest
 from unittest.mock import AsyncMock
-from pyconnect.main import get_app
+from connect.main import get_app
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def settings() -> Settings:
         'kafka_bootstrap_servers': ['localhost:8080'],
         'nats_servers': ['tls://localhost:8080'],
         'uvicorn_reload': False,
-        'uvicorn_app': 'pyconnect.asgi:app',
-        'pyconnect_cert_key': './mycert.key',
-        'pyconnect_cert': './mycert.pem',
+        'uvicorn_app': 'connect.asgi:app',
+        'connect_cert_key': './mycert.key',
+        'connect_cert': './mycert.pem',
         'fhir_r4_externalserver': 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     }
     return Settings(**settings_fields)
@@ -59,8 +59,8 @@ def test_client(monkeypatch) -> TestClient:
     :param monkeypatch: monkeypatch fixture
     :return: Fast API test client
     """
-    monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
-    monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
+    monkeypatch.setenv('CONNECT_CERT', './mycert.pem')
+    monkeypatch.setenv('CONNECT_CERT_KEY', './mycert.key')
     return TestClient(get_app())
 
 
@@ -71,8 +71,8 @@ def async_test_client(monkeypatch) -> AsyncClient:
     :param monkeypatch: monkeypatch fixture
     :return: HTTPX async test client
     """
-    monkeypatch.setenv('PYCONNECT_CERT', './mycert.pem')
-    monkeypatch.setenv('PYCONNECT_CERT_KEY', './mycert.key')
+    monkeypatch.setenv('CONNECT_CERT', './mycert.pem')
+    monkeypatch.setenv('CONNECT_CERT_KEY', './mycert.key')
 
     return AsyncClient(app=get_app(), base_url='http://testserver')
 

@@ -63,7 +63,7 @@ echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sleep 5
 echo
 
-echo ### Deploying pyconnect application ###
-kubectl apply -f ./pyconnect/pyconnect-deployment.yml --namespace=$k8s_ns
+echo ### Deploying connect application ###
+kubectl apply -f ./connect/connect-deployment.yml --namespace=$k8s_ns
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -4,7 +4,7 @@ Tests the /status API endpoints
 """
 import pytest
 from unittest.mock import AsyncMock
-from pyconnect.routes import status
+from connect.routes import status
 
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_status_get(async_test_client, monkeypatch):
             assert actual_json['elapsed_time'] > 0.0
 
             expected = {
-                'application': 'pyconnect.asgi:app',
+                'application': 'connect.asgi:app',
                 'application_version': actual_json['application_version'],
                 'is_reload_enabled': False,
                 'nats_status': 'AVAILABLE',

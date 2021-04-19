@@ -4,8 +4,8 @@ Tests /data endpoints
 """
 import pytest
 
-from pyconnect.exceptions import KafkaMessageNotFoundError
-from pyconnect.routes import data
+from connect.exceptions import KafkaMessageNotFoundError
+from connect.routes import data
 from unittest.mock import Mock
 
 

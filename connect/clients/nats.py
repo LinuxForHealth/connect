@@ -4,17 +4,17 @@ NATS message subscribers and message handlers
 """
 import json
 import logging
-import pyconnect.workflows.core as core
+import connect.workflows.core as core
 import ssl
 from asyncio import get_running_loop
 from nats.aio.client import (Client as NatsClient,
                              Msg)
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     KafkaCallback)
-from pyconnect.config import (get_settings,
-                              nats_sync_subject,
-                              kafka_sync_topic)
-from pyconnect.support.encoding import decode_to_dict
+from connect.clients.kafka import (get_kafka_producer,
+                                   KafkaCallback)
+from connect.config import (get_settings,
+                            nats_sync_subject,
+                            kafka_sync_topic)
+from connect.support.encoding import decode_to_dict
 from typing import (Callable,
                     List,
                     Optional)

@@ -5,21 +5,21 @@ Provides the base LinuxForHealth workflow definition.
 """
 import json
 import logging
-import pyconnect.clients.nats as nats
+import connect.clients.nats as nats
 import uuid
 import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
-from pyconnect.clients.kafka import (get_kafka_producer,
-                                     KafkaCallback)
-from pyconnect.config import nats_sync_subject
-from pyconnect.exceptions import LFHError
-from pyconnect.routes.data import LinuxForHealthDataRecordResponse
-from pyconnect.support.encoding import (encode_from_dict,
-                                        encode_from_str,
-                                        decode_to_str,
-                                        PyConnectEncoder)
+from connect.clients.kafka import (get_kafka_producer,
+                                   KafkaCallback)
+from connect.config import nats_sync_subject
+from connect.exceptions import LFHError
+from connect.routes.data import LinuxForHealthDataRecordResponse
+from connect.support.encoding import (encode_from_dict,
+                                      encode_from_str,
+                                      decode_to_str,
+                                      ConnectEncoder)
 
 
 logger = logging.getLogger(__name__)
@@ -194,7 +194,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         if self.do_sync:
             nats_client = await nats.get_nats_client()
-            msg_str = json.dumps(self.message, cls=PyConnectEncoder)
+            msg_str = json.dumps(self.message, cls=ConnectEncoder)
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, 'utf-8'))
 
     @xworkflows.transition('handle_error')
@@ -210,7 +210,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         :return: The json string for the error message stored in Kafka
         """
         logger.debug(f'{self.__class__.__name__} error: incoming error = {error}')
-        data_str = json.dumps(self.message, cls=PyConnectEncoder)
+        data_str = json.dumps(self.message, cls=ConnectEncoder)
         data = json.loads(data_str)
 
         message = {

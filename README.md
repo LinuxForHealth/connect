@@ -1,19 +1,19 @@
-# pyConnect
+# Connect
 LinuxForHealth Connectors for Inbound Data Processing
 
 ## Where to Contribute  
 | Type      | Link |
 | ----------- | ----------- |
-| 🚨 Bug Reports | [GitHub Issues Tracker](https://github.com/LinuxForHealth/pyconnect/labels/bug) |  
-| 🎁 Feature Requests & Ideas | [GitHub Issues Tracker](https://github.com/LinuxForHealth/pyconnect/issues)  | 
+| 🚨 Bug Reports | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/labels/bug) |  
+| 🎁 Feature Requests & Ideas | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/issues)  | 
 | ❔ Questions | [LFH Slack Channel](https://ibm-watsonhealth.slack.com/archives/G01639WJEMA) |   
-| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/pyconnect/projects/1) |
+| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/connect/projects/1) |
 
 
 ## Getting Started
 
 ### Required Software
-The LinuxForHealth pyConnect development environment requires the following:
+The LinuxForHealth Connect development environment requires the following:
 
 - [git](https://git-scm.com) for project version control
 - [mkcert](https://github.com/FiloSottile/mkcert) for local trusted certificates
@@ -25,8 +25,8 @@ For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://doc
 ### Set Up A Local Environment
 #### Clone the project and navigate to the root directory
 ```shell
-git clone https://github.com/LinuxForHealth/pyconnect
-cd pyconnect
+git clone https://github.com/LinuxForHealth/connect
+cd connect
 ```
 
 #### Create a virtual environment
@@ -36,44 +36,44 @@ source venv/bin/activate
 pip install --upgrade pip
 ```
 
-#### Install pyconnect with dev and test dependencies
+#### Install connect with dev and test dependencies
 ```shell
 pip install -e .[dev,test]
 # note if using zsh shell the extra dependencies require quoting
 # pip install -e ".[dev,test]"
 ```
 
-#### Generate trusted local certs for pyConnect and supporting services
+#### Generate trusted local certs for connect and supporting services
 ```shell
 ./local-certs/install-certificates.sh
 ```
-For more information on pyConnect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
+For more information on connect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
 
 
-#### Start pyConnect and supporting services
+#### Start connect and supporting services
 ```shell
 docker-compose up -d
 docker-compose ps
 
 APPLICATION_CERT_PATH=./local-certs \
   UVICORN_RELOAD=True \
-  python pyconnect/main.py
+  python connect/main.py
 ```
 
 Browse to `https://localhost:5000/docs` to view the Open API documentation
 
 ### Docker Image
-The pyConnect docker image is an "incubating" feature and is subject to change. The image is associated with the "deployment" profile to provide separation from core services.
+The connect docker image is an "incubating" feature and is subject to change. The image is associated with the "deployment" profile to provide separation from core services.
 
 #### Build the image
-The pyconnect image build integrates the application's x509 certificate (PEM encoded) into the image.
+The connect image build integrates the application's x509 certificate (PEM encoded) into the image.
 
 The `APPLICATION_CERT_PATH` build argument is used to specify the location of the certificate on the host machine.
 If the `APPLICATION_CERT_PATH` build argument is not provided, a default value of ./local-certs/lfh.pem is used.
 
 #### Build the image with Docker CLI
 ```shell
-docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-certs/ -t linuxforhealth/pyconnect:0.25.0 .
+docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-certs/ -t linuxforhealth/connect:0.42.0 .
 ```
 
 #### Build the image with Docker-Compose
@@ -82,7 +82,7 @@ The docker-compose command below parses the build context, arguments, and image 
 docker-compose build connect
 ```
 
-#### Run pyConnect and Supporting Services
+#### Run connect and Supporting Services
 ```shell
 docker-compose --profile deployment up -d
 ```

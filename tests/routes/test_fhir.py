@@ -4,9 +4,9 @@ Tests the /fhir endpoint
 """
 import asyncio
 import pytest
-from pyconnect.clients import kafka
-from pyconnect.config import get_settings
-from pyconnect.workflows.fhir import FhirWorkflow
+from connect.clients import kafka
+from connect.config import get_settings
+from connect.workflows.fhir import FhirWorkflow
 from starlette.responses import Response
 from unittest.mock import AsyncMock
 
@@ -177,7 +177,7 @@ async def test_fhir_post(async_test_client,
     :param encounter_fixture: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
-    :param settings: pyConnect configuration settings fixture
+    :param settings: connect configuration settings fixture
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)
@@ -220,7 +220,7 @@ async def test_fhir_post_with_transmit(async_test_client,
     :param encounter_fixture: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
-    :param settings: pyConnect configuration settings
+    :param settings: connect configuration settings
     """
 
     async def mock_workflow_transmit(self, response: Response):
@@ -258,7 +258,7 @@ async def test_fhir_post_endpoints(async_test_client,
     :param encounter_fixture: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
-    :param settings: pyConnect configuration settings fixture
+    :param settings: connect configuration settings fixture
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, 'ConfluentAsyncKafkaProducer', mock_async_kafka_producer)

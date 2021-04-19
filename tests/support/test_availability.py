@@ -1,15 +1,15 @@
 """
 test_availability.py
 
-Tests pyConnect service/host availability functions
+Tests connect service/host availability functions
 """
 import asyncio
 from unittest.mock import (AsyncMock,
                            Mock)
 import pytest
-from pyconnect.support.availability import (get_host_ports,
-                                            is_service_available,
-                                            ping_host)
+from connect.support.availability import (get_host_ports,
+                                          is_service_available,
+                                          ping_host)
 
 
 @pytest.mark.asyncio

@@ -1,5 +1,5 @@
-# validates the pyConnect image build process
-name: pyConnect Image Build
+# validates the Connect image build process
+name: Connect Image Build
 
 on:
   push:

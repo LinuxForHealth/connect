@@ -9,8 +9,8 @@ from pydantic import (BaseModel,
 from fastapi.routing import (APIRouter,
                              HTTPException)
 from typing import Optional
-from pyconnect.clients.kafka import get_kafka_consumer
-from pyconnect.exceptions import KafkaMessageNotFoundError
+from connect.clients.kafka import get_kafka_consumer
+from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
 
 import uuid

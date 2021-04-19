@@ -1,14 +1,14 @@
 """
 kafka_segments.py
 
-pyConnect convenience functions to handle Kafka message segmentation
+Connect convenience functions to handle Kafka message segmentation
 """
 
 import uuid
 import math
 import time
 import logging
-from pyconnect.config import get_settings
+from connect.config import get_settings
 
 logger = logging.getLogger(__name__)
 

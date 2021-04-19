@@ -4,10 +4,10 @@ test_core.py
 Tests the processes and transitions defined within the Core Workflow implementation.
 """
 from fastapi import Response
-import pyconnect.clients.nats as nats
+import connect.clients.nats as nats
 import pytest
-from pyconnect.workflows import core
-from pyconnect.workflows.core import CoreWorkflow
+from connect.workflows import core
+from connect.workflows.core import CoreWorkflow
 import datetime
 from unittest.mock import (AsyncMock,
                            Mock)

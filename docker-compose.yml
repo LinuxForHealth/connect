@@ -16,7 +16,7 @@ services:
     profiles: ["deployment"]
     networks:
       - main
-    image: linuxforhealth/pyconnect:0.42.0
+    image: linuxforhealth/connect:0.42.0
     ports:
       - "5000:5000"
     environment:

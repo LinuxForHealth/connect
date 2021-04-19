@@ -3,7 +3,7 @@
 # configure-nats.sh
 # Configures the NATS JetStream server.
 
-NATS_SERVICE_NAME=pyconnect_nats-server_1
+NATS_SERVICE_NAME=connect_nats-server_1
 NATS_CLIENT_PORT=4222
 TLSCERT=/certs/nats-server.pem
 TLSKEY=/certs/nats-server.key

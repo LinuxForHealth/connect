@@ -1,7 +1,7 @@
 """
 availability.py
 
- pyConnect convenience functions for verifying host/service availability
+ Connect convenience functions for verifying host/service availability
   and fetching host:port lookups
 """
 
