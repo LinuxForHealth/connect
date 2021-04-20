@@ -5,10 +5,11 @@ Tests the /status API endpoints
 import pytest
 from unittest.mock import AsyncMock
 from connect.routes import status
+from connect.config import get_settings
 
 
 @pytest.mark.asyncio
-async def test_status_get(async_test_client, monkeypatch):
+async def test_status_get(async_test_client, settings, monkeypatch):
     """
     Tests /status [GET]
     :param async_test_client: Fast API async test client
@@ -19,6 +20,8 @@ async def test_status_get(async_test_client, monkeypatch):
         m.setattr(status, 'is_service_available', AsyncMock(return_value=True))
 
         async with async_test_client as ac:
+            settings.uvicorn_reload = False
+            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
             actual_response = await ac.get('/status')
 
             assert actual_response.status_code == 200

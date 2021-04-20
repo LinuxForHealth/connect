@@ -4,7 +4,5 @@
 # now include specific items as our inclusions < our exclusions
 !connect
 !local-certs
-!setup.*
-!README.md
-!LICENSE
+!Pipfile.lock
 !logging.yaml
