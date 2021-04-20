@@ -36,7 +36,7 @@ RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 USER lfh
 WORKDIR /home/lfh
 COPY --chown=lfh:lfh ./connect ./connect
-COPY --chown=lfh:lfh ./local-certs/nats-server.conf ./local-certs/server.nk ./local-certs
+COPY --chown=lfh:lfh ./local-certs/nats-server.conf ./local-certs/server.nk ./local-certs/
 COPY --chown=lfh:lfh setup.* README.md logging.yaml ./
 RUN python -m pip install --upgrade pip setuptools
 RUN python -m pip install --user -e .
