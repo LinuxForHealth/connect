@@ -21,6 +21,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 [dev-packages]
 pytest = "*"
 pytest-asyncio = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.8"
