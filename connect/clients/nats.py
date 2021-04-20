@@ -73,7 +73,7 @@ async def nats_sync_event_handler(msg: Msg):
 
     # if the message is from our local LFH, don't store in kafka
     message = json.loads(data)
-    if (get_settings().lfh_id == message['lfh_id']):
+    if (get_settings().connect_lfh_id == message['lfh_id']):
         logger.debug('nats_sync_event_handler: detected local LFH message, not storing in kafka')
         return
 
