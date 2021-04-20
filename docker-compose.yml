@@ -33,7 +33,7 @@ services:
       --tlscert=/certs/nats-server.pem \
       --tlskey=/certs/nats-server.key \
       --tlscacert=/certs/rootCA.pem \
-      --config=/certs/nats/nats-server.conf
+      --config=/certs/nats-server.conf
     ports:
       - "4222:4222"
   zookeeper:

@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     nats_rootCA_file: str = application_cert_path + '/rootCA.pem'
     nats_cert_file: str = application_cert_path + '/nats-server.pem'
     nats_key_file: str = application_cert_path + '/nats-server.key'
-    nats_nk_file: str = application_cert_path + '/nats/server.nk'
+    nats_nk_file: str = application_cert_path + '/server.nk'
 
     # Connect
     connect_cert: str = application_cert_path + '/lfh.pem'
