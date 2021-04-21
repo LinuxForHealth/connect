@@ -128,7 +128,7 @@ async def get_nats_client() -> Optional[NatsClient]:
 
 async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     """
-    Create a NATS client for any NATS server or NATS cluster.
+    Create a NATS client for any NATS server or NATS cluster configured to accept this installation's NKey.
 
     :param servers: List of one or more NATS servers.  If multiple servers are
     provided, they should be in the same NATS cluster.
@@ -142,6 +142,7 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     nats_client = NatsClient()
     await nats_client.connect(
         servers=servers,
+        nkeys_seed=settings.nats_nk_file,
         loop=get_running_loop(),
         tls=ssl_ctx,
         allow_reconnect=settings.nats_allow_reconnect,

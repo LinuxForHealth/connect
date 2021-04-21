@@ -28,9 +28,10 @@ class Settings(BaseSettings):
     connect application settings
     """
 
-    # First preference to a defined env var 'LOCAL_CERTS_PATH'
+    # First preference to a defined env var 'APPLICATION_CERT_PATH'
     application_cert_path: str = os.getenv('APPLICATION_CERT_PATH',
                                            os.path.join(Path(__file__).parents[1], 'local-certs'))
+    local_cert_path: str = os.path.join(Path(__file__).parents[1], 'local-certs')
 
     # general certificate settings
     # path to "standard" CA certificates
@@ -60,6 +61,7 @@ class Settings(BaseSettings):
     nats_rootCA_file: str = application_cert_path + '/rootCA.pem'
     nats_cert_file: str = application_cert_path + '/nats-server.pem'
     nats_key_file: str = application_cert_path + '/nats-server.key'
+    nats_nk_file: str = local_cert_path + '/nats-server.nk'
 
     # Connect
     connect_cert: str = application_cert_path + '/lfh.pem'

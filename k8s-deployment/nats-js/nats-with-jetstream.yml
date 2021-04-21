@@ -19,6 +19,12 @@ data:
           url: "nats://nats:7422"
         }
       ]
+
+      authorization: {
+        users: [
+          { nkey: UAOG3WGHPVLI3OQQVVTAP33Q3VOJKHYRZWA7A3REHZ3AD4U7YJJUYXO4 }
+        ]
+      }
     }
 ---
 apiVersion: v1

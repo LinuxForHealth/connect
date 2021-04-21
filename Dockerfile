@@ -16,8 +16,8 @@ RUN \
 
 # copy certificates and keys
 WORKDIR /usr/local/share/ca-certificates/
-COPY $APPLICATION_BUILD_CERT_PATH/*.pem .
-COPY $APPLICATION_BUILD_CERT_PATH/*.key .
+COPY $APPLICATION_BUILD_CERT_PATH/*.pem ./
+COPY $APPLICATION_BUILD_CERT_PATH/*.key ./
 RUN chmod 644 *.pem *.key
 
 FROM python:3.9.4-alpine3.13
@@ -46,7 +46,8 @@ USER lfh
 RUN mkdir -p /home/lfh/connect
 WORKDIR /home/lfh/connect
 COPY --chown=lfh:lfh ./connect ./connect
-COPY --chown=lfh:lfh Pipfile.lock logging.yaml .
+COPY --chown=lfh:lfh ./local-certs/nats-server.nk ./local-certs/
+COPY --chown=lfh:lfh Pipfile.lock logging.yaml ./
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync
 

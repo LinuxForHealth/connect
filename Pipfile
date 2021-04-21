@@ -17,6 +17,7 @@ linuxforhealth-xworkflows = "*"
 httpx = "*"
 slowapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
+nkeys = "*"
 
 [dev-packages]
 pytest = "*"
