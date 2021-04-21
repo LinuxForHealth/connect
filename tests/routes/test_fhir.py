@@ -185,7 +185,7 @@ async def test_fhir_post(async_test_client,
 
         async with async_test_client as ac:
             # remove external server setting
-            settings.fhir_r4_externalserver = None
+            settings.connect_external_fhir_server = None
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post('/fhir/Encounter', json=encounter_fixture)
@@ -266,7 +266,7 @@ async def test_fhir_post_endpoints(async_test_client,
 
         async with async_test_client as ac:
             # remove external server setting
-            settings.fhir_r4_externalserver = None
+            settings.connect_external_fhir_server = None
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post('/fhir/Encounter', json=encounter_fixture)

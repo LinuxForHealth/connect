@@ -66,20 +66,17 @@ class Settings(BaseSettings):
     # Connect
     connect_cert: str = application_cert_path + '/lfh.pem'
     connect_cert_key: str = application_cert_path + '/lfh.key'
-    lfh_id: str = host_name
-
-    # logging
-    logging_config_path: str = 'logging.yaml'
+    connect_lfh_id: str = host_name
+    connect_logging_config_path: str = 'logging.yaml'
+    # external FHIR server URL or None
+    # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
+    connect_external_fhir_server: str = None
 
     # uvicorn settings
     uvicorn_app: str = 'connect.asgi:app'
     uvicorn_host: str = '0.0.0.0'
     uvicorn_port: int = 5000
     uvicorn_reload: bool = False
-
-    # external FHIR server URL or None
-    # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
-    fhir_r4_externalserver: str = None
 
     class Config:
         case_sensitive = False
