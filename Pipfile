@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[scripts]
+connect="python connect/main.py"
+
+[packages]
+asyncio-nats-client = "*"
+confluent-kafka = "*"
+fastapi = "*"
+pyaml = "*"
+requests = "*"
+linuxforhealth-xworkflows = "*"
+"fhir.resources" = "*"
+httpx = "*"
+slowapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+
+[dev-packages]
+pytest = "*"
+pytest-asyncio = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.8"

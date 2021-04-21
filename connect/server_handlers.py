@@ -33,12 +33,12 @@ def configure_logging() -> None:
 
     settings = get_settings()
 
-    if os.path.exists(settings.logging_config_path):
-        with open(settings.logging_config_path, 'r') as f:
+    if os.path.exists(settings.connect_logging_config_path):
+        with open(settings.connect_logging_config_path, 'r') as f:
             try:
                 logging_config = yaml.safe_load(f)
                 logging.config.dictConfig(logging_config)
-                logger.info(f'Loaded logging configuration from {settings.logging_config_path}')
+                logger.info(f'Loaded logging configuration from {settings.connect_logging_config_path}')
             except YAMLError as e:
                 apply_basic_config()
                 logger.error(f'Unable to load logging configuration from file: {e}.')
@@ -67,7 +67,7 @@ def log_configuration() -> None:
     logger.info('=' * header_footer_length)
 
     logger.info(f'CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}')
-    logger.info(f'LOGGING_CONFIG_PATH: {settings.logging_config_path}')
+    logger.info(f'LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}')
     logger.info('=' * header_footer_length)
 
     logger.debug(f'KAFKA_BOOTSTRAP_SERVERS: {settings.kafka_bootstrap_servers}')
