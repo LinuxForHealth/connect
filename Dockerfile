@@ -46,7 +46,7 @@ USER lfh
 RUN mkdir -p /home/lfh/connect
 WORKDIR /home/lfh/connect
 COPY --chown=lfh:lfh ./connect ./connect
-COPY --chown=lfh:lfh ./local-certs/nats-server.conf ./local-certs/server.nk ./local-certs/
+COPY --chown=lfh:lfh ./local-certs/nats-server.nk ./local-certs/
 COPY --chown=lfh:lfh Pipfile.lock logging.yaml ./
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync
