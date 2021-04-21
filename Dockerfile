@@ -16,8 +16,8 @@ RUN \
 
 # copy certificates and keys
 WORKDIR /usr/local/share/ca-certificates/
-COPY $APPLICATION_BUILD_CERT_PATH/*.pem .
-COPY $APPLICATION_BUILD_CERT_PATH/*.key .
+COPY $APPLICATION_BUILD_CERT_PATH/*.pem ./
+COPY $APPLICATION_BUILD_CERT_PATH/*.key ./
 RUN chmod 644 *.pem *.key
 
 FROM python:3.9.4-alpine3.13
