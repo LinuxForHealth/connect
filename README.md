@@ -58,6 +58,34 @@ Process registered with pre-commit hooks include:
 pipenv run pytest
 ```
 
+#### Black code formatting integration
+LinuxForHealth connect utilizes the [black library](https://black.readthedocs.io/en/stable/index.html) to provide standard code formatting. The connect project registers black with a git pre-commit hook to ensure that code is formatted when it is committed to a developer's local repository. The [pyproject.toml](./pyproject.toml) and [.pre-commit-config.yaml](./.pre-commit-config.yaml) are used to configure the integration.
+
+##### Commit Output - No Python Source Committed
+```shell
+black................................................(no files to check)Skipped
+[black-formatter 95bb1c6] settings black version to latest release
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+```
+
+##### Commit Output - Python Source is Correctly Formatted
+```shell
+black....................................................................Passed
+[format-test c3e1b4a] test commit
+ 1 file changed, 1 insertion(+)
+```
+
+##### Commit Output - Black Updates Python Source
+```shell
+black....................................................................Failed
+- hook id: black
+- files were modified by this hook
+
+reformatted connect/routes/api.py
+All done! ✨ 🍰 ✨
+1 file reformatted.
+```
+
 #### Generate trusted local certs for connect and supporting services
 ```shell
 ./local-certs/install-certificates.sh
