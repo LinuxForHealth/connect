@@ -42,8 +42,16 @@ pipenv --version
 #### Install core and dev dependencies
 ```shell
 pip install --upgrade pip
-pipenv sync
+pipenv sync --dev
 ```
+
+#### Install git pre-commit hooks
+```shell
+pipenv run pre-commit install
+```
+
+Process registered with pre-commit hooks include: 
+- [black](https://black.readthedocs.io/en/stable/index.html) code formatter
 
 #### Run tests
 ```shell

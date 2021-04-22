@@ -5,6 +5,8 @@ name = "pypi"
 
 [scripts]
 connect="python connect/main.py"
+check-format="black -t py38 --check connect tests"
+format="black -t py38 connect tests"
 
 [packages]
 asyncio-nats-client = "*"
@@ -23,6 +25,11 @@ nkeys = "*"
 pytest = "*"
 pytest-asyncio = "*"
 flake8 = "*"
+black = "*"
+pre-commit = "*"
 
 [requires]
 python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true

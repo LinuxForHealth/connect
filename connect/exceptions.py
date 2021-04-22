@@ -5,17 +5,16 @@ Defines LinuxForHealth exceptions.
 """
 import datetime
 import uuid
-from pydantic import (BaseModel,
-                      constr)
-from typing import (Any,
-                    Optional)
+from pydantic import BaseModel, constr
+from typing import Any, Optional
 
 
-data_record_regex = '^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$'
+data_record_regex = "^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$"
 
 
 class LFHError(BaseModel):
     """Pydantic wrapper for any exception or error message, with the ability to include data for future processing"""
+
     data: Optional[Any]
     error_msg: str
     uuid: uuid.UUID
@@ -28,7 +27,7 @@ class MissingFhirResourceType(Exception):
 
     def __init__(self, msg=None):
         if msg is None:
-            msg = 'Input FHIR resource is missing resourceType'
+            msg = "Input FHIR resource is missing resourceType"
         super(MissingFhirResourceType, self).__init__(msg)
 
 
@@ -44,7 +43,7 @@ class FhirValidationTypeError(FhirValidationError):
 
     def __init__(self, expected_type, actual_type):
         super(FhirValidationTypeError, self).__init__(
-            msg=f'Expected an instance of {expected_type}, but got type {actual_type}'
+            msg=f"Expected an instance of {expected_type}, but got type {actual_type}"
         )
 
 

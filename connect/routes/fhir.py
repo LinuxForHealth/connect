@@ -3,10 +3,7 @@ fhir.py
 
 Receive and store any valid FHIR data record using the /fhir [POST] endpoint.
 """
-from fastapi import (Body,
-                     Depends,
-                     HTTPException,
-                     Response)
+from fastapi import Body, Depends, HTTPException, Response
 from fastapi.routing import APIRouter
 from connect.config import get_settings
 from connect.workflows.fhir import FhirWorkflow
@@ -16,9 +13,13 @@ from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
 router = APIRouter()
 
 
-@router.post('/{resource_type}')
-async def post_fhir_data(resource_type: str, response: Response,
-                         settings=Depends(get_settings), request_data: dict = Body(...)):
+@router.post("/{resource_type}")
+async def post_fhir_data(
+    resource_type: str,
+    response: Response,
+    settings=Depends(get_settings),
+    request_data: dict = Body(...),
+):
     """
     Receive and process a single FHIR data record.  Any valid FHIR R4 may be submitted. To transmit the FHIR
     data to an external server, set fhir_r4_externalserver in connect/config.py.
@@ -69,29 +70,33 @@ async def post_fhir_data(resource_type: str, response: Response,
     :raise: HTTPException if the /{resource_type} is invalid or does not align with the request's resource type
     """
     if resource_type not in FHIR_RESOURCES.keys():
-        raise HTTPException(status_code=404, detail=f'/{resource_type} not found')
+        raise HTTPException(status_code=404, detail=f"/{resource_type} not found")
 
-    if resource_type != request_data.get('resourceType'):
+    if resource_type != request_data.get("resourceType"):
         msg = f"request {request_data.get('resource_type')} does not match /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
     transmit_server = None
     if settings.connect_external_fhir_server:
-        resource_type = request_data['resourceType']
-        transmit_server = settings.connect_external_fhir_server + '/' + resource_type
+        resource_type = request_data["resourceType"]
+        transmit_server = settings.connect_external_fhir_server + "/" + resource_type
 
     try:
-        workflow = FhirWorkflow(message=request_data,
-                                origin_url='/fhir/' + resource_type,
-                                certificate_verify=settings.certificate_verify,
-                                lfh_id=settings.connect_lfh_id,
-                                transmit_server=transmit_server,
-                                do_sync=True)
+        workflow = FhirWorkflow(
+            message=request_data,
+            origin_url="/fhir/" + resource_type,
+            certificate_verify=settings.certificate_verify,
+            lfh_id=settings.connect_lfh_id,
+            transmit_server=transmit_server,
+            do_sync=True,
+        )
 
         # enable the transmit workflow step if defined
         if settings.connect_external_fhir_server:
-            resource_type = request_data['resourceType']
-            workflow.transmit_server = settings.connect_external_fhir_server + '/' + resource_type
+            resource_type = request_data["resourceType"]
+            workflow.transmit_server = (
+                settings.connect_external_fhir_server + "/" + resource_type
+            )
 
         result = await workflow.run(response)
 
