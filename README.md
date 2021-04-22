@@ -42,7 +42,7 @@ pipenv --version
 #### Install core and dev dependencies
 ```shell
 pip install --upgrade pip
-pipenv sync
+pipenv sync --dev
 ```
 
 #### Install git pre-commit hooks
