@@ -3,11 +3,8 @@ data.py
 
 Provides access to LinuxForHealth data records using the /data [GET] endpoint
 """
-from pydantic import (BaseModel,
-                      AnyUrl,
-                      constr)
-from fastapi.routing import (APIRouter,
-                             HTTPException)
+from pydantic import BaseModel, AnyUrl, constr
+from fastapi.routing import APIRouter, HTTPException
 from typing import Optional
 from connect.clients.kafka import get_kafka_consumer
 from connect.exceptions import KafkaMessageNotFoundError
@@ -19,7 +16,7 @@ import json
 
 router = APIRouter()
 
-data_record_regex = '^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$'
+data_record_regex = "^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$"
 
 
 class LinuxForHealthDataRecordResponse(BaseModel):
@@ -28,6 +25,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     Data stored includes urls and statistics related to the receiving data endpoint, data storage,
     and data transmission.
     """
+
     uuid: uuid.UUID
     lfh_id: str
     creation_date: datetime.datetime
@@ -44,7 +42,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     elapsed_total_time: Optional[float]
 
 
-@router.get('')
+@router.get("")
 async def get_data_record(dataformat: str, partition: int, offset: int):
     """
     Returns a single data record from the LinuxForHealth data store.
@@ -73,6 +71,8 @@ async def get_data_record(dataformat: str, partition: int, offset: int):
 
 
 async def _fetch_data_record_cb(kafka_consumer_msg):
-    decoded_json_dict = json.loads(kafka_consumer_msg)  # Decode message here if necessary in the future
+    decoded_json_dict = json.loads(
+        kafka_consumer_msg
+    )  # Decode message here if necessary in the future
 
     return decoded_json_dict

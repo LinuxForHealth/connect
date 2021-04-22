@@ -23,10 +23,10 @@ async def ping_host(hostname: str, port: int) -> bool:
     :return: True if the host is available, False if an "address info" or ConnectionError occurs
     """
     writer: StreamWriter = None
-    try :
+    try:
         _, writer = await asyncio.open_connection(hostname, port)
     except Exception as ex:
-        logger.error(f'error connecting to {hostname}:{port}')
+        logger.error(f"error connecting to {hostname}:{port}")
         logger.exception(ex)
         return False
     else:
@@ -49,7 +49,7 @@ def get_host_ports(service_setting: List[str]) -> List[tuple]:
         # parse a second time if hostname isn't found
         # useful for settings without a protocol scheme
         if parsed_url.hostname is None:
-            parsed_url = urlsplit('//' + service)
+            parsed_url = urlsplit("//" + service)
         host_ports.append((parsed_url.hostname.strip(), parsed_url.port))
     return host_ports
 

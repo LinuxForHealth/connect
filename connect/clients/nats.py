@@ -7,17 +7,11 @@ import logging
 import connect.workflows.core as core
 import ssl
 from asyncio import get_running_loop
-from nats.aio.client import (Client as NatsClient,
-                             Msg)
-from connect.clients.kafka import (get_kafka_producer,
-                                   KafkaCallback)
-from connect.config import (get_settings,
-                            nats_sync_subject,
-                            kafka_sync_topic)
+from nats.aio.client import Client as NatsClient, Msg
+from connect.clients.kafka import get_kafka_producer, KafkaCallback
+from connect.config import get_settings, nats_sync_subject, kafka_sync_topic
 from connect.support.encoding import decode_to_dict
-from typing import (Callable,
-                    List,
-                    Optional)
+from typing import Callable, List, Optional
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +35,12 @@ async def start_sync_event_subscribers():
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
     nats_client = await get_nats_client()
-    await subscribe(nats_client, nats_sync_subject, nats_sync_event_handler, ''.join(settings.nats_servers))
+    await subscribe(
+        nats_client,
+        nats_sync_subject,
+        nats_sync_event_handler,
+        "".join(settings.nats_servers),
+    )
 
     # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
@@ -59,7 +58,7 @@ async def subscribe(client: NatsClient, subject: str, callback: Callable, server
     """
     await client.subscribe(subject, cb=callback)
     nats_clients.append(client)
-    logger.debug(f'Subscribed {servers} to NATS subject {subject}')
+    logger.debug(f"Subscribed {servers} to NATS subject {subject}")
 
 
 async def nats_sync_event_handler(msg: Msg):
@@ -69,42 +68,53 @@ async def nats_sync_event_handler(msg: Msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    logger.debug(f'nats_sync_event_handler: received a message on {subject} {reply}: {data}')
+    logger.debug(
+        f"nats_sync_event_handler: received a message on {subject} {reply}: {data}"
+    )
 
     # if the message is from our local LFH, don't store in kafka
     message = json.loads(data)
-    if (get_settings().connect_lfh_id == message['lfh_id']):
-        logger.debug('nats_sync_event_handler: detected local LFH message, not storing in kafka')
+    if get_settings().connect_lfh_id == message["lfh_id"]:
+        logger.debug(
+            "nats_sync_event_handler: detected local LFH message, not storing in kafka"
+        )
         return
 
     # store the message in kafka
     kafka_producer = get_kafka_producer()
     kafka_cb = KafkaCallback()
-    await kafka_producer.produce_with_callback(kafka_sync_topic, data,
-                                               on_delivery=kafka_cb.get_kafka_result)
-    logger.debug(f'nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}')
+    await kafka_producer.produce_with_callback(
+        kafka_sync_topic, data, on_delivery=kafka_cb.get_kafka_result
+    )
+    logger.debug(
+        f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}"
+    )
 
     # process the message into the local store
     settings = get_settings()
-    msg_data = decode_to_dict(message['data'])
-    workflow = core.CoreWorkflow(message=msg_data,
-                                 origin_url=message['consuming_endpoint_url'],
-                                 certificate_verify=settings.certificate_verify,
-                                 lfh_id=message['lfh_id'],
-                                 data_format=message['data_format'],
-                                 transmit_server=None,
-                                 do_sync=False)
+    msg_data = decode_to_dict(message["data"])
+    workflow = core.CoreWorkflow(
+        message=msg_data,
+        origin_url=message["consuming_endpoint_url"],
+        certificate_verify=settings.certificate_verify,
+        lfh_id=message["lfh_id"],
+        data_format=message["data_format"],
+        transmit_server=None,
+        do_sync=False,
+    )
 
     result = await workflow.run(None)
-    location = result['data_record_location']
-    logger.debug(f'nats_sync_event_handler: replayed nats sync message, data record location = {location}')
+    location = result["data_record_location"]
+    logger.debug(
+        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}"
+    )
 
 
 async def stop_nats_clients():
-    '''
+    """
     Gracefully stop all NATS clients prior to shutdown, including
     unsubscribing from all subscriptions.
-    '''
+    """
     for client in nats_clients:
         await client.close()
 
@@ -146,7 +156,8 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
         loop=get_running_loop(),
         tls=ssl_ctx,
         allow_reconnect=settings.nats_allow_reconnect,
-        max_reconnect_attempts=settings.nats_max_reconnect_attempts)
-    logger.debug(f'Created NATS client for servers = {servers}')
+        max_reconnect_attempts=settings.nats_max_reconnect_attempts,
+    )
+    logger.debug(f"Created NATS client for servers = {servers}")
 
     return nats_client

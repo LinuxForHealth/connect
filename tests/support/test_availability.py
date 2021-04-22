@@ -4,12 +4,9 @@ test_availability.py
 Tests connect service/host availability functions
 """
 import asyncio
-from unittest.mock import (AsyncMock,
-                           Mock)
+from unittest.mock import AsyncMock, Mock
 import pytest
-from connect.support.availability import (get_host_ports,
-                                          is_service_available,
-                                          ping_host)
+from connect.support.availability import get_host_ports, is_service_available, ping_host
 
 
 @pytest.mark.asyncio
@@ -22,13 +19,13 @@ def test_ping_host(monkeypatch):
     """
     with monkeypatch.context() as m:
         mock = AsyncMock(return_value=(Mock(), Mock()))
-        m.setattr(asyncio, 'open_connection', mock)
-        actual_result = asyncio.run(ping_host('some-server', 8080))
+        m.setattr(asyncio, "open_connection", mock)
+        actual_result = asyncio.run(ping_host("some-server", 8080))
         assert actual_result is True
 
         mock = AsyncMock(side_effect=OSError)
-        m.setattr(asyncio, 'open_connection', mock)
-        actual_result = asyncio.run(ping_host('some-server', 8080))
+        m.setattr(asyncio, "open_connection", mock)
+        actual_result = asyncio.run(ping_host("some-server", 8080))
         assert actual_result is False
 
 
@@ -36,24 +33,24 @@ def test_get_host_ports():
     """
     Validates that host and port data is parsed from settings
     """
-    service_setting = ['localhost:9090']
-    expected = [('localhost', 9090)]
+    service_setting = ["localhost:9090"]
+    expected = [("localhost", 9090)]
     actual = get_host_ports(service_setting)
     assert actual == expected
 
-    service_setting = ['localhost']
-    expected = [('localhost', None)]
+    service_setting = ["localhost"]
+    expected = [("localhost", None)]
     actual = get_host_ports(service_setting)
     assert actual == expected
 
-    service_setting = ['localhost:9090', 'localhost:9091']
+    service_setting = ["localhost:9090", "localhost:9091"]
     actual = get_host_ports(service_setting)
-    expected = [('localhost', 9090), ('localhost', 9091)]
+    expected = [("localhost", 9090), ("localhost", 9091)]
     assert actual == expected
 
-    service_setting = ['localhost:9090',' localhost:9091']
+    service_setting = ["localhost:9090", " localhost:9091"]
     actual = get_host_ports(service_setting)
-    expected = [('localhost', 9090), ('localhost', 9091)]
+    expected = [("localhost", 9090), ("localhost", 9091)]
     assert actual == expected
 
 
@@ -67,13 +64,13 @@ async def test_is_service_available(monkeypatch):
     with monkeypatch.context() as m:
 
         mock = AsyncMock(return_value=(Mock(), Mock()))
-        m.setattr(asyncio, 'open_connection', mock)
-        service_setting = ['https://localhost:8080', 'tls://otherhost:8080']
+        m.setattr(asyncio, "open_connection", mock)
+        service_setting = ["https://localhost:8080", "tls://otherhost:8080"]
         actual_result = await is_service_available(service_setting)
         assert actual_result is True
 
         mock = AsyncMock(side_effect=OSError)
-        m.setattr(asyncio, 'open_connection', mock)
-        service_setting = ['https://localhost:9090', 'tls://otherhost:8080']
+        m.setattr(asyncio, "open_connection", mock)
+        service_setting = ["https://localhost:9090", "tls://otherhost:8080"]
         actual_result = await is_service_available(service_setting)
         assert actual_result is False

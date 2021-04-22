@@ -6,8 +6,7 @@ Customizes the base LinuxForHealth workflow definition for FHIR resources.
 import logging
 import xworkflows
 from fhir.resources import construct_fhir_element
-from connect.exceptions import (FhirValidationError,
-                                MissingFhirResourceType)
+from connect.exceptions import FhirValidationError, MissingFhirResourceType
 from connect.workflows.core import CoreWorkflow
 
 
@@ -15,7 +14,8 @@ class FhirWorkflow(CoreWorkflow):
     """
     Implements a FHIR validation and storage workflow for LinuxForHealth.
     """
-    @xworkflows.transition('do_validate')
+
+    @xworkflows.transition("do_validate")
     def validate(self):
         """
         Overridden to validate the incoming FHIR message by instantiating a fhir.resources
@@ -25,16 +25,16 @@ class FhirWorkflow(CoreWorkflow):
         output: self.message as an instantiated and validated fhir.resources resource class.
         raises: MissingFhirResourceType, FhirValidationTypeError
         """
-        resource_type = self.message.get('resourceType')
-        logging.debug(f'FhirWorkflow.validate: resource type = {resource_type}')
+        resource_type = self.message.get("resourceType")
+        logging.debug(f"FhirWorkflow.validate: resource type = {resource_type}")
         if resource_type is None:
             raise MissingFhirResourceType()
 
         try:
             self.message = construct_fhir_element(resource_type, self.message)
-            self.data_format = f'FHIR-R4_{resource_type.upper()}'
+            self.data_format = f"FHIR-R4_{resource_type.upper()}"
         except LookupError as le:
             logging.exception(le)
             raise FhirValidationError(str(le))
 
-        logging.debug(f'FhirWorkflow.validate: validated resource = {resource_type}')
+        logging.debug(f"FhirWorkflow.validate: validated resource = {resource_type}")
