@@ -25,7 +25,7 @@ nkeys = "*"
 pytest = "*"
 pytest-asyncio = "*"
 flake8 = "*"
-black = "*"
+black = {extras = ["d"], version = "*"}
 pre-commit = "*"
 
 [requires]
