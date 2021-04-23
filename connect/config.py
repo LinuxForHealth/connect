@@ -22,6 +22,9 @@ host_name = socket.gethostname()
 nats_sync_subject = "EVENTS.sync"
 kafka_sync_topic = "LFH_SYNC"
 
+# set TRACE log level below DEBUG
+TRACE = 5
+
 
 class Settings(BaseSettings):
     """

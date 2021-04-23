@@ -15,7 +15,7 @@ from confluent_kafka import (
     TopicPartition,
 )
 from confluent_kafka.admin import AdminClient, NewTopic
-from connect.config import get_settings, kafka_sync_topic
+from connect.config import get_settings, kafka_sync_topic, TRACE
 from connect.exceptions import KafkaMessageNotFoundError, KafkaStorageError
 from threading import Thread
 from typing import Callable, List, Optional
@@ -187,7 +187,8 @@ class ConfluentAsyncKafkaConsumer:
             #     message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
 
             if message is not None:
-                logger.info(
+                logger.log(
+                    TRACE,
                     f"Found message for topic_name - {self.topic_name}, partition - {self.partition} "
                     f"and offset - {self.offset}. Invoking callback_method - {callback_method}"
                 )
@@ -286,7 +287,8 @@ class ConfluentAsyncKafkaListener:
             error_code = msg.error().code() if msg and msg.error() else None
             if error_code == KafkaError._PARTITION_EOF:
                 # End of partition event
-                logger.debug(
+                logger.log(
+                    TRACE,
                     f"Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}"
                 )
             elif error_code:
@@ -391,7 +393,8 @@ class KafkaCallback:
         else:
             self.kafka_status = "success"
             self.kafka_result = f"{msg.topic()}:{msg.partition()}:{msg.offset()}"
-            logger.debug(
+            logger.log(
+                TRACE,
                 f"Produced record to topic {msg.topic()} "
                 f"partition [{msg.partition()}] @ offset {msg.offset()}"
             )
