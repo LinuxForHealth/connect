@@ -70,7 +70,7 @@ async def nats_sync_event_handler(msg: Msg):
     data = msg.data.decode()
     logger.log(
         TRACE,
-        f"nats_sync_event_handler: received a message on {subject} {reply}: {data}"
+        f"nats_sync_event_handler: received a message on {subject} {reply}"
     )
 
     # if the message is from our local LFH, don't store in kafka
