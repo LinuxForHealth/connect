@@ -6,7 +6,7 @@ formatters:
 handlers:
   console:
     class: logging.StreamHandler
-    level: TRACE
+    level: INFO
     formatter: simple
     stream: ext://sys.stdout
 root:
@@ -14,6 +14,6 @@ root:
   handlers: [console]
 loggers:
   connect:
-    level: TRACE
+    level: INFO
   uvicorn:
     level: INFO
