@@ -190,7 +190,7 @@ class ConfluentAsyncKafkaConsumer:
                 logger.log(
                     TRACE,
                     f"Found message for topic_name - {self.topic_name}, partition - {self.partition} "
-                    f"and offset - {self.offset}. Invoking callback_method - {callback_method}"
+                    f"and offset - {self.offset}. Invoking callback_method - {callback_method}",
                 )
 
                 return await callback_method(message)
@@ -289,7 +289,7 @@ class ConfluentAsyncKafkaListener:
                 # End of partition event
                 logger.log(
                     TRACE,
-                    f"Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}"
+                    f"Listener: {msg.topic()} [{msg.partition()}] reached end, offset {msg.offset()}",
                 )
             elif error_code:
                 # other error
@@ -396,5 +396,5 @@ class KafkaCallback:
             logger.log(
                 TRACE,
                 f"Produced record to topic {msg.topic()} "
-                f"partition [{msg.partition()}] @ offset {msg.offset()}"
+                f"partition [{msg.partition()}] @ offset {msg.offset()}",
             )

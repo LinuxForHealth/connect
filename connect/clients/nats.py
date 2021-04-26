@@ -69,8 +69,7 @@ async def nats_sync_event_handler(msg: Msg):
     reply = msg.reply
     data = msg.data.decode()
     logger.log(
-        TRACE,
-        f"nats_sync_event_handler: received a message on {subject} {reply}"
+        TRACE, f"nats_sync_event_handler: received a message on {subject} {reply}"
     )
 
     # if the message is from our local LFH, don't store in kafka
@@ -78,7 +77,7 @@ async def nats_sync_event_handler(msg: Msg):
     if get_settings().connect_lfh_id == message["lfh_id"]:
         logger.log(
             TRACE,
-            "nats_sync_event_handler: detected local LFH message, not storing in kafka"
+            "nats_sync_event_handler: detected local LFH message, not storing in kafka",
         )
         return
 
@@ -90,7 +89,7 @@ async def nats_sync_event_handler(msg: Msg):
     )
     logger.log(
         TRACE,
-        f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}"
+        f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}",
     )
 
     # process the message into the local store
@@ -110,7 +109,7 @@ async def nats_sync_event_handler(msg: Msg):
     location = result["data_record_location"]
     logger.log(
         TRACE,
-        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}"
+        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}",
     )
 
 

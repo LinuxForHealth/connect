@@ -110,7 +110,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         logger.log(
             TRACE,
-            f"{self.__class__.__name__}: incoming message type = {type(self.message)}"
+            f"{self.__class__.__name__}: incoming message type = {type(self.message)}",
         )
 
         if hasattr(self.message, "dict"):
@@ -142,7 +142,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         storage_delta = datetime.now() - storage_start
         logger.log(
             TRACE,
-            f" {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}"
+            f" {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}",
         )
         total_time = datetime.utcnow() - self.start_time
         message["elapsed_storage_time"] = storage_delta.total_seconds()
@@ -244,7 +244,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         logger.log(
             TRACE,
-            f"{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}"
+            f"{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}",
         )
         message["data_record_location"] = kafka_cb.kafka_result
         error = LFHError(**message).json()

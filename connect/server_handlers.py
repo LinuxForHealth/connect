@@ -28,9 +28,10 @@ def configure_logging() -> None:
     Logging configuration is parsed from the setting/environment variable LOGGING_CONFIG_PATH, if present.
     If LOGGING_CONFIG_PATH is not found, a basic config is applied.
     """
+
     def apply_basic_config():
         """Applies a basic config for console logging"""
-        logging.addLevelName(TRACE, 'TRACE')
+        logging.addLevelName(TRACE, "TRACE")
         logging.basicConfig(
             stream=sys.stdout,
             level=logging.INFO,
