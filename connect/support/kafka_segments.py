@@ -117,5 +117,5 @@ def _purge_segments():
         last_accessed = _message_store[identifier]["last_accessed"]
         current_time = time.time() - settings.kafka_segments_purge_timeout
         if last_accessed < current_time:
-            logger.info(f"Purging message segments with identifier: {identifier}")
+            logger.log(TRACE, f"Purging message segments with identifier: {identifier}")
             del _message_store[identifier]

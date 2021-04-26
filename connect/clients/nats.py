@@ -9,7 +9,7 @@ import ssl
 from asyncio import get_running_loop
 from nats.aio.client import Client as NatsClient, Msg
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import get_settings, nats_sync_subject, kafka_sync_topic
+from connect.config import get_settings, nats_sync_subject, kafka_sync_topic, TRACE
 from connect.support.encoding import decode_to_dict
 from typing import Callable, List, Optional
 
@@ -68,15 +68,16 @@ async def nats_sync_event_handler(msg: Msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    logger.debug(
-        f"nats_sync_event_handler: received a message on {subject} {reply}: {data}"
+    logger.log(
+        TRACE, f"nats_sync_event_handler: received a message on {subject} {reply}"
     )
 
     # if the message is from our local LFH, don't store in kafka
     message = json.loads(data)
     if get_settings().connect_lfh_id == message["lfh_id"]:
-        logger.debug(
-            "nats_sync_event_handler: detected local LFH message, not storing in kafka"
+        logger.log(
+            TRACE,
+            "nats_sync_event_handler: detected local LFH message, not storing in kafka",
         )
         return
 
@@ -86,8 +87,9 @@ async def nats_sync_event_handler(msg: Msg):
     await kafka_producer.produce_with_callback(
         kafka_sync_topic, data, on_delivery=kafka_cb.get_kafka_result
     )
-    logger.debug(
-        f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}"
+    logger.log(
+        TRACE,
+        f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}",
     )
 
     # process the message into the local store
@@ -105,8 +107,9 @@ async def nats_sync_event_handler(msg: Msg):
 
     result = await workflow.run(None)
     location = result["data_record_location"]
-    logger.debug(
-        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}"
+    logger.log(
+        TRACE,
+        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}",
     )
 
 
