@@ -7,7 +7,7 @@ LinuxForHealth Connectors for Inbound Data Processing
 | 🚨 Bug Reports | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/labels/bug) |  
 | 🎁 Feature Requests & Ideas | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/issues)  | 
 | ❔ Questions | [LFH Slack Channel](https://ibm-watsonhealth.slack.com/archives/G01639WJEMA) |   
-| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/connect/projects/1) |
+| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/connect/projects/1#workspaces/linux-for-health-5ee2d7cecec5920ec43ae1cb/board?notFullScreen=false&repos=337464130) |
 
 
 ## Getting Started
