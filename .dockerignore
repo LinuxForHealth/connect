@@ -3,6 +3,6 @@
 
 # now include specific items as our inclusions < our exclusions
 !connect
-!local-certs
+!local-config
 !Pipfile.lock
 !logging.yaml

@@ -12,7 +12,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APPLICATION_BUILD_CERT_PATH: ./local-certs
+        APPLICATION_BUILD_CERT_PATH: ./local-config/certs
     profiles: ["deployment"]
     networks:
       - main
@@ -22,18 +22,20 @@ services:
     environment:
       APPLICATION_CERT_PATH: /usr/local/share/ca-certificates
       KAFKA_BOOTSTRAP_SERVERS: '["kafka:9092"]'
+      NATS_NK_FILE: /home/lfh/connect/local-certs/nats-server.nk
       NATS_SERVERS: '["tls://nats-server:4222"]'
   nats-server:
     networks:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
-      - ./local-certs:/certs
+      - ./local-config/nats:/conf
+      - ./local-config/certs:/certs
     command: server --tls \
       --tlscert=/certs/nats-server.pem \
       --tlskey=/certs/nats-server.key \
       --tlscacert=/certs/rootCA.pem \
-      --config=/certs/nats-server.conf
+      --config=/conf/nats-server.conf
     ports:
       - "4222:4222"
   zookeeper:
