@@ -99,9 +99,9 @@ All done! ✨ 🍰 ✨
 
 #### Generate trusted local certs for connect and supporting services
 ```shell
-./local-certs/install-certificates.sh
+./local-config/install-certificates.sh
 ```
-For more information on connect and HTTPS/TLS support, please refer to [the local cert readme](./local-certs/README.md).
+For more information on connect and HTTPS/TLS support, please refer to [the local cert readme](local-config/README.md).
 
 
 #### Start connect and supporting services
@@ -124,7 +124,7 @@ If the `APPLICATION_CERT_PATH` build argument is not provided, a default value o
 
 #### Build the image with Docker CLI
 ```shell
-docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-certs/ -t linuxforhealth/connect:0.42.0 .
+docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-config/ -t linuxforhealth/connect:0.42.0 .
 ```
 
 #### Build the image with Docker-Compose

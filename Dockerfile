@@ -1,6 +1,6 @@
 FROM alpine:3.13 AS builder
 
-ARG APPLICATION_BUILD_CERT_PATH="./local-certs"
+ARG APPLICATION_BUILD_CERT_PATH="./local-config/certs"
 ARG LIBRDKAFKA_VERSION="v1.6.1"
 
 RUN apk update
@@ -46,7 +46,7 @@ USER lfh
 RUN mkdir -p /home/lfh/connect
 WORKDIR /home/lfh/connect
 COPY --chown=lfh:lfh ./connect ./connect
-COPY --chown=lfh:lfh ./local-certs/nats-server.nk ./local-certs/
+COPY --chown=lfh:lfh ./local-config/nats/nats-server.nk ./local-certs/
 COPY --chown=lfh:lfh Pipfile.lock logging.yaml ./
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync

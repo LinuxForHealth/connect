@@ -9,7 +9,7 @@ The LinuxForHealth container-support/certs directory contains the scripts requir
 Run the following commands to generate and install the LinuxForHealth certs.
 
 ```shell script
-cd local-certs
+cd local-config
 ./clean.sh
 ./mk-certs.sh
 cp *.jks ../../src/main/resources

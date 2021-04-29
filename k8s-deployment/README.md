@@ -13,9 +13,9 @@ Deploying LinuxForHealth Connect on a Kubernetes cluster requires the following:
 
 #### Generate trusted local certs for Connect and supporting services for your kubernetes environment
 ```shell
-./local-certs/install-certificates.sh
+./local-config/install-certificates.sh
 ```
-For more information on Connect and HTTPS/TLS support, please refer to [the local cert readme](../local-certs/README.md).
+For more information on Connect and HTTPS/TLS support, please refer to [the local cert readme](../local-config/README.md).
 
 ##### Create configmaps for connect
 ```shell

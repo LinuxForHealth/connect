@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # uninstall-certificates.sh
 # removes the LinuxForHealth CA and other trusted certificates from the local trust store and file system
-SCRIPT_DIRECTORY=$(dirname "$0")
+OUTPUT_DIRECTORY=$(dirname "$0")/certs
 
 mkcert -uninstall
-rm "$SCRIPT_DIRECTORY"/*.pem "$SCRIPT_DIRECTORY"/*.key
+rm "$OUTPUT_DIRECTORY"/*.pem "$OUTPUT_DIRECTORY"/*.key
