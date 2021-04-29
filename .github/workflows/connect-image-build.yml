@@ -16,10 +16,8 @@ jobs:
       - name: Create Local Config Placeholders
         run: |
           mkdir -p ./local-config/certs
-          mkdir -p ./local-config/nats
           touch ./local-config/certs/placeholder.pem
           touch ./local-config/certs/placeholder.key
-          touch ./local-config/nats/nats-server.nk
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Cache Docker layers
