@@ -12,7 +12,7 @@ from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import nats_sync_subject, TRACE
+from connect.config import nats_sync_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
@@ -108,8 +108,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             the original object instance in the data field as a byte string
         """
 
-        logger.log(
-            TRACE,
+        logger.trace(
             f"{self.__class__.__name__}: incoming message type = {type(self.message)}",
         )
 
@@ -140,8 +139,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         )
 
         storage_delta = datetime.now() - storage_start
-        logger.log(
-            TRACE,
+        logger.trace(
             f" {self.__class__.__name__} persist: stored resource location = {kafka_cb.kafka_result}",
         )
         total_time = datetime.utcnow() - self.start_time
@@ -222,7 +220,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         :param error: The error message tp be stored in kafka
         :return: The json string for the error message stored in Kafka
         """
-        logger.log(TRACE, f"{self.__class__.__name__} error: incoming error = {error}")
+        logger.trace(f"{self.__class__.__name__} error: incoming error = {error}")
         data_str = json.dumps(self.message, cls=ConnectEncoder)
         data = json.loads(data_str)
 
@@ -241,9 +239,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             error.json(),
             on_delivery=kafka_cb.get_kafka_result,
         )
-
-        logger.log(
-            TRACE,
+        # trace log
+        logger.trace(
             f"{self.__class__.__name__} error: stored resource location = {kafka_cb.kafka_result}",
         )
         message["data_record_location"] = kafka_cb.kafka_result
@@ -260,7 +257,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.start_time = datetime.utcnow()
 
         try:
-            logger.log(TRACE, f"Running {self.__class__.__name__}")
+            # trace log
+            logger.trace(f"Running {self.__class__.__name__}")
             self.validate()
             self.transform()
             await self.persist()

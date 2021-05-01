@@ -6,7 +6,7 @@ import yaml
 from yaml import YAMLError
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from connect.config import get_settings, TRACE
+from connect.config import get_settings
 from connect.clients.kafka import (
     get_kafka_producer,
     create_kafka_listeners,
@@ -22,6 +22,21 @@ from connect.clients.nats import (
 logger = logging.getLogger(__name__)
 
 
+def add_trace_logging():
+    """
+    Adds trace level logging support to logging and the root logging class
+    """
+
+    def trace(self, message, *args, **kwargs):
+        """
+        Generates a TRACE log record
+        """
+        self.log(5, message, *args, **kwargs)
+
+    logging.addLevelName(5, "TRACE")
+    logging.getLoggerClass().trace = trace
+
+
 def configure_logging() -> None:
     """
     Configures logging for the connect application.
@@ -31,7 +46,7 @@ def configure_logging() -> None:
 
     def apply_basic_config():
         """Applies a basic config for console logging"""
-        logging.addLevelName(TRACE, "TRACE")
+        add_trace_logging()
         logging.basicConfig(
             stream=sys.stdout,
             level=logging.INFO,
@@ -48,6 +63,7 @@ def configure_logging() -> None:
                 logger.info(
                     f"Loaded logging configuration from {settings.connect_logging_config_path}"
                 )
+                add_trace_logging()
             except YAMLError as e:
                 apply_basic_config()
                 logger.error(f"Unable to load logging configuration from file: {e}.")
