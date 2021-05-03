@@ -6,7 +6,6 @@ Customizes the base LinuxForHealth workflow definition for FHIR resources.
 import logging
 import xworkflows
 from fhir.resources import construct_fhir_element
-from connect.config import TRACE
 from connect.exceptions import FhirValidationError, MissingFhirResourceType
 from connect.workflows.core import CoreWorkflow
 
@@ -30,7 +29,7 @@ class FhirWorkflow(CoreWorkflow):
         raises: MissingFhirResourceType, FhirValidationTypeError
         """
         resource_type = self.message.get("resourceType")
-        logger.log(TRACE, f"FhirWorkflow.validate: resource type = {resource_type}")
+        logger.trace(f"FhirWorkflow.validate: resource type = {resource_type}")
         if resource_type is None:
             raise MissingFhirResourceType()
 
