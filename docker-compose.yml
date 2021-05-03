@@ -12,7 +12,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APPLICATION_BUILD_CERT_PATH: ./local-config/certs
+        CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
     profiles: ["deployment"]
     networks:
       - main
@@ -30,11 +30,10 @@ services:
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
       - ./local-config/nats:/conf
-      - ./local-config/certs:/certs
     command: server --tls \
-      --tlscert=/certs/nats-server.pem \
-      --tlskey=/certs/nats-server.key \
-      --tlscacert=/certs/rootCA.pem \
+      --tlscert=/conf/nats-server.pem \
+      --tlskey=/conf/nats-server.key \
+      --tlscacert=/conf/rootCA.pem \
       --config=/conf/nats-server.conf
     ports:
       - "4222:4222"

@@ -1,6 +1,6 @@
 FROM alpine:3.13 AS builder
 
-ARG APPLICATION_BUILD_CERT_PATH="./local-config/certs"
+ARG CONNECT_CONFIG_PATH_BUILD_ARG="./local-config/connect"
 ARG LIBRDKAFKA_VERSION="v1.6.1"
 
 RUN apk update
@@ -16,8 +16,8 @@ RUN \
 
 # copy certificates and keys
 WORKDIR /usr/local/share/ca-certificates/
-COPY $APPLICATION_BUILD_CERT_PATH/*.pem ./
-COPY $APPLICATION_BUILD_CERT_PATH/*.key ./
+COPY $CONNECT_CONFIG_PATH_BUILD_ARG/*.pem ./
+COPY $CONNECT_CONFIG_PATH_BUILD_ARG/*.key ./
 RUN chmod 644 *.pem *.key
 
 FROM python:3.9.4-alpine3.13
