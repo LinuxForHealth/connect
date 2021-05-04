@@ -4,12 +4,18 @@ NATS message subscribers and message handlers
 """
 import json
 import logging
-import connect.workflows.core as core
 import ssl
+
+import connect.workflows.core as core
 from asyncio import get_running_loop
 from nats.aio.client import Client as NatsClient, Msg
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import get_settings, nats_sync_subject, kafka_sync_topic
+from connect.config import (
+    get_settings,
+    get_ssl_context,
+    nats_sync_subject,
+    kafka_sync_topic,
+)
 from connect.support.encoding import decode_to_dict
 from typing import Callable, List, Optional
 import os
@@ -35,9 +41,9 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    nats_client = await get_nats_client()
+    client = await get_nats_client()
     await subscribe(
-        nats_client,
+        client,
         nats_sync_subject,
         nats_sync_event_handler,
         "".join(settings.nats_servers),
@@ -45,8 +51,8 @@ async def start_sync_event_subscribers():
 
     # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
-        nats_client = await create_nats_client(server)
-        await subscribe(nats_client, nats_sync_subject, nats_sync_event_handler, server)
+        client = await create_nats_client(server)
+        await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
 
 
 async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
@@ -145,22 +151,17 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     """
     settings = get_settings()
 
-    ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-    ssl_ctx.load_verify_locations(
-        os.path.join(settings.nats_config_directory, settings.nats_rootCA_file)
-    )
-
-    nats_client = NatsClient()
-    await nats_client.connect(
+    client = NatsClient()
+    await client.connect(
         servers=servers,
         nkeys_seed=os.path.join(
             settings.connect_config_directory, settings.nats_nk_file
         ),
         loop=get_running_loop(),
-        tls=ssl_ctx,
+        tls=get_ssl_context(ssl.Purpose.SERVER_AUTH),
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts,
     )
     logger.debug(f"Created NATS client for servers = {servers}")
 
-    return nats_client
+    return client

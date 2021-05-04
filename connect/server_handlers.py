@@ -97,6 +97,12 @@ def log_configuration() -> None:
     logger.info(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
     logger.info("=" * header_footer_length)
 
+    logger.debug(f"CONNECT_CERT_DIRECTORY: {settings.connect_cert_directory}")
+    logger.debug(f"CONNECT_CONFIG_DIRECTORY: {settings.connect_config_directory}")
+    logger.debug(f"CONNECT_CERT: {settings.connect_cert_name}")
+    logger.debug(f"CONNECT_CERT_KEY: {settings.connect_cert_key_name}")
+    logger.debug("=" * header_footer_length)
+
     logger.debug(f"KAFKA_BOOTSTRAP_SERVERS: {settings.kafka_bootstrap_servers}")
     logger.debug(f"KAFKA_PRODUCER_ACKS: {settings.kafka_producer_acks}")
     logger.debug("=" * header_footer_length)
@@ -104,13 +110,6 @@ def log_configuration() -> None:
     logger.debug(f"NATS_SERVERS: {settings.nats_servers}")
     logger.debug(f"NATS_ALLOW_RECONNECT: {settings.nats_allow_reconnect}")
     logger.debug(f"NATS_MAX_RECONNECT_ATTEMPTS: {settings.nats_max_reconnect_attempts}")
-    logger.debug(f"NATS_ROOTCA_FILE: {settings.nats_rootCA_file}")
-    logger.debug(f"NATS_CERT_FILE: {settings.nats_cert_file}")
-    logger.debug(f"NATS_KEY_FILE: {settings.nats_key_file}")
-    logger.debug("=" * header_footer_length)
-
-    logger.debug(f"CONNECT_CERT: {settings.connect_cert}")
-    logger.debug(f"CONNECT_CERT_KEY: {settings.connect_cert_key}")
     logger.debug("=" * header_footer_length)
 
     logger.info("*" * header_footer_length)

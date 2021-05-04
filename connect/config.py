@@ -11,13 +11,13 @@ Example:
 """
 from pydantic import BaseSettings
 from functools import lru_cache
-from pathlib import Path
 from typing import List
 from datetime import timedelta
 import os
 from os.path import dirname, abspath
 import certifi
 import socket
+import ssl
 
 host_name = socket.gethostname()
 nats_sync_subject = "EVENTS.sync"
@@ -66,17 +66,10 @@ class Settings(BaseSettings):
     kafka_listener_timeout: float = 1.0
     kafka_topics_timeout: float = 0.5
 
-    # nats
-    nats_config_directory: str = os.path.join(
-        Path(__file__).parents[1], "local-config/nats"
-    )
     nats_servers: List[str] = ["tls://localhost:4222"]
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
-    nats_rootCA_file: str = "rootCA.pem"
-    nats_cert_file: str = "nats-server.pem"
-    nats_key_file: str = "nats-server.key"
     nats_nk_file: str = "nats-server.nk"
 
     class Config:
@@ -88,3 +81,12 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Returns the settings instance"""
     return Settings()
+
+
+@lru_cache()
+def get_ssl_context(ssl_purpose: ssl.Purpose) -> ssl.SSLContext:
+    """Returns a SSL Context configured for server auth with the connect certificate path"""
+    settings = get_settings()
+    return ssl.create_default_context(
+        ssl_purpose, capath=settings.connect_cert_directory
+    )
