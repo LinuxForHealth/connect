@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import List
 from datetime import timedelta
 import os
+from os.path import dirname, abspath
 import certifi
 import socket
 
@@ -28,17 +29,27 @@ class Settings(BaseSettings):
     connect application settings
     """
 
-    # First preference to a defined env var 'APPLICATION_CERT_PATH'
-    application_cert_path: str = os.getenv(
-        "APPLICATION_CERT_PATH",
-        os.path.join(Path(__file__).parents[1], "local-config/certs"),
-    )
-    nats_config_path: str = os.path.join(Path(__file__).parents[1], "local-config/nats")
+    # uvicorn settings
+    uvicorn_app: str = "connect.asgi:app"
+    uvicorn_host: str = "0.0.0.0"
+    uvicorn_port: int = 5000
+    uvicorn_reload: bool = False
 
     # general certificate settings
     # path to "standard" CA certificates
     certificate_authority_path: str = certifi.where()
     certificate_verify: bool = False
+
+    # Connect
+    connect_cert_directory: str = "/usr/local/share/ca-certificates"
+    connect_cert_name: str = "lfh.pem"
+    connect_cert_key_name: str = "lfh.key"
+    connect_config_directory: str = "/home/lfh/connect/config"
+    connect_lfh_id: str = host_name
+    connect_logging_config_path: str = "logging.yaml"
+    # external FHIR server URL or None
+    # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
+    connect_external_fhir_server: str = None
 
     # kakfa
     kafka_bootstrap_servers: List[str] = ["localhost:9094"]
@@ -56,32 +67,21 @@ class Settings(BaseSettings):
     kafka_topics_timeout: float = 0.5
 
     # nats
+    nats_config_directory: str = os.path.join(
+        Path(__file__).parents[1], "local-config/nats"
+    )
     nats_servers: List[str] = ["tls://localhost:4222"]
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
-    nats_rootCA_file: str = application_cert_path + "/rootCA.pem"
-    nats_cert_file: str = application_cert_path + "/nats-server.pem"
-    nats_key_file: str = application_cert_path + "/nats-server.key"
-    nats_nk_file: str = nats_config_path + "/nats-server.nk"
-
-    # Connect
-    connect_cert: str = application_cert_path + "/lfh.pem"
-    connect_cert_key: str = application_cert_path + "/lfh.key"
-    connect_lfh_id: str = host_name
-    connect_logging_config_path: str = "logging.yaml"
-    # external FHIR server URL or None
-    # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
-    connect_external_fhir_server: str = None
-
-    # uvicorn settings
-    uvicorn_app: str = "connect.asgi:app"
-    uvicorn_host: str = "0.0.0.0"
-    uvicorn_port: int = 5000
-    uvicorn_reload: bool = False
+    nats_rootCA_file: str = "rootCA.pem"
+    nats_cert_file: str = "nats-server.pem"
+    nats_key_file: str = "nats-server.key"
+    nats_nk_file: str = "nats-server.nk"
 
     class Config:
         case_sensitive = False
+        env_file = os.path.join(dirname(dirname(abspath(__file__))), ".env")
 
 
 @lru_cache()

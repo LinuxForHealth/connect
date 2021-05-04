@@ -19,6 +19,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
+import os
 
 
 def get_app() -> FastAPI:
@@ -56,8 +57,12 @@ if __name__ == "__main__":
         "log_config": None,
         "port": settings.uvicorn_port,
         "reload": settings.uvicorn_reload,
-        "ssl_keyfile": settings.connect_cert_key,
-        "ssl_certfile": settings.connect_cert,
+        "ssl_keyfile": os.path.join(
+            settings.connect_cert_directory, settings.connect_cert_key_name
+        ),
+        "ssl_certfile": os.path.join(
+            settings.connect_cert_directory, settings.connect_cert_name
+        ),
     }
 
     uvicorn.run(**uvicorn_params)
