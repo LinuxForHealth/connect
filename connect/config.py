@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import List
 from datetime import timedelta
 import os
+from os.path import dirname, abspath
 import certifi
 import socket
 
@@ -28,10 +29,8 @@ class Settings(BaseSettings):
     connect application settings
     """
 
-    # First preference to a defined env var 'APPLICATION_CERT_PATH'
-    application_cert_path: str = os.getenv(
-        "APPLICATION_CERT_PATH",
-        os.path.join(Path(__file__).parents[1], "local-config/certs"),
+    application_cert_path: str = os.path.join(
+        Path(__file__).parents[1], "local-config/certs"
     )
     nats_config_path: str = os.path.join(Path(__file__).parents[1], "local-config/nats")
 
@@ -82,6 +81,7 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = False
+        env_file = os.path.join(dirname(dirname(abspath(__file__))), ".env")
 
 
 @lru_cache()
