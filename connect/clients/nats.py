@@ -34,9 +34,9 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    nats_client = await get_nats_client()
+    client = await get_nats_client()
     await subscribe(
-        nats_client,
+        client,
         nats_sync_subject,
         nats_sync_event_handler,
         "".join(settings.nats_servers),
@@ -44,8 +44,8 @@ async def start_sync_event_subscribers():
 
     # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
-        nats_client = await create_nats_client(server)
-        await subscribe(nats_client, nats_sync_subject, nats_sync_event_handler, server)
+        client = await create_nats_client(server)
+        await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
 
 
 async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
@@ -147,8 +147,8 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
     ssl_ctx.load_verify_locations(settings.nats_rootCA_file)
 
-    nats_client = NatsClient()
-    await nats_client.connect(
+    client = NatsClient()
+    await client.connect(
         servers=servers,
         nkeys_seed=settings.nats_nk_file,
         loop=get_running_loop(),
@@ -156,6 +156,7 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts,
     )
+    logger.info("Created NATS client")
     logger.debug(f"Created NATS client for servers = {servers}")
 
-    return nats_client
+    return client
