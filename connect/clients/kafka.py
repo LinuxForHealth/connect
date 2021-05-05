@@ -6,7 +6,7 @@ Service instances are bound to data attributes and accessed through "get" functi
 """
 import logging
 import time
-from asyncio import get_event_loop, get_running_loop
+from asyncio import get_running_loop
 from confluent_kafka import (
     Producer,
     Consumer,
@@ -36,11 +36,13 @@ class ConfluentAsyncKafkaProducer:
     """
 
     def __init__(self, configs, loop=None):
-        self._loop = loop or get_event_loop()
+        self._loop = loop or get_running_loop()
         self._producer = Producer(configs)
         self._cancelled = False
         self._poll_thread = Thread(target=self._poll_loop)
         self._poll_thread.start()
+        logger.info("Kafka Producer Started")
+        logger.debug(f"Kafka Producer config = {configs}")
 
     def _poll_loop(self):
         while not self._cancelled:
@@ -58,6 +60,7 @@ class ConfluentAsyncKafkaProducer:
 
         def ack(err, msg):
             if err:
+                logger.error(f"Error producing Kafka Message {err}")
                 self._loop.call_soon_threadsafe(
                     result.set_exception, KafkaException(err)
                 )
@@ -76,6 +79,7 @@ class ConfluentAsyncKafkaProducer:
 
         def ack(err, msg):
             if err:
+                logger.error(f"Error producing Kafka Message {err}")
                 self._loop.call_soon_threadsafe(
                     result.set_exception, KafkaException(err)
                 )
@@ -131,6 +135,8 @@ class ConfluentAsyncKafkaConsumer:
         self.topic_name = topic_name
         self.partition = partition
         self.offset = offset
+        logger.info("Kafka Consumer Started")
+        logger.debug(f"Kafka Consumer config = {consumer_conf}")
 
     async def get_message_from_kafka_cb(self, callback_method) -> None:
         """
@@ -265,11 +271,14 @@ class ConfluentAsyncKafkaListener:
         self.poll_yield = params["poll_yield"]
         self.topics = None
         self.callback = None
-        self._loop = loop or get_event_loop()
+        self._loop = loop or get_running_loop()
         self._consumer = Consumer(configs)
         self._cancelled = False
         self._poll_thread = Thread(target=self._poll_loop)
         self._poll_thread.start()
+        logger.info("Kafka Listener Started")
+        logger.debug(f"Kafka Listener Config = {configs}")
+        logger.debug(f"Kafka Listener Params = {params}")
 
     def _poll_loop(self):
         while not self._cancelled:
