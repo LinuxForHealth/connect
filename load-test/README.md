@@ -19,14 +19,13 @@ cd connect/load-test
 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
 ```
 ### Example 2
-By default, this load test POSTs to /fhir using randomly selected FHIR resources from connect/load-test/messages/fhir[1...NUM_FILES].json files.  You can replace the contents of these fhir*.json files with your own FHIR resources or add fhir resource files to connect/load-test/messages using the same naming convention.  To separate FHIR resources, place them in separate files.  To change the number of files used by the load test (default = 3):
+By default, this load test POSTs to /fhir using randomly selected FHIR resources from connect/load-test/messages/fhir[1...NUM_FILES].json files.  You can replace the contents of these fhir*.json files with your own FHIR resources or add fhir resource files to connect/load-test/messages using the same naming convention.  To separate FHIR resources, place them in separate files.  To change the number of files used by the load test (default = 2):
 ```shell
 cd connect/load-test
-NUM_FILES=2 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
+NUM_FILES=1 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
 ```
 Result:  
-Loading message file = ./messages/fhir1.json  
-Loading message file = ./messages/fhir2.json
+Loading message file = ./messages/fhir1.json
 
 ### Example 3
 To use the locust UI to run load tests, run locust from the command line:
