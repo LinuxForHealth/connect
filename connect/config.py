@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     connect_external_fhir_server: str = None
 
     # kakfa
-    kafka_bootstrap_servers: List[str] = ["localhost:9094"]
+    kafka_bootstrap_servers: List[str] = ["kafka:9092"]
     kafka_segments_purge_timeout: float = timedelta(minutes=10).total_seconds()
     kafka_message_chunk_size: int = 900 * 1024  # 900 KB chunk_size
     kafka_producer_acks: str = "all"
@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     kafka_listener_timeout: float = 1.0
     kafka_topics_timeout: float = 0.5
 
-    nats_servers: List[str] = ["tls://localhost:4222"]
+    nats_servers: List[str] = ["tls://nats-server:4222"]
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10

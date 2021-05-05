@@ -12,6 +12,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        CONNECT_CERT_PATH_BUILD_ARG: ./local-config/connect
         CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
     profiles: ["deployment"]
     networks:
@@ -19,11 +20,6 @@ services:
     image: linuxforhealth/connect:0.42.0
     ports:
       - "5000:5000"
-    environment:
-      APPLICATION_CERT_PATH: /usr/local/share/ca-certificates
-      KAFKA_BOOTSTRAP_SERVERS: '["kafka:9092"]'
-      NATS_NK_FILE: /home/lfh/connect/local-certs/nats-server.nk
-      NATS_SERVERS: '["tls://nats-server:4222"]'
   nats-server:
     networks:
       - main

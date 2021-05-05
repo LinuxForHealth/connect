@@ -4,9 +4,10 @@ kafka.py
 Client services used to support internal and external transactions.
 Service instances are bound to data attributes and accessed through "get" functions.
 """
+import asyncio
 import logging
 import time
-from asyncio import get_event_loop, get_running_loop
+from asyncio import get_running_loop
 from confluent_kafka import (
     Producer,
     Consumer,
@@ -36,11 +37,13 @@ class ConfluentAsyncKafkaProducer:
     """
 
     def __init__(self, configs, loop=None):
-        self._loop = loop or get_event_loop()
+        self._loop = loop or asyncio.get_running_loop()
         self._producer = Producer(configs)
         self._cancelled = False
         self._poll_thread = Thread(target=self._poll_loop)
         self._poll_thread.start()
+        logger.info(f"Created Kafka Producer")
+        logger.debug(f"Kafka Producer configs = {configs}")
 
     def _poll_loop(self):
         while not self._cancelled:
@@ -131,6 +134,8 @@ class ConfluentAsyncKafkaConsumer:
         self.topic_name = topic_name
         self.partition = partition
         self.offset = offset
+        logger.info(f"Created Kafka Consumer")
+        logger.debug(f"Kafka Consumer configs = {consumer_conf}")
 
     async def get_message_from_kafka_cb(self, callback_method) -> None:
         """
@@ -265,11 +270,15 @@ class ConfluentAsyncKafkaListener:
         self.poll_yield = params["poll_yield"]
         self.topics = None
         self.callback = None
-        self._loop = loop or get_event_loop()
+        self._loop = loop or get_running_loop()
         self._consumer = Consumer(configs)
         self._cancelled = False
         self._poll_thread = Thread(target=self._poll_loop)
         self._poll_thread.start()
+
+        logger.info(f"Created Kafka Listener")
+        logger.debug(f"Kafka Listener configs = {configs}")
+        logger.debug(f"Kafka Listener params = {params}")
 
     def _poll_loop(self):
         while not self._cancelled:
@@ -386,7 +395,9 @@ class KafkaCallback:
         """
         if err is not None:
             self.kafka_status = "error"
-            logging.debug(self.kafka_status)
+            logging.error(
+                f"Running callback - fetching result - Kafka Error Status {self.kafka_status}"
+            )
             raise KafkaStorageError(f"Failed to deliver message: {str(msg)} {str(err)}")
         else:
             self.kafka_status = "success"

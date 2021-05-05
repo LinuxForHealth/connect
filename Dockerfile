@@ -1,6 +1,5 @@
 FROM alpine:3.13 AS builder
 
-ARG CONNECT_CONFIG_PATH_BUILD_ARG="./local-config/connect"
 ARG LIBRDKAFKA_VERSION="v1.6.1"
 
 RUN apk update
@@ -14,13 +13,10 @@ RUN \
      cd /usr/src/librdkafka && \
      curl -LfsS https://github.com/edenhill/librdkafka/archive/${LIBRDKAFKA_VERSION}.tar.gz | tar xvzf - --strip-components=1
 
-# copy certificates and keys
-WORKDIR /usr/local/share/ca-certificates/
-COPY $CONNECT_CONFIG_PATH_BUILD_ARG/*.pem ./
-COPY $CONNECT_CONFIG_PATH_BUILD_ARG/*.key ./
-RUN chmod 644 *.pem *.key
-
 FROM python:3.9.4-alpine3.13
+
+ARG CONNECT_CERT_PATH_BUILD_ARG="./local-config/connect"
+ARG CONNECT_CONFIG_PATH_BUILD_ARG="./local-config/connect"
 
 RUN apk update && \
     apk add --no-cache --virtual .dev-packages build-base curl bash
@@ -35,7 +31,11 @@ RUN cd /usr/src/librdkafka && \
      rm -rf /usr/src/librdkafka
 
 # install certificates
-COPY --from=builder /usr/local/share/ca-certificates /usr/local/share/ca-certificates
+# copy certificates and keys
+WORKDIR /usr/local/share/ca-certificates/
+COPY $CONNECT_CERT_PATH_BUILD_ARG/*.pem ./
+COPY $CONNECT_CERT_PATH_BUILD_ARG/*.key ./
+RUN chmod 644 *.pem *.key
 RUN update-ca-certificates
 
 # configure the connect app
@@ -43,11 +43,14 @@ RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 
 USER lfh
 
-RUN mkdir -p /home/lfh/connect
 WORKDIR /home/lfh/connect
-COPY --chown=lfh:lfh ./connect ./connect
-COPY --chown=lfh:lfh ./local-config/nats/nats-server.nk ./local-certs/
+# copy config files
+RUN mkdir config
+COPY --chown=lfh:lfh $CONNECT_CERT_PATH_BUILD_ARG/nats-server.nk ./config/
 COPY --chown=lfh:lfh Pipfile.lock logging.yaml ./
+
+# configure application
+COPY --chown=lfh:lfh ./connect ./connect
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync
 

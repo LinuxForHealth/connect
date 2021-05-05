@@ -4,9 +4,8 @@ NATS message subscribers and message handlers
 """
 import json
 import logging
-import ssl
-
 import connect.workflows.core as core
+import ssl
 from asyncio import get_running_loop
 from nats.aio.client import Client as NatsClient, Msg
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
@@ -162,6 +161,7 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts,
     )
+    logger.info("Created NATS client")
     logger.debug(f"Created NATS client for servers = {servers}")
 
     return client
