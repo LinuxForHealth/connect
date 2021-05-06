@@ -42,8 +42,8 @@ class Settings(BaseSettings):
 
     # Connect
     connect_cert_directory: str = "/usr/local/share/ca-certificates"
-    connect_cert_name: str = "lfh.pem"
-    connect_cert_key_name: str = "lfh.key"
+    connect_cert_name: str = "lfh-connect.pem"
+    connect_cert_key_name: str = "lfh-connect.key"
     connect_config_directory: str = "/home/lfh/connect/config"
     connect_lfh_id: str = host_name
     connect_logging_config_path: str = "logging.yaml"
@@ -87,6 +87,9 @@ def get_settings() -> Settings:
 def get_ssl_context(ssl_purpose: ssl.Purpose) -> ssl.SSLContext:
     """Returns a SSL Context configured for server auth with the connect certificate path"""
     settings = get_settings()
-    return ssl.create_default_context(
-        ssl_purpose, capath=settings.connect_cert_directory
+    ssl_context = ssl.create_default_context(ssl_purpose)
+    ssl_context.load_verify_locations(
+        cafile=settings.certificate_authority_path,
+        capath=settings.connect_cert_directory,
     )
+    return ssl_context

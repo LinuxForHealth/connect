@@ -27,9 +27,8 @@ services:
     volumes:
       - ./local-config/nats:/conf
     command: server --tls \
-      --tlscert=/conf/nats-server.pem \
-      --tlskey=/conf/nats-server.key \
-      --tlscacert=/conf/rootCA.pem \
+      --tlscert=/conf/lfh-nats-server.pem \
+      --tlskey=/conf/lfh-nats-server.key \
       --config=/conf/nats-server.conf
     ports:
       - "4222:4222"

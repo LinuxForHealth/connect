@@ -19,7 +19,11 @@ ARG CONNECT_CERT_PATH_BUILD_ARG="./local-config/connect"
 ARG CONNECT_CONFIG_PATH_BUILD_ARG="./local-config/connect"
 
 RUN apk update && \
-    apk add --no-cache --virtual .dev-packages build-base curl bash
+    apk add ca-certificates && \
+    apk add --no-cache --virtual .dev-packages bash \
+        build-base \
+        curl \
+        openssl
 
 # build librdkafka
 COPY --from=builder /usr/src/librdkafka /usr/src/librdkafka

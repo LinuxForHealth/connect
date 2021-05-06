@@ -84,18 +84,18 @@ def log_configuration() -> None:
     settings = get_settings()
     header_footer_length = 50
 
-    logger.info("*" * header_footer_length)
-    logger.info("Connect Configuration Settings")
-    logger.info("=" * header_footer_length)
-    logger.info(f"UVICORN_APP: {settings.uvicorn_app}")
-    logger.info(f"UVICORN_HOST: {settings.uvicorn_host}")
-    logger.info(f"UVICORN_PORT: {settings.uvicorn_port}")
-    logger.info(f"UVICORN_RELOAD: {settings.uvicorn_reload}")
-    logger.info("=" * header_footer_length)
+    logger.debug("*" * header_footer_length)
+    logger.debug("Connect Configuration Settings")
+    logger.debug("=" * header_footer_length)
+    logger.debug(f"UVICORN_APP: {settings.uvicorn_app}")
+    logger.debug(f"UVICORN_HOST: {settings.uvicorn_host}")
+    logger.debug(f"UVICORN_PORT: {settings.uvicorn_port}")
+    logger.debug(f"UVICORN_RELOAD: {settings.uvicorn_reload}")
+    logger.debug("=" * header_footer_length)
 
-    logger.info(f"CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}")
-    logger.info(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
-    logger.info("=" * header_footer_length)
+    logger.debug(f"CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}")
+    logger.debug(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
+    logger.debug("=" * header_footer_length)
 
     logger.debug(f"CONNECT_CERT_DIRECTORY: {settings.connect_cert_directory}")
     logger.debug(f"CONNECT_CONFIG_DIRECTORY: {settings.connect_config_directory}")
@@ -112,7 +112,7 @@ def log_configuration() -> None:
     logger.debug(f"NATS_MAX_RECONNECT_ATTEMPTS: {settings.nats_max_reconnect_attempts}")
     logger.debug("=" * header_footer_length)
 
-    logger.info("*" * header_footer_length)
+    logger.debug("*" * header_footer_length)
 
 
 async def configure_internal_integrations() -> None:

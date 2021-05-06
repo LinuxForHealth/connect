@@ -13,6 +13,7 @@ from connect.server_handlers import (
     close_internal_clients,
     configure_internal_integrations,
     configure_logging,
+    log_configuration,
     http_exception_handler,
 )
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -35,6 +36,7 @@ def get_app() -> FastAPI:
     app.add_middleware(HTTPSRedirectMiddleware)
     app.include_router(router)
     app.add_event_handler("startup", configure_logging)
+    app.add_event_handler("startup", log_configuration)
     app.add_event_handler("startup", configure_internal_integrations)
     app.add_event_handler("shutdown", close_internal_clients)
     app.add_exception_handler(HTTPException, http_exception_handler)
