@@ -10,6 +10,10 @@ or specify CONNECT_RATE_LIMIT when starting LinuxForHealth connect:
 ```shell
 CONNECT_RATE_LIMIT=10000/second pipenv run connect
 ```
+or update connect/config.py with the new rate limit:
+```shell
+connect_rate_limit: str = "10000/second"
+```
 ## Run the Tests
 
 ### Example 1

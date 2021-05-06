@@ -1,17 +1,5 @@
 """
-Load test LinuxForHealth REST APIs using locust.  Example:
-    cd connect/load-test
-    locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
-
-By default, this load test POSTs to /fhir using randomly selected FHIR resources from
-connect/load-test/messages/fhir[1...NUM_FILES].json files.  To separate FHIR resources,
-place them in separate files.
-
-Override the number of resource files (default = 2) on the command line with NUM_FILES.
-This example:
-    NUM_FILES=1 locust --host https://localhost:5000 --run-time 15s --users 100 --spawn-rate 20 --headless
-loads the following files:
-Loading message file = ./messages/fhir1.json
+Load test LinuxForHealth REST APIs using locust.
 """
 import json
 import os

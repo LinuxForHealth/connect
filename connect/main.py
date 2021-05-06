@@ -3,7 +3,6 @@ main.py
 
 Bootstraps the Fast API application and Uvicorn processes
 """
-import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import uvicorn
@@ -27,6 +26,8 @@ def get_app() -> FastAPI:
     Creates the Fast API application instance
     :return: The application instance
     """
+    settings = get_settings()
+
     app = FastAPI(
         title="LinuxForHealth Connect",
         description="LinuxForHealth Connectors for Inbound Data Processing",
@@ -40,9 +41,10 @@ def get_app() -> FastAPI:
     app.add_exception_handler(HTTPException, http_exception_handler)
 
     # use the slowapi rate limiter
-    rate_limit = os.getenv("CONNECT_RATE_LIMIT", "5/second")
     app.add_middleware(SlowAPIMiddleware)
-    limiter = Limiter(key_func=get_remote_address, default_limits=[rate_limit])
+    limiter = Limiter(
+        key_func=get_remote_address, default_limits=[settings.connect_rate_limit]
+    )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
