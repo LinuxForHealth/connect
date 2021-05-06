@@ -101,7 +101,9 @@ def mock_async_kafka_producer() -> Callable:
             """
 
             class CallbackMessage:
-                """ Message to send to producer callback"""
+                """
+                Message to send to producer callback
+                """
 
                 @staticmethod
                 def topic():
