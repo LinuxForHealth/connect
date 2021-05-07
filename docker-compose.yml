@@ -18,6 +18,8 @@ services:
     networks:
       - main
     image: linuxforhealth/connect:0.42.0
+    environment:
+      CONNECT_CA_PATH: /usr/local/share/ca-certificates
     ports:
       - "5000:5000"
   nats-server:

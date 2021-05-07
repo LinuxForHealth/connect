@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     certificate_verify: bool = False
 
     # Connect
-    connect_cert_directory: str = "/usr/local/share/ca-certificates"
+    connect_ca_file: str = certifi.where()
+    connect_ca_path: str = None
     connect_cert_name: str = "lfh-connect.pem"
     connect_cert_key_name: str = "lfh-connect.key"
     connect_config_directory: str = "/home/lfh/connect/config"
@@ -85,11 +86,13 @@ def get_settings() -> Settings:
 
 @lru_cache()
 def get_ssl_context(ssl_purpose: ssl.Purpose) -> ssl.SSLContext:
-    """Returns a SSL Context configured for server auth with the connect certificate path"""
+    """
+    Returns a SSL Context configured for server auth with the connect certificate path
+    :param ssl_purpose:
+    """
     settings = get_settings()
     ssl_context = ssl.create_default_context(ssl_purpose)
     ssl_context.load_verify_locations(
-        cafile=settings.certificate_authority_path,
-        capath=settings.connect_cert_directory,
+        cafile=settings.connect_ca_file, capath=settings.connect_ca_path
     )
     return ssl_context

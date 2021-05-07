@@ -60,10 +60,10 @@ if __name__ == "__main__":
         "port": settings.uvicorn_port,
         "reload": settings.uvicorn_reload,
         "ssl_keyfile": os.path.join(
-            settings.connect_cert_directory, settings.connect_cert_key_name
+            settings.connect_ca_path, settings.connect_cert_key_name
         ),
         "ssl_certfile": os.path.join(
-            settings.connect_cert_directory, settings.connect_cert_name
+            settings.connect_ca_path, settings.connect_cert_name
         ),
     }
 

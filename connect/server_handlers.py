@@ -97,7 +97,8 @@ def log_configuration() -> None:
     logger.debug(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
     logger.debug("=" * header_footer_length)
 
-    logger.debug(f"CONNECT_CERT_DIRECTORY: {settings.connect_cert_directory}")
+    logger.debug(f"CONNECT_CA_FILE: {settings.connect_ca_file}")
+    logger.debug(f"CONNECT_CA_PATH: {settings.connect_ca_path}")
     logger.debug(f"CONNECT_CONFIG_DIRECTORY: {settings.connect_config_directory}")
     logger.debug(f"CONNECT_CERT: {settings.connect_cert_name}")
     logger.debug(f"CONNECT_CERT_KEY: {settings.connect_cert_key_name}")
