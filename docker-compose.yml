@@ -27,6 +27,7 @@ services:
     volumes:
       - ./local-config/nats:/conf
     command: server --tls \
+      --tlscacert=/conf/lfh-root-ca.pem \
       --tlscert=/conf/lfh-nats-server.pem \
       --tlskey=/conf/lfh-nats-server.key \
       --config=/conf/nats-server.conf
