@@ -167,7 +167,7 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     return client
 
 
-async def get_client_status() -> str:
+async def get_client_status() -> Optional[str]:
     """
     Check to see if the default NATS client is connected.
 

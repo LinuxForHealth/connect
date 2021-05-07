@@ -8,7 +8,7 @@ from fastapi.routing import APIRouter
 from pydantic.main import BaseModel
 from pydantic import constr
 from connect import __version__
-from connect.clients.nats import get_client_status
+from connect.clients import nats
 from connect.config import get_settings
 from connect.support.availability import is_service_available
 from typing import List
@@ -61,7 +61,7 @@ async def get_status(settings=Depends(get_settings)):
         "application": settings.uvicorn_app,
         "application_version": __version__,
         "is_reload_enabled": settings.uvicorn_reload,
-        "nats_client_status": await get_client_status(),
+        "nats_client_status": await nats.get_client_status(),
         "kafka_broker_status": await get_service_status(
             settings.kafka_bootstrap_servers
         ),
