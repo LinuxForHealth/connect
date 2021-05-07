@@ -19,7 +19,7 @@ async def test_status_get(async_test_client, settings, monkeypatch):
     """
     with monkeypatch.context() as m:
         m.setattr(status, "is_service_available", AsyncMock(return_value=True))
-        m.setattr(nats, "get_client_status", AsyncMock(return_value=True))
+        m.setattr(nats, "get_client_status", AsyncMock(return_value="CONNECTED"))
 
         async with async_test_client as ac:
             settings.uvicorn_reload = False
