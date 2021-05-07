@@ -28,6 +28,8 @@ def get_app() -> FastAPI:
     Creates the Fast API application instance
     :return: The application instance
     """
+    settings = get_settings()
+
     app = FastAPI(
         title="LinuxForHealth Connect",
         description="LinuxForHealth Connectors for Inbound Data Processing",
@@ -43,7 +45,9 @@ def get_app() -> FastAPI:
 
     # use the slowapi rate limiter
     app.add_middleware(SlowAPIMiddleware)
-    limiter = Limiter(key_func=get_remote_address, default_limits=["5/second"])
+    limiter = Limiter(
+        key_func=get_remote_address, default_limits=[settings.connect_rate_limit]
+    )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

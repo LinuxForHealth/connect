@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     # external FHIR server URL or None
     # Example: 'https://fhiruser:change-password@localhost:9443/fhir-server/api/v4'
     connect_external_fhir_server: str = None
+    connect_rate_limit: str = "5/second"
 
     # kakfa
     kafka_bootstrap_servers: List[str] = ["kafka:9092"]
