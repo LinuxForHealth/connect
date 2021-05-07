@@ -36,5 +36,12 @@ class QuickstartUser(FastHttpUser):
             name="/data",
         )
 
+    @task
+    def get_status(self):
+        self.client.get(
+            "/status",
+            verify=False,
+        )
+
     def on_start(self):
         self.client.verify = False

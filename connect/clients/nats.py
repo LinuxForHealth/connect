@@ -165,3 +165,19 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     logger.debug(f"Created NATS client for servers = {servers}")
 
     return client
+
+
+async def get_client_status() -> str:
+    """
+    Check to see if the default NATS client is connected.
+
+    :return: CONNECTED if client is connected, CONNECTING if reconnecting, NOT_CONNECTED otherwise
+    """
+    client = await get_nats_client()
+
+    if client.is_connected:
+        return "CONNECTED"
+    elif client.is_reconnecting:
+        return "CONNECTING"
+    else:
+        return "NOT_CONNECTED"
