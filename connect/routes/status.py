@@ -8,6 +8,7 @@ from fastapi.routing import APIRouter
 from pydantic.main import BaseModel
 from pydantic import constr
 from connect import __version__
+from connect.clients import nats
 from connect.config import get_settings
 from connect.support.availability import is_service_available
 from typing import List
@@ -16,6 +17,7 @@ import time
 router = APIRouter()
 
 status_regex = "^AVAILABLE|UNAVAILABLE$"
+nats_client_regex = "^CONNECTED|CONNECTING|NOT_CONNECTED$"
 
 
 class StatusResponse(BaseModel):
@@ -27,7 +29,7 @@ class StatusResponse(BaseModel):
     application: str
     application_version: str
     is_reload_enabled: bool
-    nats_status: constr(regex=status_regex)
+    nats_client_status: constr(regex=nats_client_regex)
     kafka_broker_status: constr(regex=status_regex)
     elapsed_time: float
 
@@ -37,7 +39,7 @@ class StatusResponse(BaseModel):
                 "application": "connect.main:app",
                 "application_version": "0.25.0",
                 "is_reload_enabled": False,
-                "nats_status": "AVAILABLE",
+                "nats_client_status": "CONNECTED",
                 "kafka_broker_status": "AVAILABLE",
                 "elapsed_time": 0.080413915000008,
             }
@@ -59,7 +61,7 @@ async def get_status(settings=Depends(get_settings)):
         "application": settings.uvicorn_app,
         "application_version": __version__,
         "is_reload_enabled": settings.uvicorn_reload,
-        "nats_status": await get_service_status(settings.nats_servers),
+        "nats_client_status": await nats.get_client_status(),
         "kafka_broker_status": await get_service_status(
             settings.kafka_bootstrap_servers
         ),
