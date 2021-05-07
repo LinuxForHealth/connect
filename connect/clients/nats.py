@@ -9,9 +9,15 @@ import ssl
 from asyncio import get_running_loop
 from nats.aio.client import Client as NatsClient, Msg
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import get_settings, nats_sync_subject, kafka_sync_topic
+from connect.config import (
+    get_settings,
+    get_ssl_context,
+    nats_sync_subject,
+    kafka_sync_topic,
+)
 from connect.support.encoding import decode_to_dict
 from typing import Callable, List, Optional
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -144,15 +150,14 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     """
     settings = get_settings()
 
-    ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-    ssl_ctx.load_verify_locations(settings.nats_rootCA_file)
-
     client = NatsClient()
     await client.connect(
         servers=servers,
-        nkeys_seed=settings.nats_nk_file,
+        nkeys_seed=os.path.join(
+            settings.connect_config_directory, settings.nats_nk_file
+        ),
         loop=get_running_loop(),
-        tls=ssl_ctx,
+        tls=get_ssl_context(ssl.Purpose.SERVER_AUTH),
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts,
     )
