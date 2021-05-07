@@ -24,8 +24,8 @@ def settings() -> Settings:
         "nats_servers": ["tls://localhost:8080"],
         "uvicorn_reload": False,
         "uvicorn_app": "connect.asgi:app",
-        "connect_cert_key": "./mycert.key",
-        "connect_cert": "./mycert.pem",
+        "connect_cert_key_name": "./mycert.key",
+        "connect_cert_name": "./mycert.pem",
         "connect_external_fhir_server": "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
     }
     return Settings(**settings_fields)
@@ -33,7 +33,9 @@ def settings() -> Settings:
 
 @pytest.fixture
 def lfh_data_record():
-    """ A LFH Data Record Fixture"""
+    """
+    :return: LFH Data Record Fixture
+    """
     return {
         "uuid": "dbe0e8dd-7b64-4d7b-aefc-d27e2664b94a",
         "creation_date": "2021-02-12T18:13:17Z",
@@ -94,10 +96,14 @@ def mock_async_kafka_producer() -> Callable:
             pass
 
         async def produce_with_callback(self, topic, value, on_delivery):
-            """is successful for any topic and value using any producer callback"""
+            """
+            Implements a producer with a callback
+            """
 
             class CallbackMessage:
-                """ Message to send to producer callback"""
+                """
+                Message to send to producer callback
+                """
 
                 @staticmethod
                 def topic():

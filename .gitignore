@@ -69,7 +69,8 @@ env.bak/
 venv.bak/
 
 # Certificates
-local-config/*
+local-config/connect/*
+local-config/nats/*
 
 # Container runtime folders
 ipfs-*

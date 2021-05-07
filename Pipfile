@@ -5,7 +5,7 @@ name = "pypi"
 
 [scripts]
 connect="python connect/main.py"
-check-format="black -t py38 --check connect tests"
+check-format="black -t py38 --check --diff connect tests"
 format="black -t py38 connect tests"
 
 [packages]

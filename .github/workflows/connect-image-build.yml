@@ -15,9 +15,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Create Local Config Placeholders
         run: |
-          mkdir -p ./local-config/certs
-          touch ./local-config/certs/placeholder.pem
-          touch ./local-config/certs/placeholder.key
+          mkdir -p ./local-config/connect
+          touch ./local-config/connect/placeholder.pem
+          touch ./local-config/connect/placeholder.key
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Cache Docker layers
