@@ -17,12 +17,14 @@ def timer(func):
 
     @functools.wraps(func)
     async def timer_wrapper(*args, **kwargs):
-        start_time = time.time()
         settings = get_settings()
+        if not settings.connect_timing_enabled:
+            return
+
+        start_time = time.time()
         result = await func(*args, **kwargs)
         run_time = time.time() - start_time
-        if settings.connect_timing_enabled:
-            logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
+        logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
         return result
 
     return timer_wrapper
@@ -33,12 +35,14 @@ def sync_timer(func):
 
     @functools.wraps(func)
     def timer_wrapper(*args, **kwargs):
-        start_time = time.time()
         settings = get_settings()
+        if not settings.connect_timing_enabled:
+            return
+
+        start_time = time.time()
         result = func(*args, **kwargs)
         run_time = time.time() - start_time
-        if settings.connect_timing_enabled:
-            logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
+        logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
         return result
 
     return timer_wrapper
