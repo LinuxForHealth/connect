@@ -80,10 +80,10 @@ async def test_manual_flow(
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=nats_mock))
 
-        workflow.validate()
+        await workflow.validate()
         assert workflow.state.name == "validate"
 
-        workflow.transform()
+        await workflow.transform()
         assert workflow.state.name == "transform"
 
         await workflow.persist()
@@ -130,10 +130,10 @@ async def test_manual_flow_transmit_disabled(
         m.setattr(core, "KafkaCallback", kafka_callback)
         m.setattr(core, "AsyncClient", mock_httpx_client)
 
-        workflow.validate()
+        await workflow.validate()
         assert workflow.state.name == "validate"
 
-        workflow.transform()
+        await workflow.transform()
         assert workflow.state.name == "transform"
 
         await workflow.persist()
