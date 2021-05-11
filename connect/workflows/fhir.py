@@ -7,7 +7,6 @@ import logging
 import xworkflows
 from fhir.resources import construct_fhir_element
 from connect.exceptions import FhirValidationError, MissingFhirResourceType
-from connect.support.timer import timer
 from connect.workflows.core import CoreWorkflow
 
 
@@ -20,7 +19,7 @@ class FhirWorkflow(CoreWorkflow):
     """
 
     @xworkflows.transition("do_validate")
-    @timer
+    @CoreWorkflow.timer
     def validate(self):
         """
         Overridden to validate the incoming FHIR message by instantiating a fhir.resources
