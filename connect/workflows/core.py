@@ -15,7 +15,7 @@ from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import get_settings, nats_sync_subject
+from connect.config import nats_sync_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
@@ -77,6 +77,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.transmit_server = kwargs.get("transmit_server", None)
         self.do_sync = kwargs.get("do_sync", True)
         self.uuid = str(uuid.uuid4())
+        self.enable_timing = kwargs.get("enable_timing", False)
 
     state = CoreWorkflowDef()
 
@@ -85,8 +86,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
         @functools.wraps(func)
         async def timer_wrapper(*args, **kwargs):
-            settings = get_settings()
-            if settings.connect_timing_enabled:
+            self = args[0]
+            if self.enable_timing:
                 start_time = time.time()
 
             if inspect.iscoroutinefunction(func):
@@ -94,9 +95,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             else:
                 result = func(*args, **kwargs)
 
-            if settings.connect_timing_enabled:
+            if self.enable_timing:
                 run_time = time.time() - start_time
-                self = args[0]
                 logger.trace(
                     f"{func.__name__}() id = {self.uuid} elapsed time = {run_time:.7f}s"
                 )
