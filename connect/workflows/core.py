@@ -21,7 +21,7 @@ from connect.support.encoding import (
     decode_to_str,
     ConnectEncoder,
 )
-from connect.support.timer import sync_timer, timer
+from connect.support.timer import timer
 
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     state = CoreWorkflowDef()
 
     @xworkflows.transition("do_validate")
-    @sync_timer
+    @timer
     def validate(self):
         """
         Override to provide data validation.
@@ -86,7 +86,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
     @xworkflows.transition("do_transform")
-    @sync_timer
+    @timer
     def transform(self):
         """
         Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
@@ -267,8 +267,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         try:
             # trace log
             logger.trace(f"Running {self.__class__.__name__}")
-            self.validate()
-            self.transform()
+            await self.validate()
+            await self.transform()
             await self.persist()
             await self.transmit(response)
             await self.synchronize()

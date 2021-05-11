@@ -3,6 +3,7 @@ timer.py
 
  Timer functions for timing LinuxForHealth connect functions.
 """
+import inspect
 import logging
 import functools
 import time
@@ -13,36 +14,22 @@ logger = logging.getLogger(__name__)
 
 
 def timer(func):
-    """Async decorator to print the elapsed runtime of the decorated function"""
+    """Decorator to print the elapsed runtime of the decorated function"""
 
     @functools.wraps(func)
     async def timer_wrapper(*args, **kwargs):
         settings = get_settings()
-        if not settings.connect_timing_enabled:
-            return
+        if settings.connect_timing_enabled:
+            start_time = time.time()
 
-        start_time = time.time()
-        result = await func(*args, **kwargs)
-        run_time = time.time() - start_time
-        logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
-        return result
+        if inspect.iscoroutinefunction(func):
+            result = await func(*args, **kwargs)
+        else:
+            result = func(*args, **kwargs)
 
-    return timer_wrapper
-
-
-def sync_timer(func):
-    """Sync decorator to print the elapsed runtime of the decorated function"""
-
-    @functools.wraps(func)
-    def timer_wrapper(*args, **kwargs):
-        settings = get_settings()
-        if not settings.connect_timing_enabled:
-            return
-
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        run_time = time.time() - start_time
-        logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
+        if settings.connect_timing_enabled:
+            run_time = time.time() - start_time
+            logger.trace(f"{func.__name__}() elapsed time = {run_time:.7f}s")
         return result
 
     return timer_wrapper
