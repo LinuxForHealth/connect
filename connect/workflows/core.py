@@ -21,6 +21,7 @@ from connect.support.encoding import (
     decode_to_str,
     ConnectEncoder,
 )
+from connect.support.timer import sync_timer, timer
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     state = CoreWorkflowDef()
 
     @xworkflows.transition("do_validate")
+    @sync_timer
     def validate(self):
         """
         Override to provide data validation.
@@ -84,6 +86,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
     @xworkflows.transition("do_transform")
+    @sync_timer
     def transform(self):
         """
         Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
@@ -92,6 +95,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
     @xworkflows.transition("do_persist")
+    @timer
     async def persist(self):
         """
         Store the message in Kafka for persistence after converting it to the LinuxForHealth
@@ -152,6 +156,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.message = response
 
     @xworkflows.transition("do_transmit")
+    @timer
     async def transmit(self, response: Response):
         """
         Transmit the message to an external service via HTTP,
@@ -199,6 +204,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             self.use_response = True
 
     @xworkflows.transition("do_sync")
+    @timer
     async def synchronize(self):
         """
         Send the message to NATS subscribers for synchronization across LFH instances.
@@ -209,6 +215,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, "utf-8"))
 
     @xworkflows.transition("handle_error")
+    @timer
     async def error(self, error) -> str:
         """
         On error, store the error message and the current message in
@@ -247,6 +254,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         error = LFHError(**message).json()
         return error
 
+    @timer
     async def run(self, response: Response):
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
