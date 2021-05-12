@@ -77,29 +77,28 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.transmit_server = kwargs.get("transmit_server", None)
         self.do_sync = kwargs.get("do_sync", True)
         self.uuid = str(uuid.uuid4())
-        self.enable_timing = kwargs.get("enable_timing", False)
 
     state = CoreWorkflowDef()
 
     def timer(func):
-        """Decorator to print the elapsed runtime of the decorated function"""
+        """
+        Decorator to print the elapsed runtime of the decorated function
+        """
 
         @functools.wraps(func)
         async def timer_wrapper(*args, **kwargs):
             self = args[0]
-            if self.enable_timing:
-                start_time = time.time()
+            start_time = time.time()
 
             if inspect.iscoroutinefunction(func):
                 result = await func(*args, **kwargs)
             else:
                 result = func(*args, **kwargs)
 
-            if self.enable_timing:
-                run_time = time.time() - start_time
-                logger.trace(
-                    f"{func.__name__}() id = {self.uuid} elapsed time = {run_time:.7f}s"
-                )
+            run_time = time.time() - start_time
+            logger.trace(
+                f"{func.__name__}() id = {self.uuid} elapsed time = {run_time:.7f}s"
+            )
             return result
 
         return timer_wrapper

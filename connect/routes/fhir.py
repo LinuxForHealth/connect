@@ -89,7 +89,6 @@ async def post_fhir_data(
             lfh_id=settings.connect_lfh_id,
             transmit_server=transmit_server,
             do_sync=True,
-            enable_timing=settings.connect_timing_enabled,
         )
 
         # enable the transmit workflow step if defined
