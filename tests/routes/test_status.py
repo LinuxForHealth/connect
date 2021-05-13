@@ -30,8 +30,9 @@ async def test_status_get(async_test_client, settings, monkeypatch):
 
             actual_json = actual_response.json()
             assert "application_version" in actual_json
-            assert "elapsed_time" in actual_json
-            assert actual_json["elapsed_time"] > 0.0
+            assert "status_response_time" in actual_json
+            assert actual_json["status_response_time"] > 0.0
+            assert "metrics" in actual_json
 
             expected = {
                 "application": "connect.asgi:app",
@@ -39,6 +40,7 @@ async def test_status_get(async_test_client, settings, monkeypatch):
                 "is_reload_enabled": False,
                 "nats_client_status": "CONNECTED",
                 "kafka_broker_status": "AVAILABLE",
-                "elapsed_time": actual_json["elapsed_time"],
+                "status_response_time": actual_json["status_response_time"],
+                "metrics": actual_json["metrics"],
             }
             assert actual_json == expected

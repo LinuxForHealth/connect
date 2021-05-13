@@ -4,7 +4,7 @@ Tests the /fhir endpoint
 """
 import asyncio
 import pytest
-from connect.clients import kafka
+from connect.clients import kafka, nats
 from connect.config import get_settings
 from connect.workflows.fhir import FhirWorkflow
 from starlette.responses import Response
@@ -161,6 +161,7 @@ async def test_fhir_post(
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting
@@ -219,6 +220,7 @@ async def test_fhir_post_with_transmit(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(FhirWorkflow, "transmit", mock_workflow_transmit)
         m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
@@ -248,6 +250,7 @@ async def test_fhir_post_endpoints(
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting
