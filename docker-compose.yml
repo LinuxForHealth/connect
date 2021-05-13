@@ -66,10 +66,10 @@ services:
       CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-0/tcp/5001
       CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
-#     CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/127.0.0.1/tcp/9094 # Expose API
+      CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9099 # Expose API
       CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
-#   ports:
-#     - "127.0.0.1:9094:9094"
+    ports:
+      - "9099:9099"
     volumes:
       - ./ipfs-cluster-0/config:/data/ipfs-cluster
   ipfs-node-0:
@@ -78,8 +78,8 @@ services:
     image: ipfs/go-ipfs:latest
     ports:
       - "4001:4001"
-      - "127.0.0.1:8080:8080"
-      - "127.0.0.1:5001:5001"
+      - "8080:8080"
+      - "5001:5001"
     environment:
       LIBP2P_FORCE_PNET: '1'
     volumes:
