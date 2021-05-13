@@ -6,7 +6,6 @@ LinuxForHealth Connectors for Inbound Data Processing
 ![Connect CI](https://github.com/linuxforhealth/connect/actions/workflows/connect-ci.yml/badge.svg)
 ![Image Build](https://github.com/linuxforhealth/connect/actions/workflows/connect-image-build.yml/badge.svg)
 ![GitHub Issues](https://img.shields.io/github/issues/LinuxForHealth/connect)
-![GitHub Forks](https://img.shields.io/github/forks/LinuxForHealth/connect)
 ![GitHub Stars](https://img.shields.io/github/stars/LinuxForHealth/connect)
 ![GitHub License](https://img.shields.io/github/license/LinuxForHealth/connect)
 [![Cauldron Report](https://img.shields.io/badge/Cauldron%20Report-View%20Project%20Metrics-brightgreen)](https://cauldron.io/project/1128)
