@@ -31,7 +31,8 @@ class StatusResponse(BaseModel):
     is_reload_enabled: bool
     nats_client_status: constr(regex=nats_client_regex)
     kafka_broker_status: constr(regex=status_regex)
-    elapsed_time: float
+    status_response_time: float
+    metrics: dict
 
     class Config:
         schema_extra = {
@@ -41,7 +42,8 @@ class StatusResponse(BaseModel):
                 "is_reload_enabled": False,
                 "nats_client_status": "CONNECTED",
                 "kafka_broker_status": "AVAILABLE",
-                "elapsed_time": 0.080413915000008,
+                "status_response_time": 0.080413915000008,
+                "metrics": {"run": {"total": 0.001, "count": 1, "average": 0.001}},
             }
         }
 
@@ -65,6 +67,9 @@ async def get_status(settings=Depends(get_settings)):
         "kafka_broker_status": await get_service_status(
             settings.kafka_bootstrap_servers
         ),
-        "elapsed_time": time.perf_counter() - start_time,
+        "status_response_time": float(
+            "{:.8f}".format(time.perf_counter() - start_time)
+        ),
+        "metrics": nats.timing_metrics,
     }
     return StatusResponse(**status_fields)

@@ -3,12 +3,9 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
-import inspect
 import json
-import functools
 import logging
 import connect.clients.nats as nats
-import time
 import uuid
 import xworkflows
 from datetime import datetime
@@ -24,6 +21,7 @@ from connect.support.encoding import (
     decode_to_str,
     ConnectEncoder,
 )
+from connect.support.timer import timer
 
 
 logger = logging.getLogger(__name__)
@@ -79,29 +77,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.uuid = str(uuid.uuid4())
 
     state = CoreWorkflowDef()
-
-    def timer(func):
-        """
-        Decorator to print the elapsed runtime of the decorated function
-        """
-
-        @functools.wraps(func)
-        async def timer_wrapper(*args, **kwargs):
-            self = args[0]
-            start_time = time.time()
-
-            if inspect.iscoroutinefunction(func):
-                result = await func(*args, **kwargs)
-            else:
-                result = func(*args, **kwargs)
-
-            run_time = time.time() - start_time
-            logger.trace(
-                f"{func.__name__}() id = {self.uuid} elapsed time = {run_time:.7f}s"
-            )
-            return result
-
-        return timer_wrapper
 
     @xworkflows.transition("do_validate")
     @timer
