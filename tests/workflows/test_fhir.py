@@ -22,36 +22,36 @@ def workflow() -> FhirWorkflow:
     return workflow
 
 
-def test_validate(workflow: FhirWorkflow):
+async def test_validate(workflow: FhirWorkflow):
     """
     Tests FhirWorkflow.validate where the resource is valid
     """
-    workflow.validate()
+    await workflow.validate()
     assert workflow.data_format == "FHIR-R4_PATIENT"
 
 
-def test_validate_missing_resource_type(workflow: FhirWorkflow):
+async def test_validate_missing_resource_type(workflow: FhirWorkflow):
     """
     Tests FhirWorkflow.validate where the resource is missing
     """
     del workflow.message["resourceType"]
     with pytest.raises(MissingFhirResourceType):
-        workflow.validate()
+        await workflow.validate()
 
 
-def test_validate_mismatched_resource_type(workflow: FhirWorkflow):
+async def test_validate_mismatched_resource_type(workflow: FhirWorkflow):
     """
     Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
     """
     workflow.message["resourceType"] = "Encounter"
     with pytest.raises(ValidationError):
-        workflow.validate()
+        await workflow.validate()
 
 
-def test_validate_invalid_resource_type(workflow: FhirWorkflow):
+async def test_validate_invalid_resource_type(workflow: FhirWorkflow):
     """
     Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
     """
     workflow.message["resourceType"] = "NoSuchResourceName"
     with pytest.raises(FhirValidationError):
-        workflow.validate()
+        await workflow.validate()

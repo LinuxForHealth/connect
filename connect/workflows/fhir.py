@@ -19,6 +19,7 @@ class FhirWorkflow(CoreWorkflow):
     """
 
     @xworkflows.transition("do_validate")
+    @CoreWorkflow.timer
     def validate(self):
         """
         Overridden to validate the incoming FHIR message by instantiating a fhir.resources

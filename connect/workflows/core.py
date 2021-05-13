@@ -3,9 +3,12 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
+import inspect
 import json
+import functools
 import logging
 import connect.clients.nats as nats
+import time
 import uuid
 import xworkflows
 from datetime import datetime
@@ -73,10 +76,35 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.lfh_id = kwargs["lfh_id"]
         self.transmit_server = kwargs.get("transmit_server", None)
         self.do_sync = kwargs.get("do_sync", True)
+        self.uuid = str(uuid.uuid4())
 
     state = CoreWorkflowDef()
 
+    def timer(func):
+        """
+        Decorator to print the elapsed runtime of the decorated function
+        """
+
+        @functools.wraps(func)
+        async def timer_wrapper(*args, **kwargs):
+            self = args[0]
+            start_time = time.time()
+
+            if inspect.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                result = func(*args, **kwargs)
+
+            run_time = time.time() - start_time
+            logger.trace(
+                f"{func.__name__}() id = {self.uuid} elapsed time = {run_time:.7f}s"
+            )
+            return result
+
+        return timer_wrapper
+
     @xworkflows.transition("do_validate")
+    @timer
     def validate(self):
         """
         Override to provide data validation.
@@ -84,6 +112,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
     @xworkflows.transition("do_transform")
+    @timer
     def transform(self):
         """
         Override to transform from one form or protocol to another (e.g. HL7v2 to FHIR
@@ -92,6 +121,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         pass
 
     @xworkflows.transition("do_persist")
+    @timer
     async def persist(self):
         """
         Store the message in Kafka for persistence after converting it to the LinuxForHealth
@@ -120,7 +150,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             encoded_data = encode_from_str(self.message)
 
         message = {
-            "uuid": str(uuid.uuid4()),
+            "uuid": self.uuid,
             "lfh_id": self.lfh_id,
             "creation_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
             "store_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
@@ -152,6 +182,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.message = response
 
     @xworkflows.transition("do_transmit")
+    @timer
     async def transmit(self, response: Response):
         """
         Transmit the message to an external service via HTTP,
@@ -199,6 +230,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             self.use_response = True
 
     @xworkflows.transition("do_sync")
+    @timer
     async def synchronize(self):
         """
         Send the message to NATS subscribers for synchronization across LFH instances.
@@ -209,6 +241,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, "utf-8"))
 
     @xworkflows.transition("handle_error")
+    @timer
     async def error(self, error) -> str:
         """
         On error, store the error message and the current message in
@@ -247,6 +280,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         error = LFHError(**message).json()
         return error
 
+    @timer
     async def run(self, response: Response):
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
@@ -259,8 +293,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         try:
             # trace log
             logger.trace(f"Running {self.__class__.__name__}")
-            self.validate()
-            self.transform()
+            await self.validate()
+            await self.transform()
             await self.persist()
             await self.transmit(response)
             await self.synchronize()

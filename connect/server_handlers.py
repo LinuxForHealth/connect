@@ -84,18 +84,25 @@ def log_configuration() -> None:
     settings = get_settings()
     header_footer_length = 50
 
-    logger.info("*" * header_footer_length)
-    logger.info("Connect Configuration Settings")
-    logger.info("=" * header_footer_length)
-    logger.info(f"UVICORN_APP: {settings.uvicorn_app}")
-    logger.info(f"UVICORN_HOST: {settings.uvicorn_host}")
-    logger.info(f"UVICORN_PORT: {settings.uvicorn_port}")
-    logger.info(f"UVICORN_RELOAD: {settings.uvicorn_reload}")
-    logger.info("=" * header_footer_length)
+    logger.debug("*" * header_footer_length)
+    logger.debug("Connect Configuration Settings")
+    logger.debug("=" * header_footer_length)
+    logger.debug(f"UVICORN_APP: {settings.uvicorn_app}")
+    logger.debug(f"UVICORN_HOST: {settings.uvicorn_host}")
+    logger.debug(f"UVICORN_PORT: {settings.uvicorn_port}")
+    logger.debug(f"UVICORN_RELOAD: {settings.uvicorn_reload}")
+    logger.debug("=" * header_footer_length)
 
-    logger.info(f"CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}")
-    logger.info(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
-    logger.info("=" * header_footer_length)
+    logger.debug(f"CERTIFICATE_AUTHORITY_PATH: {settings.certificate_authority_path}")
+    logger.debug(f"LOGGING_CONFIG_PATH: {settings.connect_logging_config_path}")
+    logger.debug("=" * header_footer_length)
+
+    logger.debug(f"CONNECT_CA_FILE: {settings.connect_ca_file}")
+    logger.debug(f"CONNECT_CA_PATH: {settings.connect_ca_path}")
+    logger.debug(f"CONNECT_CONFIG_DIRECTORY: {settings.connect_config_directory}")
+    logger.debug(f"CONNECT_CERT: {settings.connect_cert_name}")
+    logger.debug(f"CONNECT_CERT_KEY: {settings.connect_cert_key_name}")
+    logger.debug("=" * header_footer_length)
 
     logger.debug(f"KAFKA_BOOTSTRAP_SERVERS: {settings.kafka_bootstrap_servers}")
     logger.debug(f"KAFKA_PRODUCER_ACKS: {settings.kafka_producer_acks}")
@@ -104,16 +111,9 @@ def log_configuration() -> None:
     logger.debug(f"NATS_SERVERS: {settings.nats_servers}")
     logger.debug(f"NATS_ALLOW_RECONNECT: {settings.nats_allow_reconnect}")
     logger.debug(f"NATS_MAX_RECONNECT_ATTEMPTS: {settings.nats_max_reconnect_attempts}")
-    logger.debug(f"NATS_ROOTCA_FILE: {settings.nats_rootCA_file}")
-    logger.debug(f"NATS_CERT_FILE: {settings.nats_cert_file}")
-    logger.debug(f"NATS_KEY_FILE: {settings.nats_key_file}")
     logger.debug("=" * header_footer_length)
 
-    logger.debug(f"CONNECT_CERT: {settings.connect_cert}")
-    logger.debug(f"CONNECT_CERT_KEY: {settings.connect_cert_key}")
-    logger.debug("=" * header_footer_length)
-
-    logger.info("*" * header_footer_length)
+    logger.debug("*" * header_footer_length)
 
 
 async def configure_internal_integrations() -> None:
