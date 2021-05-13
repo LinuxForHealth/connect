@@ -8,9 +8,8 @@ LinuxForHealth Connectors for Inbound Data Processing
 ![GitHub Issues](https://img.shields.io/github/issues/LinuxForHealth/connect)
 ![GitHub Forks](https://img.shields.io/github/forks/LinuxForHealth/connect)
 ![GitHub Stars](https://img.shields.io/github/stars/LinuxForHealth/connect)
-![GitHub License](https://img.shields.io/github/license/LinuxForHealth/connect)  
-
-![Cauldron_Stats](https://cauldron.io/project/4148/stats.svg)(https://cauldron.io/project/1128)
+![GitHub License](https://img.shields.io/github/license/LinuxForHealth/connect)
+![cauldron_stats](https://cauldron.io/project/1128/stats.svg)(https://cauldron.io/project/1128)
 
 
 ## Where to Contribute  
