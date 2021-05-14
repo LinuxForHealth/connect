@@ -69,11 +69,16 @@ class Settings(BaseSettings):
     kafka_listener_timeout: float = 1.0
     kafka_topics_timeout: float = 0.5
 
+    # nats
     nats_servers: List[str] = ["tls://nats-server:4222"]
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"
+
+    # ipfs-cluster
+    ipfs_cluster_uri: str = 'http://0.0.0.0:9099'
+    ipfs_cluster_replication_factor: int = 2
 
     class Config:
         case_sensitive = False
