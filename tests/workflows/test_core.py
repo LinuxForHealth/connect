@@ -104,7 +104,7 @@ async def test_manual_flow(
 
         await workflow.synchronize()
         assert workflow.state.name == "sync"
-        nats_mock.publish.assert_called_once()
+        assert nats_mock.publish.call_count == 6
 
 
 @pytest.mark.asyncio
@@ -124,11 +124,13 @@ async def test_manual_flow_transmit_disabled(
     :param mock_httpx_client: Mock HTTPX Client fixture
     """
     workflow.start_time = datetime.datetime.utcnow()
+    nats_mock = AsyncMock()
 
     with monkeypatch.context() as m:
         m.setattr(core, "get_kafka_producer", Mock(return_value=AsyncMock()))
         m.setattr(core, "KafkaCallback", kafka_callback)
         m.setattr(core, "AsyncClient", mock_httpx_client)
+        m.setattr(nats, "get_nats_client", AsyncMock(return_value=nats_mock))
 
         await workflow.validate()
         assert workflow.state.name == "validate"

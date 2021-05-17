@@ -23,6 +23,7 @@ import os
 logger = logging.getLogger(__name__)
 nats_client = None
 nats_clients = []
+timing_metrics = {}
 
 
 async def create_nats_subscribers():
@@ -30,6 +31,7 @@ async def create_nats_subscribers():
     Create NATS subscribers.  Add additional subscribers as needed.
     """
     await start_sync_event_subscribers()
+    await start_timing_subscriber()
 
 
 async def start_sync_event_subscribers():
@@ -52,6 +54,22 @@ async def start_sync_event_subscribers():
     for server in settings.nats_sync_subscribers:
         client = await create_nats_client(server)
         await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
+
+
+async def start_timing_subscriber():
+    """
+    Create a NATS subscriber for the NATS subject TIMING at the local NATS server/cluster.
+    """
+    settings = get_settings()
+
+    # subscribe to TIMING.* from the local NATS server or cluster
+    client = await get_nats_client()
+    await subscribe(
+        client,
+        "TIMING",
+        nats_timing_event_handler,
+        "".join(settings.nats_servers),
+    )
 
 
 async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
@@ -111,6 +129,27 @@ async def nats_sync_event_handler(msg: Msg):
     location = result["data_record_location"]
     logger.trace(
         f"nats_sync_event_handler: replayed nats sync message, data record location = {location}",
+    )
+
+
+def nats_timing_event_handler(msg: Msg):
+    """
+    Callback for NATS TIMING messages - calculates the average run time for any function timed with @timer.
+    """
+    data = msg.data.decode()
+
+    message = json.loads(data)
+    function_name = message["function"]
+    global timing_metrics
+    if function_name not in timing_metrics:
+        timing_metrics[function_name] = {"total": 0.0, "count": 0, "average": 0.0}
+
+    metric = timing_metrics[function_name]
+    metric["total"] += message["elapsed_time"]
+    metric["count"] += 1
+    metric["average"] = metric["total"] / metric["count"]
+    logger.trace(
+        f"nats_timing_event_handler: {function_name}() average elapsed time = {metric['average']:.8f}s",
     )
 
 

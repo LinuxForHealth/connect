@@ -31,7 +31,8 @@ class StatusResponse(BaseModel):
     is_reload_enabled: bool
     nats_client_status: constr(regex=nats_client_regex)
     kafka_broker_status: constr(regex=status_regex)
-    elapsed_time: float
+    status_response_time: float
+    metrics: dict
 
     class Config:
         schema_extra = {
@@ -41,7 +42,8 @@ class StatusResponse(BaseModel):
                 "is_reload_enabled": False,
                 "nats_client_status": "CONNECTED",
                 "kafka_broker_status": "AVAILABLE",
-                "elapsed_time": 0.080413915000008,
+                "status_response_time": 0.080413915000008,
+                "metrics": {"run": {"total": 0.001, "count": 1, "average": 0.001}},
             }
         }
 
@@ -65,6 +67,29 @@ async def get_status(settings=Depends(get_settings)):
         "kafka_broker_status": await get_service_status(
             settings.kafka_bootstrap_servers
         ),
-        "elapsed_time": time.perf_counter() - start_time,
+        "status_response_time": float(
+            "{:.8f}".format(time.perf_counter() - start_time)
+        ),
+        "metrics": format_metrics(nats.timing_metrics),
     }
     return StatusResponse(**status_fields)
+
+
+def format_metrics(d: dict) -> dict:
+    """
+    Format the floats in a dict with nested dicts, for display.
+
+    :param d: dict containing floats to format
+    :return: new dict matching the original, except with formatted floats
+    """
+    new = {}
+
+    for key in d:
+        if isinstance(d[key], dict):
+            new[key] = format_metrics(d[key])
+        elif isinstance(d[key], float):
+            new[key] = float("{:.8f}".format(d[key]))
+        else:
+            new[key] = d[key]
+
+    return new
