@@ -45,16 +45,17 @@ RUN update-ca-certificates
 # configure the connect app
 RUN addgroup -S lfh && adduser -S lfh -G lfh -h /home/lfh
 
-USER lfh
-
 WORKDIR /home/lfh/connect
+RUN mkdir config && \
+    chown -R lfh:lfh /home/lfh/connect
+
 # copy config files
-RUN mkdir config
 COPY --chown=lfh:lfh $CONNECT_CERT_PATH_BUILD_ARG/nats-server.nk ./config/
 COPY --chown=lfh:lfh Pipfile.lock logging.yaml ./
 
 # configure application
 COPY --chown=lfh:lfh ./connect ./connect
+USER lfh
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync
 
