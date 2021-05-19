@@ -26,7 +26,7 @@ services:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
-      - ./local-config/nats:/conf
+      - ../../local-config/nats:/conf
     command: server --tls \
       --tlscacert=/conf/lfh-root-ca.pem \
       --tlscert=/conf/lfh-nats-server.pem \
@@ -130,6 +130,8 @@ services:
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ibm-fhir:
     image: docker.io/linuxforhealth/ibm-fhir-server:4.8.0-SNAPSHOT
+    environment:
+      BOOTSTRAP_DB: "true"
     networks:
       - main
     ports:
