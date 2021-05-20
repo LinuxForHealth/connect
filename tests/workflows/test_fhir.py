@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from connect.exceptions import MissingFhirResourceType, FhirValidationError
 from connect.workflows.fhir import FhirWorkflow
+from connect.support.timer import nats
 
 
 @pytest.fixture
@@ -22,36 +23,54 @@ def workflow() -> FhirWorkflow:
     return workflow
 
 
-async def test_validate(workflow: FhirWorkflow):
+@pytest.mark.asyncio
+async def test_validate(workflow: FhirWorkflow, nats_client, monkeypatch):
     """
     Tests FhirWorkflow.validate where the resource is valid
     """
-    await workflow.validate()
-    assert workflow.data_format == "FHIR-R4_PATIENT"
+    with monkeypatch.context() as m:
+        m.setattr(nats, "get_nats_client", nats_client)
+        await workflow.validate()
+        assert workflow.data_format == "FHIR-R4_PATIENT"
 
 
-async def test_validate_missing_resource_type(workflow: FhirWorkflow):
+@pytest.mark.asyncio
+async def test_validate_missing_resource_type(
+    workflow: FhirWorkflow, nats_client, monkeypatch
+):
     """
     Tests FhirWorkflow.validate where the resource is missing
     """
     del workflow.message["resourceType"]
-    with pytest.raises(MissingFhirResourceType):
-        await workflow.validate()
+    with monkeypatch.context() as m:
+        m.setattr(nats, "get_nats_client", nats_client)
+        with pytest.raises(MissingFhirResourceType):
+            await workflow.validate()
 
 
-async def test_validate_mismatched_resource_type(workflow: FhirWorkflow):
+@pytest.mark.asyncio
+async def test_validate_mismatched_resource_type(
+    workflow: FhirWorkflow, nats_client, monkeypatch
+):
     """
     Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
     """
     workflow.message["resourceType"] = "Encounter"
-    with pytest.raises(ValidationError):
-        await workflow.validate()
+    with monkeypatch.context() as m:
+        m.setattr(nats, "get_nats_client", nats_client)
+        with pytest.raises(ValidationError):
+            await workflow.validate()
 
 
-async def test_validate_invalid_resource_type(workflow: FhirWorkflow):
+@pytest.mark.asyncio
+async def test_validate_invalid_resource_type(
+    workflow: FhirWorkflow, nats_client, monkeypatch
+):
     """
     Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
     """
     workflow.message["resourceType"] = "NoSuchResourceName"
-    with pytest.raises(FhirValidationError):
-        await workflow.validate()
+    with monkeypatch.context() as m:
+        m.setattr(nats, "get_nats_client", nats_client)
+        with pytest.raises(FhirValidationError):
+            await workflow.validate()
