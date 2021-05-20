@@ -34,7 +34,7 @@ The LinuxForHealth Connect development environment requires the following:
 - [mkcert](https://github.com/FiloSottile/mkcert) for local trusted certificates
 - [Python 3.8 or higher](https://www.python.org/downloads/mac-osx/) for runtime/coding support
 - [Pipenv](https://pipenv.pypa.io) for Python dependency management  
-- [Docker Compose](https://docs.docker.com/compose/install/) for a local container runtime
+- [Docker Compose 1.27.1 or higher](https://docs.docker.com/compose/install/) for a local container runtime
 
 For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)  
 For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.
