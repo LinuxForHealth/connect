@@ -12,6 +12,7 @@ from typing import Callable
 import pytest
 from unittest.mock import AsyncMock
 from connect.main import get_app
+from nats.aio.client import Client as NatsClient
 
 
 @pytest.fixture
@@ -168,3 +169,10 @@ def mock_httpx_client():
             return self._return_mock_response()
 
     return MockHttpxClient
+
+
+@pytest.fixture
+def nats_client() -> AsyncMock:
+    """Returns an AsyncMock Nats Client"""
+    mock = AsyncMock(spec=NatsClient)
+    return mock
