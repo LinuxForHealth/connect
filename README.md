@@ -36,7 +36,8 @@ The LinuxForHealth Connect development environment requires the following:
 - [Pipenv](https://pipenv.pypa.io) for Python dependency management  
 - [Docker Compose](https://docs.docker.com/compose/install/) for a local container runtime
 
-For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)  
+For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.
 
 ### Set Up A Local Environment
 #### Clone the project and navigate to the root directory
