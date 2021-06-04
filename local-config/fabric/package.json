@@ -1,0 +1,19 @@
+{
+    "name": "fabric-tools",
+    "version": "0.0.1",
+    "description": "fabric config tools",
+    "main": "enrollAdmin.js",
+    "engines": {
+        "node": ">=12",
+        "npm": ">=5"
+    },
+    "scripts": {},
+    "engineStrict": true,
+    "author": "Carole Corley",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "fabric-ca-client": "^2.2.6",
+        "fabric-network": "^2.1.0"
+    },
+    "devDependencies": {}
+}

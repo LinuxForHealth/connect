@@ -142,3 +142,16 @@ services:
       - main
     ports:
       - 9443:9443
+  fabric-client:
+    profiles: ["fabric"]
+    restart: always
+    image: linuxforhealth/fabric-client:0.1
+    environment:
+      INITIALIZE_WITH_DISCOVERY: 'false'
+      DISCOVERY_AS_LOCALHOST: 'false'
+    volumes:
+      - ./local-config/fabric/conf:/usr/src/app/conf
+    networks:
+      - main
+    ports:
+      - "9043:9043"

@@ -1,0 +1,111 @@
+{
+    "name": "test-network",
+    "version": "1.0.0",
+    "client": {
+        "organization": "Org1",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                }
+            }
+        }
+    },
+    "channels": {
+        "channel1": {
+            "orderers": ["orderer.example.com"],
+            "peers": {
+                "peer0.org1.example.com": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                },
+                "peer0.org2.example.com": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": false,
+                    "ledgerQuery": true,
+                    "eventSource": false
+                }
+            },
+            "chaincodes": ["fabric-client:1.0"],
+            "x-members": ["Org1", "Org2"]
+        }
+    },
+    "organizations": {
+        "Org1": {
+            "mspid": "Org1MSP",
+            "peers": [
+                "peer0.org1.example.com"
+            ],
+            "certificateAuthorities": [
+                "ca.org1.example.com"
+            ]
+        },
+        "Org2": {
+            "mspid": "Org2MSP",
+            "peers": [
+                "peer0.org2.example.com"
+            ],
+            "certificateAuthorities": [
+                "ca.org2.example.com"
+            ]
+        }
+    },
+    "peers": {
+        "peer0.org1.example.com": {
+            "url": "grpcs://host.docker.internal:7051",
+            "tlsCACerts": {
+                "pem": "-----BEGIN CERTIFICATE-----\nMIICJjCCAc2gAwIBAgIUZOVyK/XvyW421WKTrB/uYoJQTUswCgYIKoZIzj0EAwIw\ncDELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9saW5hMQ8wDQYDVQQH\nEwZEdXJoYW0xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh\nLm9yZzEuZXhhbXBsZS5jb20wHhcNMjEwNjAyMjAxMjAwWhcNMzYwNTI5MjAxMjAw\nWjBwMQswCQYDVQQGEwJVUzEXMBUGA1UECBMOTm9ydGggQ2Fyb2xpbmExDzANBgNV\nBAcTBkR1cmhhbTEZMBcGA1UEChMQb3JnMS5leGFtcGxlLmNvbTEcMBoGA1UEAxMT\nY2Eub3JnMS5leGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABMlh\nYssC42ffaxaV0Mfru9kL/FDMfmTZ6t1bg0J07y/PbOgo7yyQPtsqvaYMx1eMRyok\nVI82HV+pJh4NCpPYQoajRTBDMA4GA1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAG\nAQH/AgEBMB0GA1UdDgQWBBRnBkZ+TT2CUvSY/F4+RV8CrkYx4jAKBggqhkjOPQQD\nAgNHADBEAiBbXMHJqSf4p+x2IZZPuO5chy0jRdKBisuJF6Ycl2GWCgIgJx2NpA70\nrqr8CThrmiTQU8K06oqHWQ3dCA5wswOf60g=\n-----END CERTIFICATE-----\n"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.org1.example.com",
+                "hostnameOverride": "peer0.org1.example.com"
+            }
+        },
+        "peer0.org2.example.com": {
+            "url": "grpcs://host.docker.internal:9051",
+            "tlsCACerts": {
+                "pem": "-----BEGIN CERTIFICATE-----\nMIICHzCCAcWgAwIBAgIUP9zvXDO2L5e1jSaRqz/NGJOK1WkwCgYIKoZIzj0EAwIw\nbDELMAkGA1UEBhMCVUsxEjAQBgNVBAgTCUhhbXBzaGlyZTEQMA4GA1UEBxMHSHVy\nc2xleTEZMBcGA1UEChMQb3JnMi5leGFtcGxlLmNvbTEcMBoGA1UEAxMTY2Eub3Jn\nMi5leGFtcGxlLmNvbTAeFw0yMTA2MDIyMDEyMDBaFw0zNjA1MjkyMDEyMDBaMGwx\nCzAJBgNVBAYTAlVLMRIwEAYDVQQIEwlIYW1wc2hpcmUxEDAOBgNVBAcTB0h1cnNs\nZXkxGTAXBgNVBAoTEG9yZzIuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2NhLm9yZzIu\nZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASBt3fgWTy+SDVl\nj8hroojZQHpD5BzrPZ8BE3MQOvkh5W3UDXdWfD88qTH5VrIG1BXo2qbEHYS2tt1L\nkjXhbyt6o0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd\nBgNVHQ4EFgQUMH7H5N+WVRVUudsdPTjQj0sYniEwCgYIKoZIzj0EAwIDSAAwRQIh\nAJjLLbOmEpXIG0gC2oHwepd1NgnpRsf+YQz8w5CKtiLtAiAHJctWR9V44Hp/Bdl+\n8E1SPtsEGfoAvw7ata2DnrVZ7w==\n-----END CERTIFICATE-----\n"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.org2.example.com",
+                "hostnameOverride": "peer0.org2.example.com"
+            }
+        }
+    },
+    "orderers": {
+        "orderer.example.com": {
+            "url": "grpcs://host.docker.internal:7050",
+            "tlsCACerts": {
+                "pem": "-----BEGIN CERTIFICATE-----\nMIICCzCCAbGgAwIBAgIUCLR9ivsmOt//BrtsH0bQK0ojDR0wCgYIKoZIzj0EAwIw\nYjELMAkGA1UEBhMCVVMxETAPBgNVBAgTCE5ldyBZb3JrMREwDwYDVQQHEwhOZXcg\nWW9yazEUMBIGA1UEChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1wbGUu\nY29tMB4XDTIxMDYwMjIwMTIwMFoXDTM2MDUyOTIwMTIwMFowYjELMAkGA1UEBhMC\nVVMxETAPBgNVBAgTCE5ldyBZb3JrMREwDwYDVQQHEwhOZXcgWW9yazEUMBIGA1UE\nChMLZXhhbXBsZS5jb20xFzAVBgNVBAMTDmNhLmV4YW1wbGUuY29tMFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEUUj77WwINhTGG6xS4Si5I85hhvCg7ZscjIzbSabk\nCtGkQlBwZpKT8Yo1cMK2AWxkFrH61Hz+TIGqLpAofEt/BaNFMEMwDgYDVR0PAQH/\nBAQDAgEGMBIGA1UdEwEB/wQIMAYBAf8CAQEwHQYDVR0OBBYEFHCxZUVCSFEHnubl\nNR2Y9DbPhOB+MAoGCCqGSM49BAMCA0gAMEUCIQDJimZvjoeC+I68iy8/ChLnPeEK\nvQBj8O56Pd8aGXPwZgIgb1RTAv6Kr3x1Sun15Ajux/8ijkSr/3SKLm0BfsmSCXA=\n-----END CERTIFICATE-----\n"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "orderer.example.com",
+                "hostnameOverride": "orderer.example.com"
+            }
+        }
+    },
+    "certificateAuthorities": {
+        "ca.org1.example.com": {
+            "url": "https://host.docker.internal:7054",
+            "caName": "ca_org1",
+            "httpOptions": {
+                "verify": false
+            },
+            "tlsCACerts": {
+                "pem": ["-----BEGIN CERTIFICATE-----\nMIICJjCCAc2gAwIBAgIUZOVyK/XvyW421WKTrB/uYoJQTUswCgYIKoZIzj0EAwIw\ncDELMAkGA1UEBhMCVVMxFzAVBgNVBAgTDk5vcnRoIENhcm9saW5hMQ8wDQYDVQQH\nEwZEdXJoYW0xGTAXBgNVBAoTEG9yZzEuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2Nh\nLm9yZzEuZXhhbXBsZS5jb20wHhcNMjEwNjAyMjAxMjAwWhcNMzYwNTI5MjAxMjAw\nWjBwMQswCQYDVQQGEwJVUzEXMBUGA1UECBMOTm9ydGggQ2Fyb2xpbmExDzANBgNV\nBAcTBkR1cmhhbTEZMBcGA1UEChMQb3JnMS5leGFtcGxlLmNvbTEcMBoGA1UEAxMT\nY2Eub3JnMS5leGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABMlh\nYssC42ffaxaV0Mfru9kL/FDMfmTZ6t1bg0J07y/PbOgo7yyQPtsqvaYMx1eMRyok\nVI82HV+pJh4NCpPYQoajRTBDMA4GA1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAG\nAQH/AgEBMB0GA1UdDgQWBBRnBkZ+TT2CUvSY/F4+RV8CrkYx4jAKBggqhkjOPQQD\nAgNHADBEAiBbXMHJqSf4p+x2IZZPuO5chy0jRdKBisuJF6Ycl2GWCgIgJx2NpA70\nrqr8CThrmiTQU8K06oqHWQ3dCA5wswOf60g=\n-----END CERTIFICATE-----\n"]
+            }
+        },
+        "ca.org2.example.com": {
+            "url": "https://host.docker.internal:8054",
+            "caName": "ca_org2",
+            "httpOptions": {
+                "verify": false
+            },
+            "tlsCACerts": {
+                "pem": ["-----BEGIN CERTIFICATE-----\nMIICezCCAiKgAwIBAgIUSvU9NpMEIMdkbdebF9tiBB6BlOIwCgYIKoZIzj0EAwIw\nbDELMAkGA1UEBhMCVUsxEjAQBgNVBAgTCUhhbXBzaGlyZTEQMA4GA1UEBxMHSHVy\nc2xleTEZMBcGA1UEChMQb3JnMi5leGFtcGxlLmNvbTEcMBoGA1UEAxMTY2Eub3Jn\nMi5leGFtcGxlLmNvbTAeFw0yMTA2MDIyMDEyMDBaFw0yMjA2MDIyMDEyMDBaMGUx\nCzAJBgNVBAYTAlVLMRIwEAYDVQQIEwlIYW1wc2hpcmUxEDAOBgNVBAcTB0h1cnNs\nZXkxGTAXBgNVBAoTEG9yZzIuZXhhbXBsZS5jb20xFTATBgNVBAMTDGI0ZDk3ODA3\nM2JjNTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABL3MJNTZ86XMiWE+1eCYyv63\nqJ2CSsKAoIfr6PPYpx4SADa5VH2WwhKJIdNy5iwbaFRSn1Udbt+83F2O/36PKPWj\ngagwgaUwDgYDVR0PAQH/BAQDAgOoMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEF\nBQcDAjAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBSp4upkVdfIE0Qd6XOOqlBKA7KG\n/jAfBgNVHSMEGDAWgBQwfsfk35ZVFVS52x09ONCPSxieITAmBgNVHREEHzAdggls\nb2NhbGhvc3SCEG9yZzIuZXhhbXBsZS5jb20wCgYIKoZIzj0EAwIDRwAwRAIgI3fI\nHdtO8GgDq5D5MnalIhUJmXOaKuWkv9oUto+bub8CIC9GMordk5r8rw38ldaT0Q5x\nT1GX96yX9QVG5hI2fDRy\n-----END CERTIFICATE-----\n"]
+            }
+        }
+    }
+}

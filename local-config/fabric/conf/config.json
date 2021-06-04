@@ -1,0 +1,10 @@
+{
+    "user": "user1",
+    "channel": "channel1",
+    "contract": "fhir-data",
+    "port": 9043,
+    "connection_profile": "conf/connection-org1.json",
+    "wallet_location": "conf/wallet",
+    "use_discovery": "True",
+    "as_local_host": "True"
+}
