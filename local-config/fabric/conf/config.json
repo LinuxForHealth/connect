@@ -1,10 +1,16 @@
 {
-    "user": "user1",
     "channel": "channel1",
     "contract": "fhir-data",
     "port": 9043,
-    "connection_profile": "conf/connection-org1.json",
+    "connection_profile": "conf/connection-full.json",
     "wallet_location": "conf/wallet",
-    "use_discovery": "True",
-    "as_local_host": "True"
+    "use_discovery": "true",
+    "as_local_host": "true",
+    "enroll_admin": "true",
+    "admin_name": "admin",
+    "admin_pw": "adminpw",
+    "register_user": "true",
+    "user_name": "user2",
+    "certificate_authority": "ca.org1.example.com",
+    "msp_id": "Org1MSP"
 }

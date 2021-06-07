@@ -1,0 +1,111 @@
+{
+    "name": "test-network-org1",
+    "version": "1.0.0",
+    "client": {
+        "organization": "Org1",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                }
+            }
+        }
+    },
+    "channels": {
+        "channel1": {
+            "orderers": ["orderer.example.com"],
+            "peers": {
+                "peer0.org1.example.com": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                },
+                "peer0.org2.example.com": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": false,
+                    "ledgerQuery": true,
+                    "eventSource": false
+                }
+            },
+            "chaincodes": ["fabric-client:1.0"],
+            "x-members": ["Org1", "Org2"]
+        }
+    },
+    "organizations": {
+        "Org1": {
+            "mspid": "Org1MSP",
+            "peers": [
+                "peer0.org1.example.com"
+            ],
+            "certificateAuthorities": [
+                "ca.org1.example.com"
+            ]
+        },
+        "Org2": {
+            "mspid": "Org2MSP",
+            "peers": [
+                "peer0.org2.example.com"
+            ],
+            "certificateAuthorities": [
+                "ca.org2.example.com"
+            ]
+        }
+    },
+    "peers": {
+        "peer0.org1.example.com": {
+            "url": "grpcs://host.docker.internal:${P1PORT}",
+            "tlsCACerts": {
+                "pem": "${PEER1PEM}"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.org1.example.com",
+                "hostnameOverride": "peer0.org1.example.com"
+            }
+        },
+        "peer0.org2.example.com": {
+            "url": "grpcs://host.docker.internal:${P2PORT}",
+            "tlsCACerts": {
+                "pem": "${PEER2PEM}"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.org2.example.com",
+                "hostnameOverride": "peer0.org2.example.com"
+            }
+        }
+    },
+    "orderers": {
+        "orderer.example.com": {
+            "url": "grpcs://host.docker.internal:${O1PORT}",
+            "tlsCACerts": {
+                "pem": "${O1PEM}"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "orderer.example.com",
+                "hostnameOverride": "orderer.example.com"
+            }
+        }
+    },
+    "certificateAuthorities": {
+        "ca.org1.example.com": {
+            "url": "https://host.docker.internal:${CA1PORT}",
+            "caName": "ca-org1",
+            "tlsCACerts": {
+                "pem": ["${CA1PEM}"]
+            },
+            "httpOptions": {
+                "verify": false
+            }
+        },
+        "ca.org2.example.com": {
+            "url": "https://host.docker.internal:${CA2PORT}",
+            "caName": "ca-org2",
+            "httpOptions": {
+                "verify": false
+            },
+            "tlsCACerts": {
+                "pem": ["${CA2PEM}"]
+            }
+        }
+    }
+}
