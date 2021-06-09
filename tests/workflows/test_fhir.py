@@ -18,6 +18,7 @@ def workflow() -> FhirWorkflow:
         "origin_url": "http://localhost:5000/fhir",
         "certificate_verify": False,
         "lfh_id": "90cf887d-eaa0-4997-b2b7-b1e39ae0ec03",
+        "operation": "POST",
     }
     workflow = FhirWorkflow(**config)
     return workflow
