@@ -75,6 +75,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.transmit_server = kwargs.get("transmit_server", None)
         self.do_sync = kwargs.get("do_sync", True)
         self.uuid = str(uuid.uuid4())
+        self.operation = kwargs["operation"]
 
     state = CoreWorkflowDef()
 
@@ -133,6 +134,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             "data_format": self.data_format,
             "data": encoded_data,
             "target_endpoint_url": self.transmit_server,
+            "operation": self.operation,
         }
         response = LinuxForHealthDataRecordResponse(**message)
 
