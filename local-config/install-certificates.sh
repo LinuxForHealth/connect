@@ -14,7 +14,7 @@ echo ""
 echo "copy root ca to service directories"
 CA_ROOT_LOCATION=$(mkcert -CAROOT)
 
-for dir in connect nats
+for dir in connect nats fabric/conf/certs
 do
   cp "$CA_ROOT_LOCATION"/rootCA.pem "$BASE_DIRECTORY"/"$dir"/lfh-root-ca.pem
 done
@@ -24,6 +24,12 @@ echo ""
 mkcert -cert-file "$BASE_DIRECTORY"/nats/lfh-nats-server.pem \
        -key-file "$BASE_DIRECTORY"/nats/lfh-nats-server.key \
        nats-server connect_nats-server_1 localhost 127.0.0.1 ::1
+
+echo "create fabric client development certificate"
+echo ""
+mkcert -cert-file "$BASE_DIRECTORY"/fabric/conf/certs/lfh-fabric-client.pem \
+       -key-file "$BASE_DIRECTORY"/fabric/conf/certs/lfh-fabric-client.key \
+       fabric-client connect_fabric-client_1 localhost 127.0.0.1 ::1
 
 echo "create LinuxForHealth development certificate"
 echo ""
