@@ -4,7 +4,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.18.0.0/24
+        - subnet: 172.19.0.0/24
       driver: default
 services:
   connect:
@@ -28,11 +28,7 @@ services:
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
       - ./local-config/nats:/conf
-    command: server --tls \
-      --tlscacert=/conf/lfh-root-ca.pem \
-      --tlscert=/conf/lfh-nats-server.pem \
-      --tlskey=/conf/lfh-nats-server.key \
-      --config=/conf/nats-server.conf
+    command: server --config=/conf/nats-server.conf
     ports:
       - "4222:4222"
   zookeeper:
@@ -142,3 +138,16 @@ services:
       - main
     ports:
       - 9443:9443
+  fabric-client:
+    profiles: ["fabric"]
+    image: linuxforhealth/fabric-client:0.1
+    restart: "always"
+    environment:
+      INITIALIZE_WITH_DISCOVERY: 'false'
+      DISCOVERY_AS_LOCALHOST: 'false'
+    volumes:
+      - ./local-config/fabric/conf:/usr/src/app/conf
+    networks:
+      - main
+    ports:
+      - "9043:9043"

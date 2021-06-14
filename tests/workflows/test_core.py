@@ -33,6 +33,7 @@ def workflow() -> CoreWorkflow:
         "certificate_verify": False,
         "lfh_id": "90cf887d-eaa0-4997-b2b7-b1e39ae0ec03",
         "data_format": "custom",
+        "operation": "POST",
     }
     workflow = CoreWorkflow(**config)
     return workflow

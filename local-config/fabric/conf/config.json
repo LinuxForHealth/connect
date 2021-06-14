@@ -1,0 +1,20 @@
+{
+    "channel": "channel1",
+    "contract": "fhir-data",
+    "port": 9043,
+    "connection_profile": "conf/connection-full.json",
+    "wallet_location": "conf/wallet",
+    "use_discovery": "false",
+    "as_local_host": "false",
+    "use_nats": "true",
+    "nats_servers": ["nats-server:4222"],
+    "nats_nkey": "conf/certs/nats-server.nk",
+    "nats_ca_file": "./conf/certs/lfh-root-ca.pem",
+    "enroll_admin": "true",
+    "admin_name": "admin",
+    "admin_pw": "adminpw",
+    "register_user": "true",
+    "user_name": "user2",
+    "certificate_authority": "ca.org1.example.com",
+    "msp_id": "Org1MSP"
+}

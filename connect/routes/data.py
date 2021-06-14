@@ -28,6 +28,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
 
     uuid: uuid.UUID
     lfh_id: str
+    operation: str
     creation_date: datetime.datetime
     store_date: datetime.datetime
     consuming_endpoint_url: str
