@@ -86,3 +86,4 @@ ipfs-*
 local-config/fabric/node_modules
 local-config/fabric/conf/wallet
 local-config/fabric/conf/connection-full.json
+local-config/fabric/conf/certs/lfh*

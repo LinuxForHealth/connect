@@ -126,20 +126,43 @@ Committed chaincode definition for chaincode 'fhir-data' on channel 'mychannel':
 Version: 1.0, Sequence: 1, Endorsement Plugin: escc, Validation Plugin: vscc, Approvals: [Org1MSP: true, Org2MSP: true]
 ```
 
-## Configure the client
-Generate the test-network connection-full.json file, which describes the fabric network you just deployed.  To do that, first edit connect/local-config/fabric/conf/ccp-generate.sh and set TESTNET_PATH to your test-network location. Then generate connection-full.json:
+### Generate the connection json file
+Generate the test-network connection-full.json file, which describes the fabric network you just deployed.  To do that, first edit connect/local-config/fabric/conf/ccp-generate.sh and set TESTNET_PATH to your test-network directory. Then generate connection-full.json:
 ```shell
 cd connect/local-config/fabric/conf
 ./ccp-generate.sh
 ```
-You can also edit the fabric-client config.json in connect/local-config/fabric/conf and adjust the settings for your fabric, but you should be able to use the configuration with test-network without changes.
 
-<TODO: document each setting>
+## Configure the client
+Copy your connection json file for your Hyperledger Fabric to connect/local-config/fabric/conf and specify the filename in connect/local-config/fabric/conf.  If you generated connection-full.json in the previous step, there is nothing to do for this step.
+
+You can further edit the fabric-client config.json in connect/local-config/fabric/conf and adjust the settings for your fabric, but you should be able to use the configuration with test-network without changes.  Please see the table below if you do need to make changes:
+
+| Setting | Example | Description |
+| ------- | ------- | ----------- |
+| channel | channel1 | The channel on which your Hyperledger Fabric contract is deployed. |
+| contract | fhir-data | The name of the deployed contract. |
+| port | 9043 | The port on which the fabric client listens for incoming REST API calls. |
+| connection_profile | conf/connection-full.json | The location of the Hyperledger Fabric connection profile. |
+| wallet_location | conf/wallet | The location of the Hyperledger Fabric wallet directory. 
+| use_discovery | false | Whether to use the fabric-network API's discovery service.  Use `true` if your Hyperledger Fabric servers are DNS discoverable, otherwise use `false`. |
+| as_local_host | false | If your Hyperledger Fabric servers are running locally and `use_discovery` is `true`, use `true`, otherwise use `false`. |
+| use_nats | true | Whether to use NATS to receive messages from LinuxForHealth.  This should always be true when using LinuxForHealth. |
+| nats_servers | ["nats-server:4222"] | An array of NATS servers from which the fabric client will receive messages. |
+| nats_nkey | conf/certs/nats-server.nk | The NATS nkey private key that the client needs to connect to the LinuxForHealth NATS server. |
+| nats_ca_file | ./conf/certs/lfh-root-ca.pem | The CA file to use when connecting to the LinuxForHealth NATS server. |
+| enroll_admin | true | When using test-network, whether to enroll the admin.  In general this will be true, at least initially when using test-network.  Once the id is in the local wallet, you can leave it set to true or change it to false. |
+| admin_name | admin | The name of the admin to enroll when `enroll_admin` is `true`. |
+| admin_pw | adminpw | The password of the admin to enroll when `enroll_admin` is `true`. |
+| register_user | true | When using test-network, whether to enroll a user.  In general this will be true, at least initially when using test-network.  Once the id is in the local wallet, you can leave it set to true or change it to false. |
+| user_name | admin | The name of the user to register when `register_user` is `true`. |
+| certificate_authority | ca.org1.example.com | The name of the Hyperledger Fabric CA to specify when `register_user` is `true`. |
+| msp_id | Org1MSP | The name of the Hyperledger Fabric Membership Service Provider to use when  `register_user` is `true`. |
 
 ## Start the client
 Use the docker-compose fabric profile to start the fabric client with the rest of the LFH services:
 ```shell
-dacker-compose --profile deployment --profile fabric up -d
+docker-compose --profile deployment --profile fabric up -d
 ```
 
 That's it - you're ready to send transactions to Linux For Health and store them in your blockchain!
