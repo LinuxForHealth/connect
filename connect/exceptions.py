@@ -59,3 +59,10 @@ class KafkaMessageNotFoundError(Exception):
 
     def __init__(self, msg):
         super(KafkaMessageNotFoundError, self).__init__(msg)
+
+
+class EthereumNetworkConnectionError(Exception):
+    """Raised when the client cannot connect to a blockchain network"""
+
+    def __init__(self, msg):
+        super(EthereumNetworkConnectionError, self).__init__(msg)

@@ -75,6 +75,9 @@ class Settings(BaseSettings):
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"
 
+    # ethereum client
+    ethereum_network_uri: str = "http://127.0.0.1:7545"
+
     class Config:
         case_sensitive = False
         env_file = os.path.join(dirname(dirname(abspath(__file__))), ".env")
