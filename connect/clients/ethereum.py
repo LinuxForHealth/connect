@@ -8,6 +8,7 @@ import asyncio
 import logging
 import time
 from web3 import Web3
+from eth_account import Account
 from hexbytes import HexBytes
 from connect.config import get_settings
 from connect.exceptions import EthereumNetworkConnectionError
@@ -118,6 +119,8 @@ class EthereumClient:
         :param value: Optional. Integer value sent with this transaction.
         :param data: The compiled code of a contract OR the hash of the invoked method signature and encoded parameters.
         :param nonce: Optional. This allows to overwrite your own pending transactions that use the same nonce.
+
+        :returns txn_hash: as a string
         '''
         if not self._connected:
             error_msg = "Failed to send off transaction - connection error"
@@ -141,6 +144,91 @@ class EthereumClient:
             logger.info(f"transaction information: {transaction}")
             return self._client_connection.eth.send_transaction(transaction).hex()
 
+    def send_raw_transaction(self, from_account_addr: str, to_account_addr: str,
+                             private_key_for_senders_acct: str, txn_gas: int, gas_price: int,
+                             txn_value: int, data) -> str:
+        '''
+        Signs and sends a raw transaction
+
+        :param from_account_addr: The address the transaction is sent from.
+        :param to_account_addr: The address the transaction is directed to.
+        :param private_key_for_senders_acct: The private key string hash for the sender
+        :param txn_gas: Gas provided for the transaction execution. It will return unused gas.
+        :param gas_price: Integer gas_price used for each paid gas.
+        :param txn_value: Integer value sent with this transaction.
+        :param txn_data: The compiled code of a contract OR the hash of the invoked method signature and encoded parameters.
+
+        :returns txn_hash: as a string
+        '''
+        if not self._connected:
+            error_msg = "Failed to send off transaction - connection error"
+            raise EthereumNetworkConnectionError(error_msg)
+        else:
+            # Sign this transaction before sending it off.
+            signed_txn = self._client_connection.eth.account
+                .sign_transaction(dict
+                (
+                    nonce=w3.eth.get_transaction_count(from_account_addr),
+                    gasPrice=gas_price,
+                    gas=txn_gas,
+                    to=to_account_addr,
+                    value=txn_value,
+                    data=txn_data,
+                ),
+                private_key_for_senders_account,
+            )
+
+            # Send transaction to the blockchain
+            logger.info(f"transaction information: {signed_txn}")
+            return self._client_connection.eth.send_raw_transaction(signed_txn.rawTransaction).hex()
+
+    def create_new_account(self, entropy_randomizer=None):
+        '''
+        creates a new LocalAccount that can be used to send a raw transaction to the connected blockchain
+
+        :param entropy_randomizer: Optional. String that adds to hex randomization generation
+                                in addition to the operating system randomizer
+
+        :returns local_acct: A LocalAccount instance that provides the following
+                                - address - string: The account address.
+                                - privateKey - string: The accounts private key. This should never be shared
+                                                       or stored unencrypted in localstorage! Also make sure
+                                                       to null the memory after usage.
+                                - signTransaction(tx [, callback]) - Function: The function to sign transactions.
+                                                  See web3.eth.accounts.signTransaction() for more.
+                                - sign(data) - Function: The function to sign transactions.
+                                                         See web3.eth.accounts.sign() for more.
+        '''
+        if not self._connected:
+            error_msg = "Failed to create a new account - connection error"
+            raise EthereumNetworkConnectionError(error_msg)
+        else:
+            return self._client_connection.eth.accounts.create(entropy_randomizer)
+
+    def private_key_to_account(self, private_key: str, ignore_length: bool=False):
+        '''
+        Creates an account object from a private key.
+
+        :param private_key: String: The private key to import. This is 32 bytes of random data.
+                                    If you are supplying a hexadecimal number, it must have 0x
+                                    prefix in order to be in line with other Ethereum libraries.
+        :param ignore_length: Boolean: If set to true the privateKey length not get validated.
+
+        :returns local_acct: A LocalAccount instance that provides the following
+                                - address - string: The account address.
+                                - privateKey - string: The accounts private key. This should never be shared
+                                                       or stored unencrypted in localstorage! Also make sure
+                                                       to null the memory after usage.
+                                - signTransaction(tx [, callback]) - Function: The function to sign transactions.
+                                                  See web3.eth.accounts.signTransaction() for more.
+                                - sign(data) - Function: The function to sign transactions.
+                                                         See web3.eth.accounts.sign() for more.
+        '''
+        if not self._connected:
+            error_msg = "Failed to retrieve account from the private key - connection error"
+            raise EthereumNetworkConnectionError(error_msg)
+        else:
+            return self._client_connection.eth.accounts.privateKeyToAccount(private_key)
 
 def get_ethereum_client() -> Optional[EthereumClient]:
     """
