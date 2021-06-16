@@ -33,6 +33,7 @@ class EthereumClient:
         self._connected = False
         self._client_connection = None
         self._eth_network_uri = configs['eth_network_uri']
+        self._default_account = None
 
         self._client_connection = Web3(Web3.HTTPProvider(self._eth_network_uri))
 
@@ -70,6 +71,7 @@ class EthereumClient:
             raise EthereumNetworkConnectionError(error_msg)
         else:
             self._client_connection.eth.default_account = account_num
+            self._default_account = account_num
 
     def get_all_account_nums(self):
         if not self._connected:
@@ -229,6 +231,71 @@ class EthereumClient:
             raise EthereumNetworkConnectionError(error_msg)
         else:
             return self._client_connection.eth.accounts.privateKeyToAccount(private_key)
+
+    def deploy_contract(self, compiled_contract_json_filepath, default_account=None):
+        """
+        Deploys a compiled solidity contract to the blockchain.
+
+        :param compiled_contract_json_filepath: Solidity contract in json format. Example below:
+        {
+            "language": "Solidity",
+            "sources": {
+                "Greeter.sol": {
+                    "content": '''
+                        pragma solidity ^0.8.5;
+
+                        contract Greeter {
+                          string public greeting;
+
+                          constructor() public {
+                              greeting = 'Hello';
+                          }
+
+                          function setGreeting(string memory _greeting) public {
+                              greeting = _greeting;
+                          }
+
+                          function greet() view public returns (string memory) {
+                              return greeting;
+                          }
+                        }
+                      '''
+                }
+            },
+            "settings":
+            {
+                "outputSelection": {
+                    "*": {
+                        "*": [
+                            "metadata", "evm.bytecode"
+                            , "evm.bytecode.sourceMap"
+                        ]
+                    }
+                }
+            }
+        }
+
+        :param default_account: Default account which is used to deploy the contract
+
+        :returns txn_hash: A hash for the transaction that represents the deployed contract.
+        """
+        if not self._connected:
+            error_msg = "Failed to deploy contract - connection error"
+            raise EthereumNetworkConnectionError(error_msg)
+        else:
+            _default_account = default_account if default_account else self._default_account
+            if not _default_account:
+                raise ValueException('_default_account not set')
+
+            with open(compiled_contract_json_filepath) as file:
+                contract_json = json.load(file)
+                contract_abi = contract_json['abi']
+
+            contract = self._client_connection.eth.contract(address=_default_account, abi=contract_abi)
+            # SET function_name with the value you want to store in the blockchain
+            result = contract.functions.function_name().transact()
+            return result.hex()
+
 
 def get_ethereum_client() -> Optional[EthereumClient]:
     """

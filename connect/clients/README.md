@@ -19,4 +19,4 @@ Using the `get_ethereum_client` utility function instantiates `EthereumClient` a
 - Get gas price
 - Send a transaction
 - Send a raw transaction
-- Contract deployment **TODO
+- Contract deployment

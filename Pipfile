@@ -20,6 +20,9 @@ httpx = "*"
 slowapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 nkeys = "*"
+web3 = "*"
+eth_account = "*"
+hexbytes = "*"
 
 [dev-packages]
 pytest = "*"
