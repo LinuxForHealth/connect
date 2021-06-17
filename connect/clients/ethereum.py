@@ -8,6 +8,7 @@ import asyncio
 import logging
 import time
 from web3 import Web3
+from typing import Optional
 from eth_account import Account
 from hexbytes import HexBytes
 from connect.config import get_settings
@@ -30,77 +31,74 @@ class EthereumClient:
     """
 
     def __init__(self, configs):
-        self._connected = False
-        self._client_connection = None
+        self._client: Optional[Web3] = None
         self._eth_network_uri = configs['eth_network_uri']
-        self._default_account = None
+        self._default_account = Optional[str] = None
 
-        self._client_connection = Web3(Web3.HTTPProvider(self._eth_network_uri))
+        self._client = Web3(Web3.HTTPProvider(self._eth_network_uri))
 
-        if(self._client_connection and self._client_connection.isConnected()):
+        if(self._client and self._client.isConnected()):
             logger.info(f"Connected to the Ethereum network at: {self._eth_network_uri}")
-            self._connected = True
         else:
             error_msg = f"Failed to connect to the Ethereum network at: {self._eth_network_uri}"
-            self._connected = False
             logger.error(error_msg)
             raise EthereumNetworkConnectionError(error_msg)
 
     def get_block_info(self, block_num=None):
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve block information - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
             if block_num:
-                block_info_dict = dict(self._client_connection.eth.get_block(block_num))
+                block_info_dict = dict(self._client.eth.get_block(block_num))
             else:
-                block_info_dict = dict(self._client_connection.eth.get_block('latest'))
+                block_info_dict = dict(self._client.eth.get_block('latest'))
 
             return json.dumps(block_info_dict, cls=HexJsonEncoder)
 
     def get_latest_block_number(self, block_num: int) -> int:
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve latest block number - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.block_number
+            return self._client.eth.block_number
 
     def set_default_account_num(self, account_num: str):
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to set default account number - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            self._client_connection.eth.default_account = account_num
+            self._client.eth.default_account = account_num
             self._default_account = account_num
 
     def get_all_account_nums(self):
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve account numbers - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.get_accounts()
+            return self._client.eth.get_accounts()
 
     def get_balance_for_account_num(self, account_num: str) -> int:
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve account balance - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.get_balance(account_num)
+            return self._client.eth.get_balance(account_num)
 
     def get_transaction_info(self, tx_hash: str):
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve transaction info - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            tx_info_dict = dict(self._client_connection.eth.get_transaction(tx_hash))
+            tx_info_dict = dict(self._client.eth.get_transaction(tx_hash))
             return json.dumps(tx_info_dict, cls=HexJsonEncoder)
 
     def get_gas_price(self) -> int:
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve gas price - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.gas_price()
+            return self._client.eth.gas_price()
 
     def send_transaction(self, from_account: str, to_account: str, gas: int = None,
                          gas_price: int = None, value: int = None, data,
@@ -124,7 +122,7 @@ class EthereumClient:
 
         :returns txn_hash: as a string
         '''
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to send off transaction - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
@@ -144,7 +142,7 @@ class EthereumClient:
                 transaction['nonce'] = nonce
 
             logger.info(f"transaction information: {transaction}")
-            return self._client_connection.eth.send_transaction(transaction).hex()
+            return self._client.eth.send_transaction(transaction).hex()
 
     def send_raw_transaction(self, from_account_addr: str, to_account_addr: str,
                              private_key_for_senders_acct: str, txn_gas: int, gas_price: int,
@@ -162,12 +160,12 @@ class EthereumClient:
 
         :returns txn_hash: as a string
         '''
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to send off transaction - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
             # Sign this transaction before sending it off.
-            signed_txn = self._client_connection.eth.account
+            signed_txn = self._client.eth.account
                 .sign_transaction(dict
                 (
                     nonce=w3.eth.get_transaction_count(from_account_addr),
@@ -182,7 +180,7 @@ class EthereumClient:
 
             # Send transaction to the blockchain
             logger.info(f"transaction information: {signed_txn}")
-            return self._client_connection.eth.send_raw_transaction(signed_txn.rawTransaction).hex()
+            return self._client.eth.send_raw_transaction(signed_txn.rawTransaction).hex()
 
     def create_new_account(self, entropy_randomizer=None):
         '''
@@ -201,11 +199,11 @@ class EthereumClient:
                                 - sign(data) - Function: The function to sign transactions.
                                                          See web3.eth.accounts.sign() for more.
         '''
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to create a new account - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.accounts.create(entropy_randomizer)
+            return self._client.eth.accounts.create(entropy_randomizer)
 
     def private_key_to_account(self, private_key: str, ignore_length: bool=False):
         '''
@@ -226,11 +224,11 @@ class EthereumClient:
                                 - sign(data) - Function: The function to sign transactions.
                                                          See web3.eth.accounts.sign() for more.
         '''
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to retrieve account from the private key - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
-            return self._client_connection.eth.accounts.privateKeyToAccount(private_key)
+            return self._client.eth.accounts.privateKeyToAccount(private_key)
 
     def deploy_contract(self, compiled_contract_json_filepath, default_account=None):
         """
@@ -279,7 +277,7 @@ class EthereumClient:
 
         :returns txn_hash: A hash for the transaction that represents the deployed contract.
         """
-        if not self._connected:
+        if not self._client.isConnected():
             error_msg = "Failed to deploy contract - connection error"
             raise EthereumNetworkConnectionError(error_msg)
         else:
@@ -291,7 +289,7 @@ class EthereumClient:
                 contract_json = json.load(file)
                 contract_abi = contract_json['abi']
 
-            contract = self._client_connection.eth.contract(address=_default_account, abi=contract_abi)
+            contract = self._client.eth.contract(address=_default_account, abi=contract_abi)
             # SET function_name with the value you want to store in the blockchain
             result = contract.functions.function_name().transact()
             return result.hex()
