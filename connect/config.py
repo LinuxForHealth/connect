@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     nats_nk_file: str = "nats-server.nk"
 
     # ipfs-cluster
-    ipfs_cluster_uri: str = 'http://0.0.0.0:9099'
+    ipfs_cluster_uri: str = "http://0.0.0.0:9099"
     ipfs_cluster_replication_factor: int = 2
 
     class Config:
