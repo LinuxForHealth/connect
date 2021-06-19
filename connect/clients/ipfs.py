@@ -81,8 +81,6 @@ class IPFSClient:
             except:
                 error_msg = "Exception raised while persisting to the IPFS Cluster"
                 raise Exception(error_msg)
-            finally:
-                os.unlink(temp_file_name)
 
     async def get_ipfs_cluster_peers(self):
         """
