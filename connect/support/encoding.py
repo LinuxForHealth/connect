@@ -28,6 +28,8 @@ class ConnectEncoder(JSONEncoder):
             return o.isoformat()
         elif isinstance(o, uuid.UUID):
             return str(o)
+        elif isinstance(o, bytes):
+            return base64.b64encode(o).decode()
         else:
             return super().default(o)
 

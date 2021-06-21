@@ -73,7 +73,7 @@ async def post_fhir_data(
         raise HTTPException(status_code=404, detail=f"/{resource_type} not found")
 
     if resource_type != request_data.get("resourceType"):
-        msg = f"request {request_data.get('resource_type')} does not match /{resource_type}"
+        msg = f"request {request_data.get('resourceType')} does not match /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
     transmit_server = None
