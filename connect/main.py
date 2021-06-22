@@ -46,7 +46,10 @@ def get_app() -> FastAPI:
     # use the slowapi rate limiter
     app.add_middleware(SlowAPIMiddleware)
     limiter = Limiter(
-        key_func=get_remote_address, default_limits=[settings.connect_rate_limit]
+        key_func=get_remote_address,
+        auto_check=settings.connect_enable_rate_limit,
+        enabled=settings.connect_enable_rate_limit,
+        default_limits=[settings.connect_rate_limit],
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
