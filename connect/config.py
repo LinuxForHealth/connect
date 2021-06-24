@@ -80,6 +80,10 @@ class Settings(BaseSettings):
     nats_retransmit_loop_interval: int = 10
     nats_retransmit_max_retries: int = 20
 
+    # ipfs-cluster
+    ipfs_cluster_uri: str = "http://0.0.0.0:9099"
+    ipfs_cluster_replication_factor: int = 2
+
     class Config:
         case_sensitive = False
         env_file = os.path.join(dirname(dirname(abspath(__file__))), ".env")
