@@ -2,28 +2,39 @@
 nats.py
 NATS message subscribers and message handlers
 """
+import asyncio
+import connect.workflows.core as core
 import json
 import logging
-import connect.workflows.core as core
+import os
 import ssl
+import time
+import threading
 from asyncio import get_running_loop
+from datetime import datetime
+from httpx import AsyncClient
 from nats.aio.client import Client as NatsClient, Msg
+from typing import Callable, List, Optional
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
 from connect.config import (
     get_settings,
     get_ssl_context,
     nats_sync_subject,
+    nats_retransmit_subject,
     kafka_sync_topic,
 )
-from connect.support.encoding import decode_to_dict
-from typing import Callable, List, Optional
-import os
+from connect.support.encoding import (
+    decode_to_dict,
+    ConnectEncoder,
+)
 
 
 logger = logging.getLogger(__name__)
 nats_client = None
 nats_clients = []
 timing_metrics = {}
+nats_retransmit_queue = []
+nats_retransmit_canceled = False
 
 
 async def create_nats_subscribers():
@@ -32,6 +43,10 @@ async def create_nats_subscribers():
     """
     await start_sync_event_subscribers()
     await start_timing_subscriber()
+    await start_retransmit_subscriber()
+
+    retransmit_loop = asyncio.get_event_loop()
+    retransmit_loop.create_task(retransmitter())
 
 
 async def start_sync_event_subscribers():
@@ -68,7 +83,23 @@ async def start_timing_subscriber():
         client,
         "TIMING",
         nats_timing_event_handler,
-        "".join(settings.nats_servers),
+        ",".join(settings.nats_servers),
+    )
+
+
+async def start_retransmit_subscriber():
+    """
+    Create a NATS subscriber 'nats_retransmit_subject', as defined in config.py, for the local NATS server/cluster.
+    """
+    settings = get_settings()
+
+    # subscribe to TIMING.* from the local NATS server or cluster
+    client = await get_nats_client()
+    await subscribe(
+        client,
+        nats_retransmit_subject,
+        nats_retransmit_event_handler,
+        ",".join(settings.nats_servers),
     )
 
 
@@ -153,6 +184,106 @@ def nats_timing_event_handler(msg: Msg):
     )
 
 
+async def nats_retransmit_event_handler(msg: Msg):
+    """
+    Callback for NATS 'nats_retransmit_subject' messages
+    """
+    subject = msg.subject
+    reply = msg.reply
+    data = msg.data.decode()
+    logger.trace(
+        f"nats_retransmit_event_handler: received a message on {subject} {reply}"
+    )
+
+    message = json.loads(data)
+    await do_retransmit(message, -1)
+
+
+async def do_retransmit(message: dict, queue_pos: int):
+    """
+    Process messages from NATS or the nats_retransmit_queue.
+    """
+    global nats_retransmit_queue
+    settings = get_settings()
+    max_retries = settings.nats_retransmit_max_retries
+    kafka_producer = get_kafka_producer()
+    resource = decode_to_dict(message["data"])
+    if "retransmit_count" not in message:
+        message["retransmit_count"] = 0
+    message["retransmit_count"] += 1
+
+    try:
+        # attempt to retransmit the message
+        transmit_time = datetime.now()
+        logger.trace(
+            f"do_retransmit #{message['retransmit_count']}: retransmitting to: {message['transmit_server']}"
+        )
+        async with AsyncClient(verify=settings.certificate_verify) as client:
+            if message["operation"] == "POST":
+                await client.post(message["transmit_server"], json=resource)
+            elif message["operation"] == "PUT":
+                await client.put(message["transmit_server"], json=resource)
+            elif message["operation"] == "PATCH":
+                await client.patch(message["transmit_server"], json=resource)
+
+        # send the final result to kafka RETRANSMIT topic
+        logger.trace(
+            f"do_retransmit: sending success message to kafka topic RETRANSMIT"
+        )
+        message["status"] = "SUCCESS"
+        message["transmit_time"] = transmit_time
+        # logger.trace(f"nats_retransmit_event_handler: start time string for format: {message['transmit_start']}")
+        # transmit_delta = datetime.now() - datetime.datetime.strptime(message["transmit_start"], '%d/%m/%y %H:%M:%S')
+        # message["elapsed_transmit_time"] = transmit_delta.total_seconds()
+        await kafka_producer.produce(
+            "RETRANSMIT", json.dumps(message, cls=ConnectEncoder)
+        )
+
+        # if the message came from the retransmit queue, remove it
+        if not queue_pos == -1:
+            nats_retransmit_queue.pop(queue_pos)
+        logger.trace(
+            f"do_retransmit: successfully retransmitted message with id {message['uuid']} "
+            + f"after {message['retransmit_count']} retries"
+        )
+    except Exception as ex:
+        logger.trace(f"do_retransmit: exception {ex}")
+        if queue_pos == -1:
+            nats_retransmit_queue.append(message)
+            logger.trace(f"do_retransmit: queued message for retransmitter()")
+
+        if not max_retries == -1 and message["retransmit_count"] >= max_retries:
+            logger.trace(
+                f"do_retransmit: failed after {message['retransmit_count']} retries"
+            )
+            nats_retransmit_queue.pop(queue_pos)
+            message["status"] = f"FAILED after {message['retransmit_count']} retries"
+            await kafka_producer.produce(
+                "RETRANSMIT", json.dumps(message, cls=ConnectEncoder)
+            )
+            logger.trace(f"do_retransmit: sent FAILED message to kafka")
+
+
+async def retransmitter():
+    """
+    Process messages in nats_retransmit_queue.
+    """
+    global nats_retransmit_queue
+    settings = get_settings()
+    logger.trace("starting retransmitter() loop")
+
+    while not nats_retransmit_canceled:
+        # iterate through nats_retransmit_queue
+        i = 0
+        while i < len(nats_retransmit_queue):
+            logger.trace(f"retransmitting from nats_retransmit_queue position {i}")
+            await do_retransmit(nats_retransmit_queue[i], i)
+            i += 1
+            if i < len(nats_retransmit_queue):
+                await asyncio.sleep(2)
+        await asyncio.sleep(settings.nats_retransmit_loop_interval)
+
+
 async def stop_nats_clients():
     """
     Gracefully stop all NATS clients prior to shutdown, including
@@ -160,6 +291,9 @@ async def stop_nats_clients():
     """
     for client in nats_clients:
         await client.close()
+
+    global nats_retransmit_canceled
+    nats_retransmit_canceled = False
 
 
 async def get_nats_client() -> Optional[NatsClient]:

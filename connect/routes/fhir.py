@@ -90,6 +90,7 @@ async def post_fhir_data(
             transmit_server=transmit_server,
             do_sync=True,
             operation="POST",
+            do_retransmit=settings.nats_enable_retransmit,
         )
 
         # enable the transmit workflow step if defined

@@ -21,6 +21,7 @@ import ssl
 
 host_name = socket.gethostname()
 nats_sync_subject = "EVENTS.sync"
+nats_retransmit_subject = "EVENTS.retransmit"
 kafka_sync_topic = "LFH_SYNC"
 
 
@@ -69,11 +70,15 @@ class Settings(BaseSettings):
     kafka_listener_timeout: float = 1.0
     kafka_topics_timeout: float = 0.5
 
+    # nats
     nats_servers: List[str] = ["tls://nats-server:4222"]
     nats_sync_subscribers: List[str] = []
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"
+    nats_enable_retransmit: bool = True
+    nats_retransmit_loop_interval: int = 10
+    nats_retransmit_max_retries: int = 20
 
     class Config:
         case_sensitive = False
