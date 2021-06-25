@@ -214,34 +214,21 @@ async def do_retransmit(message: dict, queue_pos: int):
 
     try:
         # attempt to retransmit the message
-        transmit_time = datetime.now()
         logger.trace(
-            f"do_retransmit #{message['retransmit_count']}: retransmitting to: {message['transmit_server']}"
+            f"do_retransmit #{message['retransmit_count']}: retransmitting to: {message['target_endpoint_url']}"
         )
         async with AsyncClient(verify=settings.certificate_verify) as client:
             if message["operation"] == "POST":
-                await client.post(message["transmit_server"], json=resource)
+                await client.post(message["target_endpoint_url"], json=resource)
             elif message["operation"] == "PUT":
-                await client.put(message["transmit_server"], json=resource)
+                await client.put(message["target_endpoint_url"], json=resource)
             elif message["operation"] == "PATCH":
-                await client.patch(message["transmit_server"], json=resource)
-
-        # send the final result to kafka RETRANSMIT topic
-        logger.trace(
-            f"do_retransmit: sending success message to kafka topic RETRANSMIT"
-        )
-        message["status"] = "SUCCESS"
-        message["transmit_time"] = transmit_time
-        # logger.trace(f"nats_retransmit_event_handler: start time string for format: {message['transmit_start']}")
-        # transmit_delta = datetime.now() - datetime.datetime.strptime(message["transmit_start"], '%d/%m/%y %H:%M:%S')
-        # message["elapsed_transmit_time"] = transmit_delta.total_seconds()
-        await kafka_producer.produce(
-            "RETRANSMIT", json.dumps(message, cls=ConnectEncoder)
-        )
+                await client.patch(message["target_endpoint_url"], json=resource)
 
         # if the message came from the retransmit queue, remove it
         if not queue_pos == -1:
             nats_retransmit_queue.pop(queue_pos)
+        message["status"] = "SUCCESS"
         logger.trace(
             f"do_retransmit: successfully retransmitted message with id {message['uuid']} "
             + f"after {message['retransmit_count']} retries"
@@ -253,15 +240,24 @@ async def do_retransmit(message: dict, queue_pos: int):
             logger.trace(f"do_retransmit: queued message for retransmitter()")
 
         if not max_retries == -1 and message["retransmit_count"] >= max_retries:
-            logger.trace(
-                f"do_retransmit: failed after {message['retransmit_count']} retries"
-            )
             nats_retransmit_queue.pop(queue_pos)
-            message["status"] = f"FAILED after {message['retransmit_count']} retries"
-            await kafka_producer.produce(
-                "RETRANSMIT", json.dumps(message, cls=ConnectEncoder)
+            message["status"] = "FAILED"
+            logger.trace(
+                f"do_retransmit: failed retransmit of message with id {message['uuid']} "
+                + f"after {message['retransmit_count']} retries"
             )
-            logger.trace(f"do_retransmit: sent FAILED message to kafka")
+
+    # send outcome to kafka
+    if message["status"] == "SUCCESS" or message["status"] == "FAILED":
+        transmit_delta = datetime.now() - datetime.strptime(
+            message["transmit_start"], "%Y-%m-%dT%H:%M:%S.%f"
+        )
+        message["elapsed_transmit_time"] = transmit_delta.total_seconds()
+        message["elapsed_total_time"] += transmit_delta.total_seconds()
+        await kafka_producer.produce(
+            "RETRANSMIT", json.dumps(message, cls=ConnectEncoder)
+        )
+        logger.trace(f"do_retransmit: sent message to kafka topic RETRANSMIT")
 
 
 async def retransmitter():
@@ -270,18 +266,18 @@ async def retransmitter():
     """
     global nats_retransmit_queue
     settings = get_settings()
-    logger.trace("starting retransmitter() loop")
+    logger.trace("Starting retransmit loop")
 
     while not nats_retransmit_canceled:
         # iterate through nats_retransmit_queue
-        i = 0
-        while i < len(nats_retransmit_queue):
-            logger.trace(f"retransmitting from nats_retransmit_queue position {i}")
+        for i in range(len(nats_retransmit_queue)):
+            logger.trace(
+                f"retransmitter: retransmitting from nats_retransmit_queue position {i}"
+            )
             await do_retransmit(nats_retransmit_queue[i], i)
-            i += 1
-            if i < len(nats_retransmit_queue):
+            if i + 1 < len(nats_retransmit_queue):
                 await asyncio.sleep(2)
-        await asyncio.sleep(settings.nats_retransmit_loop_interval)
+        await asyncio.sleep(settings.nats_retransmit_loop_interval_secs)
 
 
 async def stop_nats_clients():
@@ -293,7 +289,7 @@ async def stop_nats_clients():
         await client.close()
 
     global nats_retransmit_canceled
-    nats_retransmit_canceled = False
+    nats_retransmit_canceled = True
 
 
 async def get_nats_client() -> Optional[NatsClient]:

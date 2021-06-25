@@ -188,43 +188,34 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             try:
                 async with AsyncClient(verify=self.verify_certs) as client:
                     result = await client.post(self.transmit_server, json=resource)
-            except (httpx.ConnectTimeout, httpx.ConnectError):
-                if self.do_retransmit:
-                    # send retransmit message to to Kafka to record
-                    kafka_producer = get_kafka_producer()
-                    await kafka_producer.produce(
-                        "RETRANSMIT", json.dumps(self.message, cls=ConnectEncoder)
-                    )
+            except Exception as ex:
+                if isinstance(ex, httpx.ConnectTimeout) or isinstance(
+                    ex, httpx.ConnectError
+                ):
+                    if self.do_retransmit:
+                        # send retransmit message to to Kafka to record
+                        kafka_producer = get_kafka_producer()
+                        await kafka_producer.produce(
+                            "RETRANSMIT", json.dumps(self.message, cls=ConnectEncoder)
+                        )
 
-                    # publish retransmit message to NATS
-                    self.message["status"] = "ERROR"
-                    self.message["transmit_start"] = transmit_start
-                    self.message["transmit_server"] = self.transmit_server
-                    nats_client = await nats.get_nats_client()
-                    msg_str = json.dumps(self.message, cls=ConnectEncoder)
-                    await nats_client.publish(
-                        nats_retransmit_subject, bytearray(msg_str, "utf-8")
-                    )
+                        # publish retransmit message to NATS
+                        self.message["status"] = "ERROR"
+                        self.message["transmit_start"] = transmit_start
+                        nats_client = await nats.get_nats_client()
+                        msg_str = json.dumps(self.message, cls=ConnectEncoder)
+                        await nats_client.publish(
+                            nats_retransmit_subject, bytearray(msg_str, "utf-8")
+                        )
 
-                    # ex.value += f" Message queued for retransmit to {self.transmit_server}."
-                    transmit_delta = datetime.now() - transmit_start
-                    self.message[
-                        "elapsed_transmit_time"
-                    ] = transmit_delta.total_seconds()
-                    raise
-                else:
-                    transmit_delta = datetime.now() - transmit_start
-                    self.message[
-                        "elapsed_transmit_time"
-                    ] = transmit_delta.total_seconds()
-                    raise
-            except:
                 transmit_delta = datetime.now() - transmit_start
                 self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
+                self.message["elapsed_total_time"] += transmit_delta.total_seconds()
                 raise
+
             transmit_delta = datetime.now() - transmit_start
             self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
-
+            self.message["elapsed_total_time"] += transmit_delta.total_seconds()
             response.body = result.text
             response.status_code = result.status_code
 

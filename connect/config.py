@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"
     nats_enable_retransmit: bool = True
-    nats_retransmit_loop_interval: int = 10
+    nats_retransmit_loop_interval_secs: int = 10
     nats_retransmit_max_retries: int = 20
 
     # ipfs-cluster
