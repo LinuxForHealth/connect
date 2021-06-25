@@ -8,8 +8,6 @@ import json
 import logging
 import os
 import ssl
-import time
-import threading
 from asyncio import get_running_loop
 from datetime import datetime
 from httpx import AsyncClient
