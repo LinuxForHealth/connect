@@ -117,6 +117,8 @@ async def subscribe(client: NatsClient, subject: str, callback: Callable, server
 async def nats_sync_event_handler(msg: Msg):
     """
     Callback for NATS 'nats_sync_subject' messages
+
+    :param msg: a message delivered from the NATS server
     """
     subject = msg.subject
     reply = msg.reply
@@ -164,6 +166,8 @@ async def nats_sync_event_handler(msg: Msg):
 def nats_timing_event_handler(msg: Msg):
     """
     Callback for NATS TIMING messages - calculates the average run time for any function timed with @timer.
+
+    :param msg: a message delivered from the NATS server
     """
     data = msg.data.decode()
 
@@ -185,6 +189,8 @@ def nats_timing_event_handler(msg: Msg):
 async def nats_retransmit_event_handler(msg: Msg):
     """
     Callback for NATS 'nats_retransmit_subject' messages
+
+    :param msg: a message delivered from the NATS server
     """
     subject = msg.subject
     reply = msg.reply
@@ -200,6 +206,10 @@ async def nats_retransmit_event_handler(msg: Msg):
 async def do_retransmit(message: dict, queue_pos: int):
     """
     Process messages from NATS or the nats_retransmit_queue.
+
+    :param message: the LFH message containing the data to retransmit
+    :param queue_pos: the position of the message in the queue.  queue_pos will be -1 if
+        the message has not yet been queued or 0 <= queue_pos < len(nats_retransmit_queue).
     """
     global nats_retransmit_queue
     settings = get_settings()
