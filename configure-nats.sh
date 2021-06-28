@@ -5,16 +5,18 @@
 
 NATS_SERVICE_NAME=connect_nats-server_1
 NATS_CLIENT_PORT=4222
-TLSCERT=/certs/nats-server.pem
-TLSKEY=/certs/nats-server.key
-TLSCA=/certs/rootCA.pem
+TLSCERT=/conf/lfh-nats-server.pem
+TLSKEY=/conf/lfh-nats-server.key
+TLSCA=/conf/lfh-root-ca.pem
+NKEY=/conf/nats-server.nk
 
-echo "Creating JetStream EVENTS stream for data synchronization"
+echo "Creating JetStream EVENTS stream"
 docker exec -it "${NATS_SERVICE_NAME}" \
               nats --server="${NATS_SERVICE_NAME}":"${NATS_CLIENT_PORT}" \
               --tlscert="${TLSCERT}" \
               --tlskey="${TLSKEY}" \
               --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
               str add EVENTS \
               --subjects EVENTS.* \
               --ack \
@@ -25,20 +27,38 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --retention limits \
               --max-msg-size=-1 \
               --discard old \
-              --dupe-window=10s > /dev/null
+              --dupe-window=10s
 
-echo "Creating JetStream consumer for data synchronization"
+echo "Creating JetStream push consumer for data synchronization"
 docker exec -it "${NATS_SERVICE_NAME}" \
               nats --server="${NATS_SERVICE_NAME}":"${NATS_CLIENT_PORT}" \
               --tlscert="${TLSCERT}" \
               --tlskey="${TLSKEY}" \
               --tlsca="${TLSCA}" \
-              con add EVENTS SUBSCRIBER \
+              --nkey="${NKEY}" \
+              con add EVENTS SYNC \
               --ack none \
-              --target EVENTS.sync \
+              --target sync.EVENTS \
               --deliver last \
               --replay instant \
-              --filter '' > /dev/null
+              --filter EVENTS.sync
+
+echo "Creating JetStream pull consumer for data retransmit"
+docker exec -it "${NATS_SERVICE_NAME}" \
+              nats --server="${NATS_SERVICE_NAME}":"${NATS_CLIENT_PORT}" \
+              --tlscert="${TLSCERT}" \
+              --tlskey="${TLSKEY}" \
+              --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
+              con add EVENTS RESTRANSMIT \
+              --pull \
+              --ack explicit \
+              --deliver all \
+              --max-deliver 20 \
+              --wait 30s \
+              --replay instant \
+              --sample 100 \
+              --filter EVENTS.retransmit
 
 echo "Creating JetStream ACTIONS stream for workflows"
 docker exec -it "${NATS_SERVICE_NAME}" \
@@ -46,6 +66,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --tlscert="${TLSCERT}" \
               --tlskey="${TLSKEY}" \
               --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
               str add ACTIONS \
               --subjects ACTIONS.* \
               --ack \
@@ -56,7 +77,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --retention limits \
               --max-msg-size=-1 \
               --discard old \
-              --dupe-window=10s > /dev/null
+              --dupe-window=10s
 
 echo "JetStream EVENTS stream info"
 docker exec -it "${NATS_SERVICE_NAME}" \
@@ -64,6 +85,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --tlscert="${TLSCERT}" \
               --tlskey="${TLSKEY}" \
               --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
               str info EVENTS
 
 echo "JetStream ACTIONS stream info"
@@ -72,6 +94,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --tlscert="${TLSCERT}" \
               --tlskey="${TLSKEY}" \
               --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
               str info ACTIONS
 
 echo "NATS JetStream configuration complete"

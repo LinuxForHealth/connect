@@ -21,6 +21,7 @@ import ssl
 
 host_name = socket.gethostname()
 nats_sync_subject = "EVENTS.sync"
+nats_retransmit_subject = "EVENTS.retransmit"
 kafka_sync_topic = "LFH_SYNC"
 
 
@@ -75,6 +76,9 @@ class Settings(BaseSettings):
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"
+    nats_enable_retransmit: bool = True
+    nats_retransmit_loop_interval_secs: int = 10
+    nats_retransmit_max_retries: int = 20
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"

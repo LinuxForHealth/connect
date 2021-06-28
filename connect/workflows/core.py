@@ -3,6 +3,7 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
+import httpx
 import json
 import logging
 import connect.clients.nats as nats
@@ -12,7 +13,7 @@ from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.config import nats_sync_subject
+from connect.config import nats_sync_subject, nats_retransmit_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
@@ -76,6 +77,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.do_sync = kwargs.get("do_sync", True)
         self.uuid = str(uuid.uuid4())
         self.operation = kwargs["operation"]
+        self.do_retransmit = kwargs.get("do_retransmit", True)
 
     state = CoreWorkflowDef()
 
@@ -186,13 +188,34 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             try:
                 async with AsyncClient(verify=self.verify_certs) as client:
                     result = await client.post(self.transmit_server, json=resource)
-            except:
+            except Exception as ex:
+                if isinstance(ex, httpx.ConnectTimeout) or isinstance(
+                    ex, httpx.ConnectError
+                ):
+                    if self.do_retransmit:
+                        # send retransmit message to to Kafka to record
+                        kafka_producer = get_kafka_producer()
+                        await kafka_producer.produce(
+                            "RETRANSMIT", json.dumps(self.message, cls=ConnectEncoder)
+                        )
+
+                        # publish retransmit message to NATS
+                        self.message["status"] = "ERROR"
+                        self.message["transmit_start"] = transmit_start
+                        nats_client = await nats.get_nats_client()
+                        msg_str = json.dumps(self.message, cls=ConnectEncoder)
+                        await nats_client.publish(
+                            nats_retransmit_subject, bytearray(msg_str, "utf-8")
+                        )
+
                 transmit_delta = datetime.now() - transmit_start
                 self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
+                self.message["elapsed_total_time"] += transmit_delta.total_seconds()
                 raise
+
             transmit_delta = datetime.now() - transmit_start
             self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
-
+            self.message["elapsed_total_time"] += transmit_delta.total_seconds()
             response.body = result.text
             response.status_code = result.status_code
 
