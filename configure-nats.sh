@@ -27,7 +27,7 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --retention limits \
               --max-msg-size=-1 \
               --discard old \
-              --dupe-window=10s
+              --dupe-window=30s
 
 echo "Creating JetStream push consumer for data synchronization"
 docker exec -it "${NATS_SERVICE_NAME}" \
@@ -42,6 +42,20 @@ docker exec -it "${NATS_SERVICE_NAME}" \
               --deliver last \
               --replay instant \
               --filter EVENTS.sync
+
+echo "Creating JetStream push consumer for eligibility responses"
+docker exec -it "${NATS_SERVICE_NAME}" \
+              nats --server="${NATS_SERVICE_NAME}":"${NATS_CLIENT_PORT}" \
+              --tlscert="${TLSCERT}" \
+              --tlskey="${TLSKEY}" \
+              --tlsca="${TLSCA}" \
+              --nkey="${NKEY}" \
+              con add EVENTS ELIGIBILITY \
+              --ack none \
+              --target eligibility.EVENTS \
+              --deliver last \
+              --replay instant \
+              --filter EVENTS.coverageeligibilityresponse
 
 echo "Creating JetStream pull consumer for data retransmit"
 docker exec -it "${NATS_SERVICE_NAME}" \

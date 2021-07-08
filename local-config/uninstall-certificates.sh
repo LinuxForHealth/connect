@@ -5,7 +5,7 @@ BASE_DIRECTORY=$(dirname "$0")
 
 mkcert -uninstall
 
-for dir in connect nats
+for dir in connect nats fabric/conf/certs
 do
   rm -f "$BASE_DIRECTORY"/"$dir"/*.pem
   rm -f "$BASE_DIRECTORY"/"$dir"/*.key
