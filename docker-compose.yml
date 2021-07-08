@@ -1,11 +1,7 @@
 version: "3.9"
 networks:
   main:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.19.0.0/24
-      driver: default
+    name: main
 services:
   connect:
     build:
@@ -51,6 +47,8 @@ services:
   ipfs-cluster-0:
     profiles: ["ipfs"]
     container_name: ipfs-cluster-0
+    networks:
+      - main
     image: ipfs/ipfs-cluster:latest
     depends_on:
       - ipfs-node-0
@@ -68,6 +66,8 @@ services:
   ipfs-node-0:
     profiles: ["ipfs"]
     container_name: ipfs-node-0
+    networks:
+      - main
     image: ipfs/go-ipfs:latest
     ports:
       - "4001:4001"
@@ -84,6 +84,8 @@ services:
   ipfs-cluster-1:
     profiles: ["ipfs"]
     container_name: ipfs-cluster-1
+    networks:
+      - main
     image: ipfs/ipfs-cluster:latest
     depends_on:
       - ipfs-node-1
@@ -98,6 +100,8 @@ services:
   ipfs-node-1:
     profiles: ["ipfs"]
     container_name: ipfs-node-1
+    networks:
+      - main
     image: ipfs/go-ipfs:latest
     environment:
       LIBP2P_FORCE_PNET: '1'
@@ -109,6 +113,8 @@ services:
   ipfs-cluster-2:
     profiles: ["ipfs"]
     container_name: ipfs-cluster-2
+    networks:
+      - main
     image: ipfs/ipfs-cluster:latest
     depends_on:
       - ipfs-node-2
@@ -123,6 +129,8 @@ services:
   ipfs-node-2:
     profiles: ["ipfs"]
     container_name: ipfs-node-2
+    networks:
+      - main
     image: ipfs/go-ipfs:latest
     environment:
       LIBP2P_FORCE_PNET: '1'
@@ -133,13 +141,15 @@ services:
       - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ibm-fhir:
     profiles: ["fhir", "deployment"]
-    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
     networks:
       - main
+    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
     ports:
       - 9443:9443
   fabric-client:
     profiles: ["fabric"]
+    networks:
+      - main
     image: linuxforhealth/fabric-client:0.1
     restart: "always"
     environment:
@@ -147,7 +157,5 @@ services:
       DISCOVERY_AS_LOCALHOST: 'false'
     volumes:
       - ./local-config/fabric/conf:/usr/src/app/conf
-    networks:
-      - main
     ports:
       - "9043:9043"
