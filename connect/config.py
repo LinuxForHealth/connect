@@ -82,6 +82,7 @@ class Settings(BaseSettings):
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"
+    # -1 replication factor replicates to all nodes in the cluster, or set to desired # of replicas
     ipfs_cluster_replication_factor: int = -1
 
     class Config:

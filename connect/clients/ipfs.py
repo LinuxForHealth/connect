@@ -7,9 +7,10 @@ IPFS cluster
 import logging
 import httpx
 import json
-from tempfile import NamedTemporaryFile
 from connect.config import get_settings
 from connect.support.encoding import ConnectEncoder
+from tempfile import NamedTemporaryFile
+from typing import Any, Tuple
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class IPFSClient:
         self._get_peers_uri = self._uri + "/peers"
         self._unpin_cid_uri = self._uri + "/pins/"
 
-    async def persist_json_to_ipfs(self, payload: dict):
+    async def persist_json_to_ipfs(self, payload: dict) -> Tuple[int, str]:
         """
         Allows persistence of JSON payloads (as a dict) into an IPFS cluster
         The IPFS cluster instance being connected to is configurable.
@@ -80,7 +81,7 @@ class IPFSClient:
                 )
                 return 500, None
 
-    async def get_ipfs_cluster_peers(self):
+    async def get_ipfs_cluster_peers(self) -> Tuple[int, Any]:
         """
         Returns a list of all connected IPFS Cluster Peers.
         Note: IPFS Node Peers are managed implicitly by IPFS Cluster.
