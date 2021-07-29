@@ -13,6 +13,7 @@ from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
+from connect.clients.ipfs import IPFSClient, get_ipfs_cluster_client
 from connect.config import nats_sync_subject, nats_retransmit_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
@@ -102,7 +103,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     @timer
     async def persist(self):
         """
-        Store the message in Kafka for persistence after converting it to the LinuxForHealth
+        Store the message in IPFS and Kafka for persistence after converting it to the LinuxForHealth
         message format.
 
         Input:
@@ -139,6 +140,14 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             "operation": self.operation,
         }
         response = LinuxForHealthDataRecordResponse(**message)
+
+        # Add the IPFS URI to the message
+        ipfs_client = get_ipfs_cluster_client()
+        response_code, cid = await ipfs_client.persist_json_to_ipfs(response.dict())
+        if response_code == 200:
+            message["ipfs_uri"] = "/ipfs/" + cid
+            response = LinuxForHealthDataRecordResponse(**message)
+        logger.trace(f"IPFS result: code={response_code} cid={cid}")
 
         kafka_producer = get_kafka_producer()
         kafka_cb = KafkaCallback()

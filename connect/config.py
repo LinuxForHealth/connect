@@ -82,7 +82,7 @@ class Settings(BaseSettings):
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"
-    ipfs_cluster_replication_factor: int = 2
+    ipfs_cluster_replication_factor: int = -1
 
     class Config:
         case_sensitive = False

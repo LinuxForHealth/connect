@@ -37,6 +37,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     status: Optional[str]
     data_record_location: Optional[constr(regex=data_record_regex)]
     target_endpoint_url: Optional[AnyUrl]
+    ipfs_uri: Optional[str]
     elapsed_storage_time: Optional[float]
     transmit_date: Optional[datetime.datetime]
     elapsed_transmit_time: Optional[float]

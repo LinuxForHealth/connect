@@ -7,7 +7,7 @@ This project directory contains configuration tooling to support running connect
 * connect - contains Connect configuration files and certificates
 * nats - contains NATS configuration files and certificates
 * openssl - "archived" directory which provides examples and documentation for generating pki for deployed environments.
-
+* ipfs - IPFS cluster and node configuration, including volume mount points
 
 ## Local Trusted Certificates
 

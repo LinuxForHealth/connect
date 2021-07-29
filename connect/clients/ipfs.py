@@ -9,6 +9,7 @@ import httpx
 import json
 from tempfile import NamedTemporaryFile
 from connect.config import get_settings
+from connect.support.encoding import ConnectEncoder
 
 
 logger = logging.getLogger(__name__)
@@ -26,30 +27,28 @@ class IPFSClient:
         self._get_peers_uri = self._uri + "/peers"
         self._unpin_cid_uri = self._uri + "/pins/"
 
-    async def persist_json_to_ipfs(self, payload_dict):
+    async def persist_json_to_ipfs(self, payload: dict):
         """
         Allows persistence of JSON payloads (as a dict) into an IPFS cluster
         The IPFS cluster instance being connected to is configurable.
 
         Content is pinned by default during the add operation.
 
-        :param payload_dict
+        :param payload: dict containing the message to be persisted to IPFS
         :returns: Tuple containing an HTTP response code and an unique ID
                   addressing the content added to the IPFS cluster. Returns
                   response code and None if a non 200 response code is returned
                   from the IPFS Cluster.
         """
-        response = None
-
-        if not payload_dict:
+        if not payload:
             error_msg = "dict payload not provided for persistence into IPFS"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
         async with httpx.AsyncClient() as client:
             try:
-                with NamedTemporaryFile() as payload_temp_file:
-                    json.dump(payload_dict, payload_temp_file)
+                with NamedTemporaryFile(mode="w+") as payload_temp_file:
+                    json.dump(payload, payload_temp_file, cls=ConnectEncoder)
                     payload_temp_file.flush()
                     temp_file_name = payload_temp_file.name
 
@@ -57,30 +56,29 @@ class IPFSClient:
                         "upload-file": (
                             temp_file_name,
                             open(temp_file_name, "r"),
-                            "multipart/form-data",
+                            "application/json",
                         )
                     }
                     response = await client.post(self._add_uri, files=files)
                     response_code = response.status_code
 
                 if response_code == 200:
-                    response_dict = json.loads(response.json())
-                    info_msg = (
-                        "Successfully added and pinned to IPFS -- "
-                        + f"cid: {response_dict['cid']}"
+                    result = response.text.split("\n")
+                    result_first = json.loads(result[0])
+                    logger.trace(
+                        f"Successfully added and pinned to IPFS, cid: {result_first['cid']['/']}"
                     )
-                    logger.info(info_msg)
-                    return (response_code, response_dict)
+                    return response_code, result_first["cid"]["/"]
                 else:
-                    error_msg = (
-                        "Error persiting to IPFS;"
-                        + f"HTTP response_code: {response.status_code}"
+                    logger.error(
+                        f"Error persisting to IPFS HTTP response_code: {response.status_code}"
                     )
-                    logger.error(error_msg)
-                    return (response_code, None)
-            except:
-                error_msg = "Exception raised while persisting to the IPFS Cluster"
-                raise Exception(error_msg)
+                    return response_code, None
+            except Exception as ex:
+                logger.error(
+                    f"Exception raised while persisting to the IPFS Cluster: {ex}"
+                )
+                return 500, None
 
     async def get_ipfs_cluster_peers(self):
         """
@@ -95,17 +93,14 @@ class IPFSClient:
         async with httpx.AsyncClient() as client:
             response = client.get(self._get_peers_uri)
 
-            if response.status_code is 200:
-                info_msg = "Successfully retrieved IPFS Cluster peers"
-                logger.info(info_msg)
-                return (response.status_code, response.json())
+            if response.status_code == 200:
+                logger.trace("Successfully retrieved IPFS Cluster peers")
+                return response.status_code, response.json()
             else:
-                error_msg = (
-                    f"Error on retrieving IPFS Cluster peers; "
-                    + f"HTTP response_code: {response.status_code}"
+                logger.error(
+                    f"Error retrieving IPFS Cluster peers; Response code: {response.status_code}"
                 )
-                logger.error(error_msg)
-                return (response.status_code, None)
+                return response.status_code, None
 
     async def unpin_content_from_cluster(self, content_cid) -> bool:
         """
@@ -126,16 +121,13 @@ class IPFSClient:
         async with httpx.AsyncClient() as client:
             response = client.delete(_unpin_uri)
             if response.status_code == 200:
-                info_msg = f"Unpinned cid: {content_cid} from IPFS Cluster"
-                logger.info(info_msg)
-                return (response.status_code, True)
+                logger.trace(f"Unpinned cid: {content_cid} from IPFS Cluster")
+                return response.status_code, True
             else:
-                error_msg = (
-                    "Error unpinning content from IPFS Cluster;"
-                    + f"HTTP response_code: {response.status_code}"
+                logger.error(
+                    f"Error unpinning content from IPFS Cluster; Response_code: {response.status_code}"
                 )
-                logger.error(error_msg)
-                return (response.status_code, False)
+                return response.status_code, False
 
 
 def get_ipfs_cluster_client() -> IPFSClient:
