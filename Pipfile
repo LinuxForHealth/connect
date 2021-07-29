@@ -20,6 +20,7 @@ httpx = "*"
 slowapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 nkeys = "*"
+wheel = "*"
 
 [dev-packages]
 pytest = "*"
