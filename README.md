@@ -155,4 +155,4 @@ docker-compose --profile deployment up -d
 | Type      | Link |
 | ----------- | ----------- |
 | 📰 Documentation | [LinuxForHealth Docs Site](https://linuxforhealth.github.io/docs/) |  
-| 📰 Documentation | [IPFS](./IPFS.md) |  
+| 📰 Documentation | [IPFS](local-config/ipfs/README.md) |  
