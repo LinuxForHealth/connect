@@ -36,7 +36,6 @@ USER lfh
 RUN python -m pip install --user --upgrade pip pipenv
 RUN /home/lfh/.local/bin/pipenv sync
 
-USER lfh
 EXPOSE 5000
 WORKDIR /home/lfh/connect
 ENV PYTHONPATH="."
