@@ -36,8 +36,9 @@ The LinuxForHealth Connect development environment requires the following:
 - [Pipenv](https://pipenv.pypa.io) for Python dependency management  
 - [Docker Compose 1.27.1 or higher](https://docs.docker.com/compose/install/) for a local container runtime
 
-For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)  
-For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.
+For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10).    
+For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.  
+For arm64 users, please read these [instructions](./platforms/arm64/README.md) before beginning.
 
 ### Set Up A Local Environment
 #### Clone the project and navigate to the root directory
@@ -63,7 +64,50 @@ pipenv sync --dev
 pipenv run pytest
 ```
 
-#### Black code formatting integration
+#### Start connect and supporting services
+```shell
+docker-compose up -d
+docker-compose ps
+pipenv run connect
+```
+
+Browse to `https://localhost:5000/docs` to view the Open API documentation
+
+### Generate new trusted local certs for connect and supporting services (optional)
+Perform this step to create new certificates for connect and connect services. The creation of new certificates is not required, as connect contains a set of default certificates for SSL.  If you do create new certificates, you must rebuild the connect docker image, as described in the next section.
+```shell
+./local-config/install-certificates.sh
+```
+For more information on connect and HTTPS/TLS support, please refer to [the local cert readme](local-config/README.md).  
+For s390x users, please read these [instructions](./platforms/s390x/README.md).  
+For arm64 users, please read these [instructions](./platforms/arm64/README.md).
+
+### Docker Image
+The connect docker image is an "incubating" feature and is subject to change. The image is associated with the "deployment" profile to provide separation from core services.
+
+#### Build the image
+The connect image build integrates the application's x509 certificate (PEM encoded) into the image.
+
+The `APPLICATION_CERT_PATH` build argument is used to specify the location of the certificate on the host machine.
+If the `APPLICATION_CERT_PATH` build argument is not provided, a default value of ./local-certs/lfh.pem is used.
+
+#### Build the image with Docker CLI
+```shell
+docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-config/ -t linuxforhealth/connect:0.42.0 .
+```
+
+#### Build the image with Docker-Compose
+The docker-compose command below parses the build context, arguments, and image tag from the docker-compose.yaml file.
+```shell
+docker-compose build connect
+```
+
+#### Run connect and Supporting Services
+```shell
+docker-compose --profile deployment up -d
+```
+
+### Developing for connect: Black code formatting integration
 LinuxForHealth connect utilizes the [black library](https://black.readthedocs.io/en/stable/index.html) to provide standard code formatting. Code formatting and style are validated as part of the [LinuxForHealth connect ci process](./.github/workflows/connect-ci.yml). LinuxForHealth connect provides developers with an option of formatting using pipenv scripts, or a git pre-commit hook.
 
 #### Pipenv Scripts
@@ -108,47 +152,6 @@ black....................................................................Failed
 reformatted connect/routes/api.py
 All done! ✨ 🍰 ✨
 1 file reformatted.
-```
-
-#### Generate trusted local certs for connect and supporting services
-```shell
-./local-config/install-certificates.sh
-```
-For more information on connect and HTTPS/TLS support, please refer to [the local cert readme](local-config/README.md).
-
-
-#### Start connect and supporting services
-```shell
-docker-compose up -d
-docker-compose ps
-pipenv run connect
-```
-
-Browse to `https://localhost:5000/docs` to view the Open API documentation
-
-### Docker Image
-The connect docker image is an "incubating" feature and is subject to change. The image is associated with the "deployment" profile to provide separation from core services.
-
-#### Build the image
-The connect image build integrates the application's x509 certificate (PEM encoded) into the image.
-
-The `APPLICATION_CERT_PATH` build argument is used to specify the location of the certificate on the host machine.
-If the `APPLICATION_CERT_PATH` build argument is not provided, a default value of ./local-certs/lfh.pem is used.
-
-#### Build the image with Docker CLI
-```shell
-docker build --build-arg APPLICATION_BUILD_CERT_PATH=./local-config/ -t linuxforhealth/connect:0.42.0 .
-```
-
-#### Build the image with Docker-Compose
-The docker-compose command below parses the build context, arguments, and image tag from the docker-compose.yaml file.
-```shell
-docker-compose build connect
-```
-
-#### Run connect and Supporting Services
-```shell
-docker-compose --profile deployment up -d
 ```
 
 ## Links and Resources 

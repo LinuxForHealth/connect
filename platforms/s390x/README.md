@@ -4,9 +4,6 @@ Most steps to run connect on s390x are the same as described in the main [README
 ## Before You Begin
 Perform these steps before you get started with the instructions in the main [README](../../README.md).
 
-### Install mkcert
-The mkcert utility has been built for you on s390x, but you need to place it on your path.  You can leave mkcert in place and add connect/platforms/s390x to your path, or you can copy connect/platforms/s390x/mkcert to another directory already on your path. 
-
 ### Install librdkafka
 To run connect locally (development mode) on s390x you must install librdkafka.  If you want to run connect in a docker container, you may skip this step, as the connect container build also builds librdkafka.  Follow this step to install librdkafka:
 ```shell
@@ -37,5 +34,10 @@ Stop the containers as you normally would:
 cd connect/platforms/s390x
 docker-compose down -v
 ```
+## Working with certificates
+Perform this step if you want to create new certificates for connect and connect services. The creation of new certificates is not required, as connect contains a set of default certificates for SSL.
 
-For any other instructions, please refer to the top-level [README](../../README.md) or the [LinuxForHealth documentation](https://linuxforhealth.github.io/docs/).
+### Install mkcert
+Uninstalling existing certificates and creating new certificates requires the mkcert utility, which has been built for you on s390x. To use mkcert, you must place it on your path.  You can leave mkcert in place and add connect/platforms/arm64 to your path, or you can copy connect/platforms/arm64/mkcert to another directory already on your path.
+
+For all other instructions, please refer to the top-level [README](../../README.md) or the [LinuxForHealth documentation](https://linuxforhealth.github.io/docs/).
