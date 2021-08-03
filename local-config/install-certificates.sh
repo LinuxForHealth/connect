@@ -36,7 +36,6 @@ echo ""
 mkcert -cert-file "$BASE_DIRECTORY"/connect/lfh-connect.pem \
        -key-file "$BASE_DIRECTORY"/connect/lfh-connect.key \
        connect connect_connect_1 localhost 127.0.0.1 ::1
-chmod 644 "$BASE_DIRECTORY"/connect/*.pem "$BASE_DIRECTORY"/connect/*.key
 
 echo "copy self signed service certs to LinuxForHealth connect directory"
 echo "Copying NATS ..."

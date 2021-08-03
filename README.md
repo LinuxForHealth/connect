@@ -37,8 +37,7 @@ The LinuxForHealth Connect development environment requires the following:
 - [Docker Compose 1.27.1 or higher](https://docs.docker.com/compose/install/) for a local container runtime
 
 For Windows 10 users, we suggest using [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10).    
-For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.  
-For arm64 users, please read these [instructions](./platforms/arm64/README.md) before beginning.
+For s390x users, please read these [instructions](./platforms/s390x/README.md) before beginning.
 
 ### Set Up A Local Environment
 #### Clone the project and navigate to the root directory

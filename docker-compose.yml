@@ -13,7 +13,7 @@ services:
     profiles: ["deployment"]
     networks:
       - main
-    image: ccorley/connect:0.42.0
+    image: linuxforhealth/connect:0.42.0
     environment:
       CONNECT_CA_PATH: /usr/local/share/ca-certificates
       IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
