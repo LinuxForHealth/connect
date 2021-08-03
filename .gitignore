@@ -68,10 +68,6 @@ ENV/
 env.bak/
 venv.bak/
 
-# Certificates
-local-config/connect/*
-local-config/nats/*
-
 # IDE configurations
 .idea
 *.iml
