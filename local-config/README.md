@@ -13,7 +13,7 @@ This project directory contains configuration tooling to support running connect
 
 Connect is configured to support secure transmissions (HTTPS/SSL/TLS) for core and external services.
 [mkcert](https://github.com/FiloSottile/mkcert)is used to implement secure processing for local/development deployments. Please note that mkcert is not recommended for production use.
-External/deployed environments are expected to utilize valid non-self signed certificates.
+External/deployed environments are expected to utilize valid non-self signed certificates.  Please see instructions for using mkcert on [s390x](./platforms/s390x/README.md) and [arm64](./platforms/arm64/README.md) before creating new certificates on these platforms.
 
 Connect uses base-64 encoded "PEM" formatted keys and certificates. Each secured external connection is configured to use a custom SSL context. The context is configured using the `CONNECT_CA_FILE` and `CONNECT_CA_PATH` environment variables.
 
