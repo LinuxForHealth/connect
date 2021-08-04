@@ -1,11 +1,7 @@
 version: "3.7"
 networks:
   main:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.18.0.0/24
-      driver: default
+    name: main
 services:
   connect:
     build:
@@ -19,6 +15,7 @@ services:
     image: linuxforhealth/connect:0.42.0
     environment:
       CONNECT_CA_PATH: /usr/local/share/ca-certificates
+      IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
     ports:
       - "5000:5000"
   nats-server:
@@ -26,12 +23,8 @@ services:
       - main
     image: docker.io/linuxforhealth/jetstream:v0.0.19
     volumes:
-      - ../../local-config/nats:/conf
-    command: server --tls \
-      --tlscacert=/conf/lfh-root-ca.pem \
-      --tlscert=/conf/lfh-nats-server.pem \
-      --tlskey=/conf/lfh-nats-server.key \
-      --config=/conf/nats-server.conf
+      - ./local-config/nats:/conf
+    command: server --config=/conf/nats-server.conf
     ports:
       - "4222:4222"
   zookeeper:
@@ -53,6 +46,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
   ipfs-cluster-0:
     container_name: ipfs-cluster-0
+    networks:
+      - main
     image: ipfs/ipfs-cluster:latest
     depends_on:
       - ipfs-node-0
@@ -66,9 +61,11 @@ services:
     ports:
       - "9099:9099"
     volumes:
-      - ./ipfs-cluster-0/config:/data/ipfs-cluster
+      - ./local-config/ipfs/volumes/ipfs-cluster-0/config:/data/ipfs-cluster
   ipfs-node-0:
     container_name: ipfs-node-0
+    networks:
+      - main
     image: ipfs/go-ipfs:latest
     ports:
       - "4001:4001"
@@ -77,62 +74,26 @@ services:
     environment:
       LIBP2P_FORCE_PNET: '1'
     volumes:
-      - ./staging_dir:/export
-      - ./pv-data_dir:/data/pv
-      - ./ipfs-node-0:/data/ipfs
-      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
-      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
-  ipfs-cluster-1:
-    container_name: ipfs-cluster-1
-    image: ipfs/ipfs-cluster:latest
-    depends_on:
-      - ipfs-node-1
-    environment:
-      CLUSTER_PEERNAME: ipfs-cluster-1
-      CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
-      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-1/tcp/5001
-      CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
-      CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
-    volumes:
-      - ./ipfs-cluster-1/config:/data/ipfs-cluster
-  ipfs-node-1:
-    container_name: ipfs-node-1
-    image: ipfs/go-ipfs:latest
-    environment:
-      LIBP2P_FORCE_PNET: '1'
-    volumes:
-      - ./pv-data_dir:/data/pv
-      - ./ipfs-node-1:/data/ipfs
-      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
-      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
-  ipfs-cluster-2:
-    container_name: ipfs-cluster-2
-    image: ipfs/ipfs-cluster:latest
-    depends_on:
-      - ipfs-node-2
-    environment:
-      CLUSTER_PEERNAME: ipfs-cluster-2
-      CLUSTER_SECRET: 724931756d306e6d56685055714966347373424e77484d733369575433364d42
-      CLUSTER_IPFSHTTP_NODEMULTIADDRESS: /dns4/ipfs-node-2/tcp/5001
-      CLUSTER_CRDT_TRUSTEDPEERS: '*' # Trust all peers in Cluster
-      CLUSTER_MONITORPINGINTERVAL: 2s # Speed up peer discovery
-    volumes:
-      - ./ipfs-cluster-2/config:/data/ipfs-cluster
-  ipfs-node-2:
-    container_name: ipfs-node-2
-    image: ipfs/go-ipfs:latest
-    environment:
-      LIBP2P_FORCE_PNET: '1'
-    volumes:
-      - ./pv-data_dir:/data/pv
-      - ./ipfs-node-2:/data/ipfs
-      - ./private-ipfs-network/.ipfs/swarm.key:/data/ipfs/swarm.key
-      - ./private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
+      - ./local-config/ipfs/volumes/staging_dir:/export
+      - ./local-config/ipfs/volumes/pv-data_dir:/data/pv
+      - ./local-config/ipfs/volumes/ipfs-node-0:/data/ipfs
+      - ./local-config/ipfs/private-ipfs-network/swarm.key:/data/ipfs/swarm.key
+      - ./local-config/ipfs/private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ibm-fhir:
-    image: docker.io/linuxforhealth/ibm-fhir-server:4.8.0-SNAPSHOT
-    environment:
-      BOOTSTRAP_DB: "true"
     networks:
       - main
+    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
     ports:
       - 9443:9443
+  fabric-client:
+    networks:
+      - main
+    image: linuxforhealth/fabric-client:0.1
+    restart: "always"
+    environment:
+      INITIALIZE_WITH_DISCOVERY: 'false'
+      DISCOVERY_AS_LOCALHOST: 'false'
+    volumes:
+      - ./local-config/fabric/conf:/usr/src/app/conf
+    ports:
+      - "9043:9043"

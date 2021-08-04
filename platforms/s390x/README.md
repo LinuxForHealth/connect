@@ -1,6 +1,11 @@
 # Connect on s390x
 Most steps to run connect on s390x are the same as described in the main [README](../../README.md), with a few exceptions noted below due to package availability on s390x.
 
+### Required Software
+s390x requires the following docker-compose version:
+
+- [Docker Compose 1.25.0 or higher](https://docs.docker.com/compose/install/) for a local container runtime
+
 ## Before You Begin
 Perform these steps before you get started with the instructions in the main [README](../../README.md).
 
@@ -13,10 +18,17 @@ sudo apt-get install -y librdkafka-dev
 ## Running Connect
 Compose 3.7 is supported on Ubuntu 20.04 on s390x (LinuxONE), but LinuxForHealth connect uses compose 3.9 for profile support.  Without compose 3.9 profiles, the easiest way to start connect containers on s390x is to specify the specific containers to start in your docker-compose command line using the instructions below.
 
+### Copy the s390x files
+Copy the s390x Dockerfile and docker-compose.yml to the connect directory.
+```shell
+cd connect
+cp platforms/s390x/Dockerfile .
+cp platforms/s390x/docker-compose.yml .
+```
+
 ### Start connect and supporting services
 To run connect locally, first start the LinuxForHealth services, then start connect:
 ```shell
-cd connect/platforms/s390x
 docker-compose up -d nats-server zookeeper kafka ibm-fhir
 docker-compose ps
 pipenv run connect
@@ -24,14 +36,12 @@ pipenv run connect
 
 To run connect in a container, start it with the other LinuxForHealth services:
 ```shell
-cd connect/platforms/s390x
-docker-compose up -d connect nats-server zookeeper kafka ibm-fhir
+docker-compose up -d nats-server zookeeper kafka ibm-fhir connect
 ```
 
 ### Stop connect and supporting services
 Stop the containers as you normally would:
 ```shell
-cd connect/platforms/s390x
 docker-compose down -v
 ```
 ## Working with certificates
