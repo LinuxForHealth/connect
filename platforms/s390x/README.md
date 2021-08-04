@@ -1,6 +1,11 @@
 # Connect on s390x
 Most steps to run connect on s390x are the same as described in the main [README](../../README.md), with a few exceptions noted below due to package availability on s390x.
 
+### Required Software
+s390x requires the following docker-compose version:
+
+- [Docker Compose 1.25.0 or higher](https://docs.docker.com/compose/install/) for a local container runtime
+
 ## Before You Begin
 Perform these steps before you get started with the instructions in the main [README](../../README.md).
 

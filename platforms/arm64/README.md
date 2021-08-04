@@ -1,6 +1,15 @@
 # Connect on arm64
 The steps to run connect on arm64 are the same as described in the main [README](../../README.md), except when working with certificates.
 
+## Before You Begin
+Perform these steps before you get started with the instructions in the main [README](../../README.md).
+
+### Install librdkafka
+To run connect locally (development mode) on s390x you must install librdkafka.  If you want to run connect in a docker container, you may skip this step.  Follow this step to install librdkafka:
+```shell
+sudo apt-get install -y librdkafka-dev
+```
+
 ## Working with certificates
 Perform this step if you want to create new certificates for connect and connect services. The creation of new certificates is not required, as connect contains a set of default certificates for SSL.
 
