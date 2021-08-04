@@ -5,7 +5,7 @@ The steps to run connect on arm64 are the same as described in the main [README]
 Perform these steps before you get started with the instructions in the main [README](../../README.md).
 
 ### Install librdkafka
-To run connect locally (development mode) on s390x you must install librdkafka.  If you want to run connect in a docker container, you may skip this step.  Follow this step to install librdkafka:
+To run connect locally (development mode) on arm64 you must install librdkafka.  If you want to run connect in a docker container, you may skip this step.  Follow this step to install librdkafka:
 ```shell
 sudo apt-get install -y librdkafka-dev
 ```
