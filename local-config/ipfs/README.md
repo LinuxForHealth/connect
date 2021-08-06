@@ -25,6 +25,7 @@ LinuxForHealth uses ipfs/go-ipfs and ipfs/ipfs-cluster docker images.  However, 
 ### Build go-ipfs
 
 #### Clone the repo and check out a release branch
+On each platform clone the repo and check out the correct branch for the release:
 ```shell
 git clone https://github.com/ipfs/go-ipfs.git
 cd go-ipfs
@@ -46,7 +47,7 @@ docker push linuxforhealth/go-ipfs:release-v0.9.1-arm64
 ```
 
 #### Build, tag and push the s390x image
-On your s390x machine, first edit Dockerfile and add s390x to the [list of supported architectures](https://github.com/ipfs/go-ipfs/blob/e9b1e2d6fb916a342d0d013a3db7b88145ae5eb5/Dockerfile#L37) for tini:
+On your s390x machine, first edit the Dockerfile and add s390x to the [list of supported architectures](https://github.com/ipfs/go-ipfs/blob/e9b1e2d6fb916a342d0d013a3db7b88145ae5eb5/Dockerfile#L37) for tini:
 ```shell
 "amd64" | "armhf" | "arm64" | "s390x")
 ```
@@ -71,6 +72,7 @@ docker manifest push linuxforhealth/go-ipfs:release-v0.9.1 --purge
 ### Build ipfs-cluster
 
 #### Clone the repo and check out a tagged release
+On each platform clone the repo and check out the correct tag for the release:
 ```shell
 git clone https://github.com/ipfs/ipfs-cluster.git
 cd ipfs-cluster
@@ -92,7 +94,7 @@ docker push linuxforhealth/ipfs-cluster:v0.14.0-arm64
 ```
 
 #### Build, tag and push the s390x image
-On your s390x machine, first edit Dockerfile and add s390x to the [list of supported architectures](https://github.com/ipfs/ipfs-cluster/blob/0c01079eca925f7b62ad1984e02c6811093484b1/Dockerfile#L16) for tini:
+On your s390x machine, first edit the Dockerfile and add s390x to the [list of supported architectures](https://github.com/ipfs/ipfs-cluster/blob/0c01079eca925f7b62ad1984e02c6811093484b1/Dockerfile#L16) for tini:
 ```shell
 "amd64" | "armhf" | "arm64" | "s390x")
 ```
