@@ -1,7 +1,48 @@
 # IPFS
 
 ## Overview
-LinuxForHealth connect IPFS support provides for replication of data to the connect private IPFS cluster.  The connect IPFS Cluster and IPFS node start when you start the connect services from the top-level connect directory.
+LinuxForHealth IPFS support provides for replication of data from connect to the private IPFS cluster.  The connect IPFS Cluster and IPFS node start automatically when you start the connect services from the top-level connect directory.
+
+### Configure the IPFS private network
+The LinuxForHealth IPFS cluster sits on top of an IPFS private network and facilitates automatic data replication between nodes in the private network.  To configure the private IPFS network, perform the following with LinuxForHealth running.  Start with the LinuxForHealth node that will be the IPFS bootstrap node.
+
+Exec into the bootstrap ipfs-node-0 container:
+```shell
+docker exec -it ipfs-node-0 sh
+```
+Get the bootstrap node id (the value of the "ID" field):
+```shell
+ipfs id
+```
+Using the bootstrap node id and the bootstrap machine's IP address, add the bootstrap node. Note this command because you will re-use it exactly on the other IPFS nodes:
+```shell
+ipfs bootstrap add /ip4/<bootstrap_machine_IP>/tcp/4001/ipfs/<bootstrap_node_id>
+# Example:
+#   ipfs bootstrap add /ip4/1.2.3.4/tcp/4001/ipfs/12D3KooWN6MRLbbhVDyNVDmgkUmgsfT7kuXMWSTGU7PPabcdefg
+```
+
+Exit the ipfs-node-0 container and stop it:
+```shell
+exit
+docker stop ipfs-node-0
+```
+
+Repeat the same ipfs add command for each LinuxForHealth node in the private network, then restart each ipfs-node-0 container, starting with the bootstrap node:
+```shell
+docker start ipfs-node-0
+```
+Note:  If you delete a container after configuring it, you will need to run the configuration again.  Particularly, `docker-compose down` will remove the containers.
+
+### Test the IPFS private network
+To test the LinuxForHealth IPFS network, send FHIR data to LinuxForHealth connect.  In the result, you'll see an IPFS link, such as:
+```shell
+"ipfs_uri": "/ipfs/Qmassczcq4pZ2MQh4cj5emaueZmxTUfD6gcQ84j7jkAVMt",
+```
+You can retrieve the stored data from any IPFS server on a private IPFS network node in the LinuxForHealth network.  Examples:
+```shell
+http://localhost:8080/ipfs/Qmassczcq4pZ2MQh4cj5emaueZmxTUfD6gcQ84j7jkAVMt
+http://1.2.3.4:8080/ipfs/Qmassczcq4pZ2MQh4cj5emaueZmxTUfD6gcQ84j7jkAVMt
+```
 
 ### Change Swarm Key
 To change the private IPFS network swarm key:
@@ -21,6 +62,8 @@ openssl rand -hex 32
 
 ## Build the IPFS multi-arch images
 LinuxForHealth uses ipfs/go-ipfs and ipfs/ipfs-cluster docker images.  However, these images are only available on Docker Hub as amd64 images.  Follow the instructions below to build multi-arch images that support amd64, s390x and arm64.  `docker buildx` does not work for s390x builds, so build each image separately on amd64, s390x and arm64 machines and use `docker manifest` to create the multi-arch images.
+
+Note:  As a LinuxForHealth deployer, you should not need to rebuild the IPFS images unless you are adding a supported OS.
 
 ### Build go-ipfs
 
