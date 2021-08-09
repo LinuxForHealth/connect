@@ -48,7 +48,7 @@ services:
     container_name: ipfs-cluster-0
     networks:
       - main
-    image: ipfs/ipfs-cluster:latest
+    image: linuxforhealth/ipfs-cluster:v0.14.0
     depends_on:
       - ipfs-node-0
     environment:
@@ -66,7 +66,7 @@ services:
     container_name: ipfs-node-0
     networks:
       - main
-    image: ipfs/go-ipfs:latest
+    image: linuxforhealth/go-ipfs:release-v0.9.1
     ports:
       - "4001:4001"
       - "8080:8080"
