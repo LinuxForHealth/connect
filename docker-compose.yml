@@ -100,3 +100,14 @@ services:
       - ./local-config/fabric/conf:/usr/src/app/conf
     ports:
       - "9043:9043"
+  ethereum-client:
+    profiles: ["ethereum"]
+    networks:
+      - main
+    image: linuxforhealth/ethereum-client:0.1.0
+    environment:
+      ETHEREUM_CA_PATH: /usr/local/share/ca-certificates
+      ETHEREUM_RATE_LIMIT: 5/second
+      ETHEREUM_CONTRACT_ADDRESS: "0x7Bad280884c907bBf3955c21351ce41122aB88eB"
+    ports:
+      - "5100:5100"
