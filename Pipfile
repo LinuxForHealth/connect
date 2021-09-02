@@ -21,6 +21,7 @@ slowapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 nkeys = "*"
 wheel = "*"
+linuxforhealth-x12 = "*"
 
 [dev-packages]
 pytest = "*"
