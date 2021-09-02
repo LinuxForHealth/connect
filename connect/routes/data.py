@@ -9,6 +9,7 @@ from typing import Optional
 from connect.clients.kafka import get_kafka_consumer
 from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
+from typing import List
 
 import uuid
 import datetime
@@ -36,7 +37,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     data_format: str
     status: Optional[str]
     data_record_location: Optional[constr(regex=data_record_regex)]
-    target_endpoint_url: Optional[AnyUrl]
+    target_endpoint_urls: Optional[List[AnyUrl]]
     ipfs_uri: Optional[str]
     elapsed_storage_time: Optional[float]
     transmit_date: Optional[datetime.datetime]

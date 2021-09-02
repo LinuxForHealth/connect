@@ -94,7 +94,7 @@ async def test_manual_flow(
         assert workflow.message["data_record_location"] == "CUSTOM:0:0"
         assert workflow.message["status"] == "success"
 
-        workflow.transmit_server = "https://external-server.com/data"
+        workflow.transmit_servers = ["https://external-server.com/data"]
         response = Response()
         await workflow.transmit(response)
         assert workflow.state.name == "transmit"
@@ -184,7 +184,7 @@ async def test_run_flow(
         assert actual_value["lfh_id"] is not None
         assert actual_value["status"] == "success"
         assert actual_value["store_date"] is not None
-        assert actual_value["target_endpoint_url"] is None
+        assert not actual_value["target_endpoint_urls"]
         assert actual_value["transmit_date"] is None
         assert actual_value["uuid"] is not None
 

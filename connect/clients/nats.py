@@ -10,6 +10,7 @@ import os
 import ssl
 from asyncio import get_running_loop
 from datetime import datetime
+from fastapi import Response
 from httpx import AsyncClient
 from nats.aio.client import Client as NatsClient, Msg
 from typing import Callable, List, Optional
@@ -19,10 +20,13 @@ from connect.config import (
     get_ssl_context,
     nats_sync_subject,
     nats_retransmit_subject,
+    nats_coverage_eligibility_topic,
     kafka_sync_topic,
 )
+from connect.routes.fhir import handle_fhir_resource
 from connect.support.encoding import (
     decode_to_dict,
+    encode_from_dict,
     ConnectEncoder,
 )
 
@@ -40,8 +44,11 @@ async def create_nats_subscribers():
     Create NATS subscribers.  Add additional subscribers as needed.
     """
     await start_sync_event_subscribers()
-    await start_timing_subscriber()
-    await start_retransmit_subscriber()
+    await start_subscriber("TIMING", nats_timing_event_handler)
+    await start_subscriber(nats_retransmit_subject, nats_retransmit_event_handler)
+    await start_subscriber(
+        nats_coverage_eligibility_topic, nats_coverage_eligibility_event_handler
+    )
 
     retransmit_loop = asyncio.get_event_loop()
     retransmit_loop.create_task(retransmitter())
@@ -55,13 +62,7 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    client = await get_nats_client()
-    await subscribe(
-        client,
-        nats_sync_subject,
-        nats_sync_event_handler,
-        "".join(settings.nats_servers),
-    )
+    await start_subscriber(nats_sync_subject, nats_sync_event_handler)
 
     # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
@@ -69,36 +70,14 @@ async def start_sync_event_subscribers():
         await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
 
 
-async def start_timing_subscriber():
+async def start_subscriber(subject: str, event_handler: Callable) -> None:
     """
-    Create a NATS subscriber for the NATS subject TIMING at the local NATS server/cluster.
-    """
-    settings = get_settings()
-
-    # subscribe to TIMING.* from the local NATS server or cluster
-    client = await get_nats_client()
-    await subscribe(
-        client,
-        "TIMING",
-        nats_timing_event_handler,
-        ",".join(settings.nats_servers),
-    )
-
-
-async def start_retransmit_subscriber():
-    """
-    Create a NATS subscriber 'nats_retransmit_subject', as defined in config.py, for the local NATS server/cluster.
+    Create a NATS subscriber with the provided subject and callback,
+    subscribed to events from the local NATS server/cluster.
     """
     settings = get_settings()
-
-    # subscribe to TIMING.* from the local NATS server or cluster
     client = await get_nats_client()
-    await subscribe(
-        client,
-        nats_retransmit_subject,
-        nats_retransmit_event_handler,
-        ",".join(settings.nats_servers),
-    )
+    await subscribe(client, subject, event_handler, ",".join(settings.nats_servers))
 
 
 async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
@@ -201,6 +180,26 @@ async def nats_retransmit_event_handler(msg: Msg):
 
     message = json.loads(data)
     await do_retransmit(message, -1)
+
+
+async def nats_coverage_eligibility_event_handler(msg: Msg):
+    """
+    Callback for NATS coverage eligibility response messages that transmits
+    the CoverageEligibilityResponse to the configured FHIR servers
+
+    :param msg: a message delivered from the NATS server
+    """
+    subject = msg.subject
+    reply = msg.reply
+    data = msg.data.decode()
+    logger.trace(
+        f"nats_coverage_eligibility_event_handler: received a message on {subject} {reply}"
+    )
+
+    # transmit the CoverageEligibilityResponse to the configured FHIR servers via the FHIR workflow
+    message = json.loads(data)
+    resource_type = message["resourceType"]
+    handle_fhir_resource(resource_type, Response(), message)
 
 
 async def do_retransmit(message: dict, queue_pos: int):

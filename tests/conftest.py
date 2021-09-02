@@ -27,7 +27,9 @@ def settings() -> Settings:
         "uvicorn_app": "connect.asgi:app",
         "connect_cert_key_name": "./mycert.key",
         "connect_cert_name": "./mycert.pem",
-        "connect_external_fhir_server": "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
+        "connect_external_fhir_servers": [
+            "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"
+        ],
     }
     return Settings(**settings_fields)
 
@@ -47,7 +49,7 @@ def lfh_data_record():
         "data": "SGVsbG8gV29ybGQhIEl0J3MgbWUu",
         "status": "success",
         "data_record_location": "EXAMPLE:100:4561",
-        "target_endpoint_url": "http://externalhost/endpoint",
+        "target_endpoint_urls": ["http://externalhost/endpoint"],
         "elapsed_storage_time": 0.080413915000008,
         "elapsed_transmit_time": 0.080413915000008,
         "elapsed_total_time": 0.080413915000008,

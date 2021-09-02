@@ -74,7 +74,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.verify_certs = kwargs["certificate_verify"]
         self.lfh_exception_topic = "LFH_EXCEPTION"
         self.lfh_id = kwargs["lfh_id"]
-        self.transmit_server = kwargs.get("transmit_server", None)
+        self.transmit_servers = kwargs.get("transmit_servers", [])
         self.do_sync = kwargs.get("do_sync", True)
         self.uuid = str(uuid.uuid4())
         self.operation = kwargs["operation"]
@@ -136,7 +136,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             "consuming_endpoint_url": self.origin_url,
             "data_format": self.data_format,
             "data": encoded_data,
-            "target_endpoint_url": self.transmit_server,
+            "target_endpoint_urls": self.transmit_servers,
             "operation": self.operation,
         }
         response = LinuxForHealthDataRecordResponse(**message)
@@ -186,56 +186,83 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         Output:
         The updated Response object
         """
-        if self.transmit_server and response:
+        if self.transmit_servers and response:
             resource_str = decode_to_str(self.message["data"])
             resource = json.loads(resource_str)
 
             transmit_start = datetime.now()
+            self.message["transmit_start"] = transmit_start
             self.message["transmit_date"] = (
                 str(transmit_start.replace(microsecond=0)) + "Z"
             )
-            try:
-                async with AsyncClient(verify=self.verify_certs) as client:
-                    result = await client.post(self.transmit_server, json=resource)
-            except Exception as ex:
-                if isinstance(ex, httpx.ConnectTimeout) or isinstance(
-                    ex, httpx.ConnectError
-                ):
-                    if self.do_retransmit:
-                        # send retransmit message to to Kafka to record
-                        kafka_producer = get_kafka_producer()
-                        await kafka_producer.produce(
-                            "RETRANSMIT", json.dumps(self.message, cls=ConnectEncoder)
-                        )
 
-                        # publish retransmit message to NATS
-                        self.message["status"] = "ERROR"
-                        self.message["transmit_start"] = transmit_start
-                        nats_client = await nats.get_nats_client()
-                        msg_str = json.dumps(self.message, cls=ConnectEncoder)
-                        await nats_client.publish(
-                            nats_retransmit_subject, bytearray(msg_str, "utf-8")
-                        )
+            results = []
+            async with AsyncClient(verify=self.verify_certs) as client:
+                for server in self.transmit_servers:
+                    try:
+                        post_result = await client.post(server, json=resource)
+                        result = {
+                            "url": server,
+                            "result": post_result.text,
+                            "status_code": post_result.status_code,
+                            "headers": post_result.headers,
+                        }
+                        results.append(result)
+                    except Exception as ex:
+                        if isinstance(ex, httpx.ConnectTimeout) or isinstance(
+                            ex, httpx.ConnectError
+                        ):
+                            if self.do_retransmit:
+                                # send retransmit message to to Kafka to record
+                                # retransmit message contains only the URL that failed
+                                retransmit_message = self.message
+                                retransmit_message["target_endpoint_urls"] = [server]
+                                retransmit_message["status"] = "ERROR"
+                                kafka_producer = get_kafka_producer()
+                                await kafka_producer.produce(
+                                    "RETRANSMIT",
+                                    json.dumps(retransmit_message, cls=ConnectEncoder),
+                                )
 
-                transmit_delta = datetime.now() - transmit_start
-                self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
-                self.message["elapsed_total_time"] += transmit_delta.total_seconds()
-                raise
+                                # publish retransmit message to NATS
+                                nats_client = await nats.get_nats_client()
+                                msg_str = json.dumps(
+                                    retransmit_message, cls=ConnectEncoder
+                                )
+                                await nats_client.publish(
+                                    nats_retransmit_subject, bytearray(msg_str, "utf-8")
+                                )
+
+                        result = {
+                            "url": server,
+                            "result": ex,
+                            "status_code": 500,
+                            "headers": {},
+                        }
+                        results.append(result)
 
             transmit_delta = datetime.now() - transmit_start
             self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
             self.message["elapsed_total_time"] += transmit_delta.total_seconds()
-            response.body = result.text
-            response.status_code = result.status_code
 
-            # Merge result headers into response headers with overwrite
-            for key, value in result.headers.items():
-                if key not in ["Content-Length", "Content-Language", "Date"]:
-                    response.headers[key] = value
+            if len(self.transmit_servers) == 1:
+                # return the results of the single transmit server as the response
+                response.body = results[0]["result"]
+                response.status_code = results[0]["status_code"]
+
+                # merge result headers into response headers with overwrite
+                for key, value in results[0]["headers"].items():
+                    if key not in ["Content-Length", "Content-Language", "Date"]:
+                        response.headers[key] = value
+            else:
+                # body contains all the results, headers and status codes, but
+                # the primary transaction status code is the first status code.
+                body = {"results": results}
+                response.body = json.dumps(body)
+                response.status_code = results[0]["status_code"]
 
             # Set original LFH message uuid in response header
             response.headers["LinuxForHealth-MessageId"] = str(self.message["uuid"])
-
             self.use_response = True
 
     @xworkflows.transition("do_sync")

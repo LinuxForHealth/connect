@@ -76,41 +76,51 @@ async def post_fhir_data(
         msg = f"request {request_data.get('resourceType')} does not match /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
-    transmit_server = None
-    if settings.connect_external_fhir_server:
-        resource_type = request_data["resourceType"]
-        transmit_server = settings.connect_external_fhir_server + "/" + resource_type
-
     try:
-        workflow = FhirWorkflow(
-            message=request_data,
-            origin_url="/fhir/" + resource_type,
-            certificate_verify=settings.certificate_verify,
-            lfh_id=settings.connect_lfh_id,
-            transmit_server=transmit_server,
-            do_sync=True,
-            operation="POST",
-            do_retransmit=settings.nats_enable_retransmit,
-        )
-
-        # enable the transmit workflow step if defined
-        if settings.connect_external_fhir_server:
-            resource_type = request_data["resourceType"]
-            workflow.transmit_server = (
-                settings.connect_external_fhir_server + "/" + resource_type
-            )
-
-        result = await workflow.run(response)
-
-        if workflow.use_response:
-            if not response.body:
-                # properly return an empty response
-                new_response = Response(status_code=response.status_code)
-                new_response.headers.update(response.headers)
-                return new_response
-            else:
-                return response
-        else:
-            return result
+        return await handle_fhir_resource(resource_type, response, request_data)
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)
+
+
+async def handle_fhir_resource(
+    resource_type: str, response: Response, request_data: dict
+):
+    """
+    Convenience method to allow submission of FHIR resources from either
+    the /fhir endpoint or via NATS messages.
+
+    :param resource_type: The FHIR Resource type (Encounter, Patient, Practitioner, etc)
+    :param response: The response object which will be returned to the client
+    :param request_data: The incoming FHIR message
+    :return: The response
+    """
+    settings = get_settings()
+
+    transmit_servers = []
+    resource_type = request_data["resourceType"]
+    for server in settings.connect_external_fhir_servers:
+        transmit_servers.append(server + "/" + resource_type)
+
+    workflow = FhirWorkflow(
+        message=request_data,
+        origin_url="/fhir/" + resource_type,
+        certificate_verify=settings.certificate_verify,
+        lfh_id=settings.connect_lfh_id,
+        transmit_servers=transmit_servers,
+        do_sync=True,
+        operation="POST",
+        do_retransmit=settings.nats_enable_retransmit,
+    )
+
+    result = await workflow.run(response)
+
+    if workflow.use_response:
+        if not response.body:
+            # properly return an empty response
+            new_response = Response(status_code=response.status_code)
+            new_response.headers.update(response.headers)
+            return new_response
+        else:
+            return response
+    else:
+        return result
