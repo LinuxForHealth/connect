@@ -30,22 +30,25 @@ class X12Request(BaseModel):
 
 
 @router.post("/")
-async def post_x12_data(x12_request: X12Request,
-                        response: Response,
-                        settings=Depends(get_settings)):
+async def post_x12_data(
+    x12_request: X12Request, response: Response, settings=Depends(get_settings)
+):
 
     x12_results: list = []
 
     try:
         with X12ModelReader(x12_request.x12) as r:
             for m in r.models():
-                data_format = f"X12_{m.header.st_segment.transaction_set_identifier_code}"
+                data_format = (
+                    f"X12_{m.header.st_segment.transaction_set_identifier_code}"
+                )
                 workflow: CoreWorkflow = CoreWorkflow(
                     message=m.x12(),
                     lfh_id=settings.connect_lfh_id,
                     origin_url="/x12",
                     operation="POST",
-                    data_format=data_format)
+                    data_format=data_format,
+                )
                 result = await workflow.run(response)
                 x12_results.append(result)
             return x12_results

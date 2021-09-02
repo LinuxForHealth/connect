@@ -64,6 +64,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
     """
     Implements the base LinuxForHealth workflow.
     """
+
     def __init__(self, **kwargs):
         self.message = kwargs["message"]
         self.data_format = kwargs.get("data_format")
