@@ -13,8 +13,6 @@ from pydantic import BaseSettings
 from functools import lru_cache
 from typing import List
 from datetime import timedelta
-import os
-from os.path import dirname, abspath
 import certifi
 import socket
 import ssl
@@ -87,7 +85,6 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = False
-        env_file = os.path.join(dirname(dirname(abspath(__file__))), ".env")
 
 
 @lru_cache()
