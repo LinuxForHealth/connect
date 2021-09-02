@@ -5,7 +5,6 @@ Tests the /x12 endpoints
 
 import pytest
 from connect.clients import kafka, nats
-from connect.config import get_settings
 from connect.workflows.fhir import FhirWorkflow
 from unittest.mock import AsyncMock
 
