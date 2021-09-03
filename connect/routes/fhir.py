@@ -3,7 +3,7 @@ fhir.py
 
 Receive and store any valid FHIR data record using the /fhir [POST] endpoint.
 """
-from fastapi import Body, Depends, HTTPException, Response
+from fastapi import Body, Depends, HTTPException, Response, Request
 from fastapi.routing import APIRouter
 from connect.config import get_settings
 from connect.workflows.fhir import FhirWorkflow
@@ -16,6 +16,7 @@ router = APIRouter()
 @router.post("/{resource_type}")
 async def post_fhir_data(
     resource_type: str,
+    request: Request,
     response: Response,
     settings=Depends(get_settings),
     request_data: dict = Body(...),
@@ -62,6 +63,7 @@ async def post_fhir_data(
                 'https://localhost:9443/fhir-server/api/v4/Patient/17836b8803d-87ab2979-2255-4a7b-acb8/_history/1'
 
     :param resource_type: Path parameter for the FHIR Resource type (Encounter, Patient, Practitioner, etc)
+    :param request: The Fast API request model
     :param response: The response object which will be returned to the client
     :param settings: Connect configuration settings
     :param request_data: The incoming FHIR message
@@ -77,9 +79,11 @@ async def post_fhir_data(
         raise HTTPException(status_code=422, detail=msg)
 
     transmit_server = None
+    transmission_attributes = None
     if settings.connect_external_fhir_server:
         resource_type = request_data["resourceType"]
         transmit_server = settings.connect_external_fhir_server + "/" + resource_type
+        transmission_attributes = request.headers
 
     try:
         workflow = FhirWorkflow(
@@ -91,6 +95,7 @@ async def post_fhir_data(
             do_sync=True,
             operation="POST",
             do_retransmit=settings.nats_enable_retransmit,
+            transmission_attributes=transmission_attributes,
         )
 
         # enable the transmit workflow step if defined
