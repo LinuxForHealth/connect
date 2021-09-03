@@ -95,14 +95,17 @@ async def test_manual_flow(
         assert workflow.message["status"] == "success"
 
         workflow.transmit_server = "https://external-server.com/data"
+        workflow.transmission_attributes["tenant_id"] = "MyTenant"
         response = Response()
         await workflow.transmit(response)
         assert workflow.state.name == "transmit"
         assert workflow.message["transmit_date"] is not None
         assert workflow.message["elapsed_transmit_time"] > 0
+        assert len(workflow.transmission_attributes) == 2
+        assert workflow.transmission_attributes["tenant_id"] == "MyTenant"
+        assert "content-length" in workflow.transmission_attributes
         assert workflow.use_response is True
         assert response.headers["LinuxForHealth-MessageId"] is not None
-
         await workflow.synchronize()
         assert workflow.state.name == "sync"
         assert nats_mock.publish.call_count == 6

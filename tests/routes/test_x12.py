@@ -7,7 +7,6 @@ Tests the /x12 endpoints
 import pytest
 from connect.clients import kafka, nats
 from connect.config import get_settings
-from connect.workflows.fhir import FhirWorkflow
 from unittest.mock import AsyncMock
 
 
@@ -59,7 +58,6 @@ async def test_x12_post(
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
-        m.setattr(FhirWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
