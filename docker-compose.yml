@@ -13,7 +13,7 @@ services:
     profiles: ["deployment"]
     networks:
       - main
-    image: linuxforhealth/connect:0.42.0
+    image: linuxforhealth/connect-demo:0.1.0
     environment:
       CONNECT_CA_PATH: /usr/local/share/ca-certificates
       IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
@@ -88,6 +88,8 @@ services:
     ports:
       - 9443:9443
   msft-fhir-api:
+    networks:
+      - main
     image: linuxforhealth/msft-fhir:20210903-001-R4
     restart: on-failure
     environment:
@@ -101,8 +103,10 @@ services:
     ports:
       - "9445:8080"
     depends_on:
-      - sql
+      - msft-sql
   msft-sql:
+    networks:
+      - main
     image: "mcr.microsoft.com/mssql/server"
     environment:
       SA_PASSWORD: ${SAPASSWORD}
