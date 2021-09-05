@@ -1,7 +1,7 @@
 version: "3.9"
 networks:
   main:
-    name: main
+    name: fabric_test
 services:
   connect:
     build:
@@ -87,6 +87,8 @@ services:
     image: docker.io/ibmcom/ibm-fhir-server:4.6.0
     ports:
       - 9443:9443
+    environment:
+      BOOTSTRAP_DB: "true"
   msft-fhir-api:
     networks:
       - main
