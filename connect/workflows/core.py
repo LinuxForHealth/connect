@@ -3,6 +3,7 @@ core.py
 
 Provides the base LinuxForHealth workflow definition.
 """
+from json import JSONDecodeError
 import httpx
 import json
 import logging
@@ -13,7 +14,7 @@ from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
-from connect.clients.ipfs import IPFSClient, get_ipfs_cluster_client
+from connect.clients.ipfs import get_ipfs_cluster_client
 from connect.config import nats_sync_subject, nats_retransmit_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
@@ -24,6 +25,7 @@ from connect.support.encoding import (
     ConnectEncoder,
 )
 from connect.support.timer import timer
+from typing import Any, Optional, Dict
 
 
 logger = logging.getLogger(__name__)
@@ -79,6 +81,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.uuid = str(uuid.uuid4())
         self.operation = kwargs["operation"]
         self.do_retransmit = kwargs.get("do_retransmit", True)
+        self.transmission_attributes = kwargs.get("transmission_attributes", {})
 
     state = CoreWorkflowDef()
 
@@ -98,6 +101,41 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         or FHIR R3 to R4).
         """
         pass
+
+    def _base64_encode_value(self, input_value: Any) -> Optional[str]:
+        """
+        Base64 encodes an input value.
+        Returns None if input_value, otherwise the value is encoded.
+        :param input_value The value to encode
+        :returns: the encoded value or None if the input is None
+        """
+        if input_value is None:
+            return None
+
+        if hasattr(input_value, "dict"):
+            return encode_from_dict(input_value.dict())
+        elif isinstance(input_value, dict):
+            return encode_from_dict(input_value)
+        else:
+            return encode_from_str(input_value)
+
+    def _scrub_transmission_attributes(self) -> Dict:
+        """
+        Removes sensitive attributes such as Authorization, Password, Token, etc
+        :returns: The "scrubbed" dictionary
+        """
+        if not self.transmission_attributes:
+            return {}
+
+        scrubbed_attributes = {
+            k: v
+            for k, v in self.transmission_attributes.items()
+            if "authorization" != k.lower()
+            and "password" not in k.lower()
+            and "pwd" not in k.lower()
+            and "token" not in k.lower()
+        }
+        return scrubbed_attributes
 
     @xworkflows.transition("do_persist")
     @timer
@@ -121,13 +159,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             f"{self.__class__.__name__}: incoming message type = {type(self.message)}",
         )
 
-        if hasattr(self.message, "dict"):
-            encoded_data = encode_from_dict(self.message.dict())
-        elif isinstance(self.message, dict):
-            encoded_data = encode_from_dict(self.message)
-        else:
-            encoded_data = encode_from_str(self.message)
-
         message = {
             "uuid": self.uuid,
             "lfh_id": self.lfh_id,
@@ -135,9 +166,12 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             "store_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
             "consuming_endpoint_url": self.origin_url,
             "data_format": self.data_format,
-            "data": encoded_data,
+            "data": self._base64_encode_value(self.message),
             "target_endpoint_urls": self.transmit_servers,
             "operation": self.operation,
+            "transmission_attributes": self._base64_encode_value(
+                self._scrub_transmission_attributes()
+            ),
         }
         response = LinuxForHealthDataRecordResponse(**message)
 
@@ -188,7 +222,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         if self.transmit_servers and response:
             resource_str = decode_to_str(self.message["data"])
-            resource = json.loads(resource_str)
+            self.transmission_attributes["content-length"] = str(len(resource_str))
 
             transmit_start = datetime.now()
             self.message["transmit_start"] = transmit_start
@@ -200,12 +234,25 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             async with AsyncClient(verify=self.verify_certs) as client:
                 for server in self.transmit_servers:
                     try:
-                        post_result = await client.post(server, json=resource)
+                        post_result = await client.post(
+                            server,
+                            json=json.loads(resource_str),
+                            headers=self.transmission_attributes,
+                        )
+
+                        if post_result.text is None:
+                            response_body = None
+                        else:
+                            try:
+                                response_body = json.loads(post_result.text)
+                            except (JSONDecodeError, TypeError):
+                                response_body = post_result.text
+
                         result = {
                             "url": server,
-                            "result": post_result.text,
+                            "result": response_body,
                             "status_code": post_result.status_code,
-                            "headers": post_result.headers,
+                            "headers": dict(post_result.headers.items()),
                         }
                         results.append(result)
                     except Exception as ex:
@@ -247,16 +294,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
 
             if len(self.transmit_servers) == 1:
                 # return the results of the single transmit server as the response
-                response.body = results[0]["result"]
-                response.status_code = results[0]["status_code"]
-
-                # merge result headers into response headers with overwrite
-                for key, value in results[0]["headers"].items():
-                    if key not in ["Content-Length", "Content-Language", "Date"]:
-                        response.headers[key] = value
+                single_result = results[0]
+                response.body = json.dumps(results[0]["result"]) if single_result["result"] else None
+                response.status_code = single_result["status_code"]
             else:
-                # body contains all the results, headers and status codes, but
-                # the primary transaction status code is the first status code.
                 body = {"results": results}
                 response.body = json.dumps(body)
                 response.status_code = results[0]["status_code"]
