@@ -1,6 +1,6 @@
 {
     "channel": "channel1",
-    "contract": "fhir-data",
+    "contract": "eligibility",
     "port": 9043,
     "connection_profile": "conf/connection-full.json",
     "wallet_location": "conf/wallet",

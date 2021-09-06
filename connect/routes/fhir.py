@@ -3,9 +3,9 @@ fhir.py
 
 Receive and store any valid FHIR data record using the /fhir [POST] endpoint.
 """
-from fastapi import Body, HTTPException, Response, Request
+from fastapi import Body, HTTPException, Response, Request, Depends
 from fastapi.routing import APIRouter
-from connect.config import get_settings
+from connect.config import get_settings, Settings
 from connect.workflows.fhir import FhirWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
 
@@ -18,6 +18,7 @@ async def post_fhir_data(
     resource_type: str,
     request: Request,
     response: Response,
+    settings=Depends(get_settings),
     request_data: dict = Body(...),
 ):
     """
@@ -77,13 +78,13 @@ async def post_fhir_data(
         raise HTTPException(status_code=422, detail=msg)
 
     try:
-        return await handle_fhir_resource(request, response, request_data)
+        return await handle_fhir_resource(request, response, settings, request_data)
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)
 
 
 async def handle_fhir_resource(
-    request: Request, response: Response, request_data: dict
+    request: Request, response: Response, settings: Settings, request_data: dict
 ):
     """
     Convenience method to allow submission of FHIR resources from either
@@ -91,11 +92,10 @@ async def handle_fhir_resource(
 
     :param request: The Fast API request model
     :param response: The response object which will be returned to the client
+    :param settings: Application settings
     :param request_data: The incoming FHIR message
     :return: The response
     """
-    settings = get_settings()
-
     resource_type = request_data["resourceType"]
     transmit_servers = [
         f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers

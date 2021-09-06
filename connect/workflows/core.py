@@ -295,7 +295,11 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             if len(self.transmit_servers) == 1:
                 # return the results of the single transmit server as the response
                 single_result = results[0]
-                response.body = json.dumps(results[0]["result"]) if single_result["result"] else None
+                response.body = (
+                    json.dumps(results[0]["result"])
+                    if single_result["result"]
+                    else None
+                )
                 response.status_code = single_result["status_code"]
             else:
                 body = {"results": results}

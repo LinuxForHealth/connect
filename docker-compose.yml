@@ -1,7 +1,7 @@
 version: "3.9"
 networks:
   main:
-    name: main
+    name: fabric_test
 services:
   connect:
     build:
@@ -124,7 +124,7 @@ services:
     profiles: ["fabric"]
     networks:
       - main
-    image: linuxforhealth/fabric-client:0.1
+    image: linuxforhealth/fabric-client-demo:0.1.0
     restart: "always"
     environment:
       INITIALIZE_WITH_DISCOVERY: 'false'
