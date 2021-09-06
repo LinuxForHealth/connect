@@ -84,7 +84,9 @@ services:
     profiles: ["fhir", "deployment"]
     networks:
       - main
-    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
+    image: docker.io/ibmcom/ibm-fhir-server:4.6.0
+    environment:
+      BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
   fabric-client:
