@@ -199,7 +199,7 @@ async def nats_coverage_eligibility_event_handler(msg: Msg):
     # transmit the CoverageEligibilityResponse to the configured FHIR servers via the FHIR workflow
     message = json.loads(data)
     resource_type = message["resourceType"]
-    handle_fhir_resource(resource_type, Response(), message)
+    await handle_fhir_resource(resource_type, Response(), message)
 
 
 async def do_retransmit(message: dict, queue_pos: int):

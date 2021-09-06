@@ -89,8 +89,6 @@ services:
       BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
-    environment:
-      BOOTSTRAP_DB: "true"
   msft-fhir-api:
     networks:
       - main
