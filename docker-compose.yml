@@ -85,6 +85,8 @@ services:
     networks:
       - main
     image: docker.io/ibmcom/ibm-fhir-server:4.6.0
+    environment:
+      BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
   msft-fhir-api:
