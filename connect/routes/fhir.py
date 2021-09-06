@@ -83,7 +83,7 @@ async def post_fhir_data(
     if settings.connect_external_fhir_server:
         resource_type = request_data["resourceType"]
         transmit_server = settings.connect_external_fhir_server + "/" + resource_type
-        transmission_attributes = request.headers
+        transmission_attributes = {k: v for k, v in request.headers.items()}
 
     try:
         workflow = FhirWorkflow(
