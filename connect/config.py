@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Optional list of external FHIR server URLs to transmit to
     # Example: ['https://fhiruser:change-password@localhost:9443/fhir-server/api/v4']
     connect_external_fhir_servers: List[str] = [
-        "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"
+        "https://fhiruser:change-password@ibm-fhir:9443/fhir-server/api/v4"
     ]
     connect_rate_limit: str = "5/second"
     connect_timing_enabled: bool = False
