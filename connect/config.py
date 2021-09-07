@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Optional list of external FHIR server URLs to transmit to
     # Example: ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
     connect_external_fhir_servers: List[str] = [
-        "https://fhiruser:change-password@ibm-fhir:9443/fhir-server/api/v4",
+        "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
         "http://localhost:9445",
     ]
     connect_rate_limit: str = "5/second"
@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     nats_nk_file: str = "nats-server.nk"
     nats_enable_retransmit: bool = True
     nats_retransmit_loop_interval_secs: int = 10
-    nats_retransmit_max_retries: int = 20
+    nats_retransmit_max_retries: int = 3
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"

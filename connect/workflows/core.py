@@ -233,11 +233,17 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             results = []
             async with AsyncClient(verify=self.verify_certs) as client:
                 for server in self.transmit_servers:
+                    logger.trace(
+                        f"{self.__class__.__name__}: Starting transmit to  = {server}"
+                    )
                     try:
                         post_result = await client.post(
                             server,
                             json=json.loads(resource_str),
                             headers=self.transmission_attributes,
+                        )
+                        logger.trace(
+                            f"{self.__class__.__name__}: Received result from server {server}: {post_result}"
                         )
 
                         if post_result.text is None:
@@ -334,7 +340,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         :param error: The error message tp be stored in kafka
         :return: The json string for the error message stored in Kafka
         """
-        logger.trace(f"{self.__class__.__name__} error: incoming error = {error}")
+        logger.trace(f"{self.__class__.__name__} error: incoming error = {str(error)}")
         data_str = json.dumps(self.message, cls=ConnectEncoder)
         data = json.loads(data_str)
 
