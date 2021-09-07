@@ -90,6 +90,7 @@ services:
     ports:
       - 9443:9443
   msft-fhir-api:
+    profiles: ["fhir", "deployment"]
     networks:
       - main
     image: linuxforhealth/msft-fhir:20210903-001-R4
@@ -107,6 +108,7 @@ services:
     depends_on:
       - msft-sql
   msft-sql:
+    profiles: ["fhir", "deployment"]
     networks:
       - main
     image: "mcr.microsoft.com/mssql/server"

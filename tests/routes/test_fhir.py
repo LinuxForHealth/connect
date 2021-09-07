@@ -170,22 +170,22 @@ async def test_fhir_post(
 
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
 
-        assert actual_response.status_code == 200
+            assert actual_response.status_code == 200
 
-        actual_json = actual_response.json()
-        assert "uuid" in actual_json
-        assert "creation_date" in actual_json
-        assert "store_date" in actual_json
-        assert "transmit_date" in actual_json
-        assert "target_endpoint_urls" in actual_json
-        assert "elapsed_storage_time" in actual_json
-        assert "elapsed_transmit_time" in actual_json
-        assert "elapsed_total_time" in actual_json
+            actual_json = actual_response.json()
+            assert "uuid" in actual_json
+            assert "creation_date" in actual_json
+            assert "store_date" in actual_json
+            assert "transmit_date" in actual_json
+            assert "target_endpoint_urls" in actual_json
+            assert "elapsed_storage_time" in actual_json
+            assert "elapsed_transmit_time" in actual_json
+            assert "elapsed_total_time" in actual_json
 
-        assert actual_json["consuming_endpoint_url"] == "/fhir/Encounter"
-        assert actual_json["data_format"] == "FHIR-R4_ENCOUNTER"
-        assert actual_json["status"] == "success"
-        assert actual_json["data_record_location"] == "FHIR-R4_ENCOUNTER:0:0"
+            assert actual_json["consuming_endpoint_url"] == "/fhir/Encounter"
+            assert actual_json["data_format"] == "FHIR-R4_ENCOUNTER"
+            assert actual_json["status"] == "success"
+            assert actual_json["data_record_location"] == "FHIR-R4_ENCOUNTER:0:0"
 
 
 @pytest.mark.asyncio

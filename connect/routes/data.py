@@ -43,6 +43,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     transmit_date: Optional[datetime.datetime]
     elapsed_transmit_time: Optional[float]
     elapsed_total_time: Optional[float]
+    transmission_attributes: Optional[str]
 
 
 @router.get("")
