@@ -89,6 +89,37 @@ services:
       BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
+  msft-fhir-api:
+    profiles: ["fhir"]
+    networks:
+      - main
+    image: linuxforhealth/msft-fhir:20210903-001-R4
+    restart: on-failure
+    environment:
+      SAPASSWORD: ${SAPASSWORD}
+      FHIRServer__Security__Enabled: "false"
+      SqlServer__ConnectionString: "Server=tcp:msft-sql,1433;Initial Catalog=FHIR;Persist Security Info=False;User ID=sa;Password=${SAPASSWORD};MultipleActiveResultSets=False;Connection Timeout=30;"
+      SqlServer__AllowDatabaseCreation: "true"
+      SqlServer__Initialize: "true"
+      SqlServer__SchemaOptions__AutomaticUpdatesEnabled: "true"
+      DataStore: "SqlServer"
+    ports:
+      - "9445:8080"
+    depends_on:
+      - msft-sql
+  msft-sql:
+    profiles: ["fhir"]
+    networks:
+      - main
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      SA_PASSWORD: ${SAPASSWORD}
+      ACCEPT_EULA: "Y"
+    healthcheck:
+        test: ["CMD", "/opt/mssql-tools/bin/sqlcmd","-U sa -P ${SAPASSWORD} -Q 'SELECT * FROM INFORMATION_SCHEMA.TABLES'"]
+        interval: 10s
+        timeout: 10s
+        retries: 6
   fabric-client:
     profiles: ["fabric"]
     networks:

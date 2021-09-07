@@ -27,7 +27,7 @@ def settings() -> Settings:
         "uvicorn_app": "connect.asgi:app",
         "connect_cert_key_name": "./mycert.key",
         "connect_cert_name": "./mycert.pem",
-        "connect_external_fhir_server": "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
+        "connect_external_fhir_servers": ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"],
     }
     return Settings(**settings_fields)
 

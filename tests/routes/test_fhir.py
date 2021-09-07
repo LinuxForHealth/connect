@@ -165,7 +165,7 @@ async def test_fhir_post(
 
         async with async_test_client as ac:
             # remove external server setting
-            settings.connect_external_fhir_server = None
+            settings.connect_external_fhir_servers = []
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
@@ -177,7 +177,7 @@ async def test_fhir_post(
         assert "creation_date" in actual_json
         assert "store_date" in actual_json
         assert "transmit_date" in actual_json
-        assert "target_endpoint_url" in actual_json
+        assert "target_endpoint_urls" in actual_json
         assert "elapsed_storage_time" in actual_json
         assert "elapsed_transmit_time" in actual_json
         assert "elapsed_total_time" in actual_json
@@ -254,7 +254,7 @@ async def test_fhir_post_endpoints(
 
         async with async_test_client as ac:
             # remove external server setting
-            settings.connect_external_fhir_server = None
+            settings.connect_external_fhir_servers = []
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
