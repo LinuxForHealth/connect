@@ -12,7 +12,7 @@ services:
         CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
     networks:
       - main
-    image: linuxforhealth/connect:0.42.0
+    image: linuxforhealth/connect-demo:0.1.0
     environment:
       CONNECT_CA_PATH: /usr/local/share/ca-certificates
       IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
@@ -83,12 +83,43 @@ services:
     networks:
       - main
     image: docker.io/ibmcom/ibm-fhir-server:4.4.0
+    environment:
+      BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
+  msft-fhir-api:
+    networks:
+      - main
+    image: linuxforhealth/msft-fhir:20210903-001-R4
+    restart: on-failure
+    environment:
+      SAPASSWORD: ${SAPASSWORD}
+      FHIRServer__Security__Enabled: "false"
+      SqlServer__ConnectionString: "Server=tcp:msft-sql,1433;Initial Catalog=FHIR;Persist Security Info=False;User ID=sa;Password=${SAPASSWORD};MultipleActiveResultSets=False;Connection Timeout=30;"
+      SqlServer__AllowDatabaseCreation: "true"
+      SqlServer__Initialize: "true"
+      SqlServer__SchemaOptions__AutomaticUpdatesEnabled: "true"
+      DataStore: "SqlServer"
+    ports:
+      - "9445:8080"
+    depends_on:
+      - msft-sql
+  msft-sql:
+    networks:
+      - main
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      SA_PASSWORD: ${SAPASSWORD}
+      ACCEPT_EULA: "Y"
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools/bin/sqlcmd","-U sa -P ${SAPASSWORD} -Q 'SELECT * FROM INFORMATION_SCHEMA.TABLES'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 6
   fabric-client:
     networks:
       - main
-    image: linuxforhealth/fabric-client:0.1
+    image: linuxforhealth/fabric-client-demo:0.1.0
     restart: "always"
     environment:
       INITIALIZE_WITH_DISCOVERY: 'false'
@@ -97,3 +128,13 @@ services:
       - ./local-config/fabric/conf:/usr/src/app/conf
     ports:
       - "9043:9043"
+  ethereum-client:
+    networks:
+      - main
+    image: linuxforhealth/ethereum-client:0.1.0
+    environment:
+      ETHEREUM_CA_PATH: /usr/local/share/ca-certificates
+      ETHEREUM_RATE_LIMIT: 5/second
+      ETHEREUM_CONTRACT_ADDRESS: "0x7Bad280884c907bBf3955c21351ce41122aB88eB"
+    ports:
+      - "5100:5100"
