@@ -82,7 +82,9 @@ async def post_fhir_data(
     transmission_attributes = None
     if settings.connect_external_fhir_server:
         resource_type = request_data["resourceType"]
-        transmit_server = settings.connect_external_fhir_server + "/" + resource_type
+        transmit_server = settings.connect_external_fhir_server
+        if settings.connect_generate_fhir_server_url:
+            transmit_server += "/" + resource_type
         transmission_attributes = {k: v for k, v in request.headers.items()}
 
     try:
@@ -97,13 +99,6 @@ async def post_fhir_data(
             do_retransmit=settings.nats_enable_retransmit,
             transmission_attributes=transmission_attributes,
         )
-
-        # enable the transmit workflow step if defined
-        if settings.connect_external_fhir_server:
-            resource_type = request_data["resourceType"]
-            workflow.transmit_server = (
-                settings.connect_external_fhir_server + "/" + resource_type
-            )
 
         result = await workflow.run(response)
 
