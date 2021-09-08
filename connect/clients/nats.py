@@ -123,14 +123,11 @@ async def nats_sync_event_handler(msg: Msg):
     )
 
     transmit_servers = []
-    settings = get_settings()
-    resource_type = message["data_format"]
-    if resource_type.startswith("FHIR"):
-        transmit_servers = [
-            f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers
-        ]
+    if "target_endpoint_urls" in message:
+        transmit_servers = message["target_endpoint_urls"]
 
     # process the message into the local store
+    settings = get_settings()
     msg_data = decode_to_dict(message["data"])
     workflow = core.CoreWorkflow(
         message=msg_data,
