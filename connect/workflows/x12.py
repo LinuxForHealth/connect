@@ -2,6 +2,8 @@ from connect.workflows.core import CoreWorkflow
 from fastapi import Response
 from datetime import datetime
 from connect.support.timer import timer
+from connect.routes.fhir import handle_fhir_resource
+from connect.config import get_settings
 import logging
 from typing import Dict, Optional
 import xworkflows
@@ -36,7 +38,11 @@ class X12Workflow(CoreWorkflow):
         :param resource: The resource name/domain to search
         :param search: dictionary of search parameters
         """
-        r = await client.get(f"{fhir_url}/{resource}", params=search)
+        try:
+            r = await client.get(f"{fhir_url}/{resource}", params=search)
+        except Exception as ex:
+            logger.error(ex)
+            raise
         search_result = r.json()
         total_hits = search_result.get("total", 0)
 
@@ -146,7 +152,12 @@ class X12Workflow(CoreWorkflow):
             await self.transform()
             await self.persist()
             await self.synchronize()
-            # await handle_fhir_resource(Request(), Response(), get_settings())
+            await handle_fhir_resource(
+                Response(),
+                get_settings(),
+                self.transformed_data,
+                self.transmission_attributes,
+            )
             return self.message
         except Exception as ex:
             msg = await self.error(ex)

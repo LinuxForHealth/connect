@@ -7,6 +7,8 @@ import pytest
 from connect.workflows.x12 import X12Workflow
 from typing import Dict, Optional
 from connect.support.timer import nats
+from connect.workflows import x12
+from unittest.mock import AsyncMock
 
 
 @pytest.fixture
@@ -101,6 +103,7 @@ async def test_transform(x12_workflow, fhir_fixture, nats_client, monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(X12Workflow, "find_resource_id", mock_find_resource_id)
         m.setattr(nats, "get_nats_client", nats_client)
+        m.setattr(x12, "handle_fhir_resource", AsyncMock())
         await x12_workflow.validate()
         await x12_workflow.transform()
         assert x12_workflow.transformed_data == fhir_fixture

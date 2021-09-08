@@ -6,6 +6,7 @@ Tests the /x12 endpoints
 import pytest
 from connect.clients import kafka, nats
 from connect.workflows.x12 import X12Workflow
+from connect.workflows import x12
 from unittest.mock import AsyncMock
 
 
@@ -59,6 +60,7 @@ async def test_x12_post(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(X12Workflow, "transform", AsyncMock())
         m.setattr(X12Workflow, "synchronize", AsyncMock())
+        m.setattr(x12, "handle_fhir_resource", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
