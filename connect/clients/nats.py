@@ -125,7 +125,7 @@ async def nats_sync_event_handler(msg: Msg):
     transmit_servers = []
     settings = get_settings()
     resource_type = message["data_format"]
-    if resource_type.startsWith("FHIR"):
+    if resource_type.startswith("FHIR"):
         transmit_servers = [
             f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers
         ]
