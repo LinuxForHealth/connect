@@ -152,7 +152,12 @@ class X12Workflow(CoreWorkflow):
             await self.transform()
             await self.persist()
             await self.synchronize()
-            await handle_fhir_resource(Response(), get_settings(), self.transformed_data, self.transmission_attributes)
+            await handle_fhir_resource(
+                Response(),
+                get_settings(),
+                self.transformed_data,
+                self.transmission_attributes,
+            )
             return self.message
         except Exception as ex:
             msg = await self.error(ex)
