@@ -133,6 +133,8 @@ async def nats_sync_event_handler(msg: Msg):
         data_format=message["data_format"],
         transmit_server=None,
         do_sync=False,
+        operation=message["operation"],
+        do_retransmit=settings.nats_enable_retransmit,
     )
 
     result = await workflow.run(None)
