@@ -75,13 +75,17 @@ def x12_workflow(x12_fixture):
         "certificate_verify": False,
         "lfh_id": "90cf887d-eaa0-4997-b2b7-b1e39ae0ec03",
         "operation": "POST",
-        "transmit_servers": ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
+        "transmit_servers": [
+            "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"
+        ],
     }
 
     return X12Workflow(**config)
 
 
-async def mock_find_resource_id(self, client, fhir_url, resource, search: Dict) -> Optional[str]:
+async def mock_find_resource_id(
+    self, client, fhir_url, resource, search: Dict
+) -> Optional[str]:
     if resource == "Organization" and search["name"] == "UNIFIED INSURANCE CO":
         return "17bc62928df-132d2ee6-9a93-44bd-acf9-46a01828c25c"
     elif resource == "Organization" and search["name"] == "DOWNTOWN MEDICAL CENTER":

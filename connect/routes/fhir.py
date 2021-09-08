@@ -8,7 +8,7 @@ from fastapi.routing import APIRouter
 from connect.config import get_settings, Settings
 from connect.workflows.fhir import FhirWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
-
+from typing import Dict
 
 router = APIRouter()
 
@@ -78,22 +78,24 @@ async def post_fhir_data(
         raise HTTPException(status_code=422, detail=msg)
 
     try:
-        return await handle_fhir_resource(request, response, settings, request_data)
+        headers = {k: v for k, v in request.headers.items()}
+        return await handle_fhir_resource(response, settings, request_data, headers)
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)
 
 
 async def handle_fhir_resource(
-    request: Request, response: Response, settings: Settings, request_data: dict
+    response: Response, settings: Settings, request_data: Dict, headers: Dict = None
 ):
     """
     Convenience method to allow submission of FHIR resources from either
     the /fhir endpoint or via NATS messages.
 
-    :param request: The Fast API request model
     :param response: The response object which will be returned to the client
     :param settings: Application settings
     :param request_data: The incoming FHIR message
+    :param headers: The request headers (Optional)
+
     :return: The response
     """
     resource_type = request_data["resourceType"]
@@ -110,7 +112,7 @@ async def handle_fhir_resource(
         do_sync=True,
         operation="POST",
         do_retransmit=settings.nats_enable_retransmit,
-        transmission_attributes={k: v for k, v in request.headers.items()},
+        transmission_attributes=headers or {},
     )
 
     result = await workflow.run(response)

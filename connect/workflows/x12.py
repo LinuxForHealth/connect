@@ -25,7 +25,9 @@ class X12Workflow(CoreWorkflow):
         """Parses the first name from a X12 loop"""
         return x12_record[target_loop]["nm1_segment"]["name_first"]
 
-    async def find_resource_id(self, client, fhir_url, resource, search: Dict) -> Optional[str]:
+    async def find_resource_id(
+        self, client, fhir_url, resource, search: Dict
+    ) -> Optional[str]:
         """
         Finds a FHIR resource id given search parameters.
 
@@ -91,14 +93,20 @@ class X12Workflow(CoreWorkflow):
             payor_name = self.parse_x12_last_org_name(
                 "loop_2100a", x12_model.information_source
             )
-            payor_id = await self.find_resource_id(c, fhir_url, "Organization", {"name": payor_name})
+            payor_id = await self.find_resource_id(
+                c, fhir_url, "Organization", {"name": payor_name}
+            )
             self.transformed_data["insurer"]["reference"] = f"Organization/{payor_id}"
 
             provider_name = self.parse_x12_last_org_name(
                 "loop_2100b", x12_model.information_receiver
             )
-            provider_id = await self.find_resource_id(c, fhir_url, "Organization", {"name": provider_name})
-            self.transformed_data["provider"]["reference"] = f"Organization/{provider_id}"
+            provider_id = await self.find_resource_id(
+                c, fhir_url, "Organization", {"name": provider_name}
+            )
+            self.transformed_data["provider"][
+                "reference"
+            ] = f"Organization/{provider_id}"
 
             patient_last_name = self.parse_x12_last_org_name(
                 "loop_2100c", x12_model.subscriber
@@ -106,11 +114,20 @@ class X12Workflow(CoreWorkflow):
             patient_first_name = self.parse_x12_first_name(
                 "loop_2100c", x12_model.subscriber
             )
-            patient_id = await self.find_resource_id(c, fhir_url, "Patient", {"name": [patient_last_name, patient_first_name]})
+            patient_id = await self.find_resource_id(
+                c,
+                fhir_url,
+                "Patient",
+                {"name": [patient_last_name, patient_first_name]},
+            )
             self.transformed_data["patient"]["reference"] = f"Patient/{patient_id}"
 
-            coverage_id = await self.find_resource_id(c, fhir_url, "Coverage", {"identifier": "12345"})
-            self.transformed_data["insurance"][0]["coverage"]["reference"] = f"Coverage/{coverage_id}"
+            coverage_id = await self.find_resource_id(
+                c, fhir_url, "Coverage", {"identifier": "12345"}
+            )
+            self.transformed_data["insurance"][0]["coverage"][
+                "reference"
+            ] = f"Coverage/{coverage_id}"
 
     @timer
     async def run(self, response: Response):
