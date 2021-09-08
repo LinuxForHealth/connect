@@ -122,8 +122,15 @@ async def nats_sync_event_handler(msg: Msg):
         f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}",
     )
 
-    # process the message into the local store
+    transmit_servers = []
     settings = get_settings()
+    resource_type = message["data_format"]
+    if resource_type.startsWith("FHIR"):
+        transmit_servers = [
+            f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers
+        ]
+
+    # process the message into the local store
     msg_data = decode_to_dict(message["data"])
     workflow = core.CoreWorkflow(
         message=msg_data,
@@ -131,13 +138,13 @@ async def nats_sync_event_handler(msg: Msg):
         certificate_verify=settings.certificate_verify,
         lfh_id=message["lfh_id"],
         data_format=message["data_format"],
-        transmit_servers=message["target_endpoint_urls"],
+        transmit_servers=transmit_servers,
         do_sync=False,
         operation=message["operation"],
         do_retransmit=settings.nats_enable_retransmit,
     )
 
-    result = await workflow.run(None)
+    result = await workflow.run(Response())
     location = result["data_record_location"]
     logger.trace(
         f"nats_sync_event_handler: replayed nats sync message, data record location = {location}",
