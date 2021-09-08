@@ -10,7 +10,7 @@ import os
 import ssl
 from asyncio import get_running_loop
 from datetime import datetime
-from fastapi import Response
+from fastapi import Request, Response
 from httpx import AsyncClient
 from nats.aio.client import Client as NatsClient, Msg
 from typing import Callable, List, Optional
@@ -133,6 +133,8 @@ async def nats_sync_event_handler(msg: Msg):
         data_format=message["data_format"],
         transmit_server=None,
         do_sync=False,
+        operation=message["operation"],
+        do_retransmit=settings.nats_enable_retransmit,
     )
 
     result = await workflow.run(None)
@@ -199,8 +201,7 @@ async def nats_coverage_eligibility_event_handler(msg: Msg):
     # transmit the CoverageEligibilityResponse to the configured FHIR servers via the FHIR workflow
     message = json.loads(data)
     settings = get_settings()
-    resource_type = message["resourceType"]
-    await handle_fhir_resource(resource_type, Response(), settings, message)
+    await handle_fhir_resource(Request(), Response(), settings, message)
 
 
 async def do_retransmit(message: dict, queue_pos: int):
