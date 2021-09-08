@@ -54,7 +54,6 @@ class Settings(BaseSettings):
     # Example: ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
     connect_external_fhir_servers: List[str] = [
         "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
-        "http://localhost:9445",
     ]
     connect_rate_limit: str = "5/second"
     connect_timing_enabled: bool = False

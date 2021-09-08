@@ -82,6 +82,7 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.operation = kwargs["operation"]
         self.do_retransmit = kwargs.get("do_retransmit", True)
         self.transmission_attributes = kwargs.get("transmission_attributes", {})
+        self.transformed_data = None
 
     state = CoreWorkflowDef()
 

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ValidationError
 from fastapi.routing import APIRouter
 from fastapi import Depends, Response, HTTPException
 from connect.config import get_settings
-from connect.workflows.core import CoreWorkflow
+from connect.workflows.x12 import X12Workflow
 from x12.io import X12ModelReader
 
 router = APIRouter()
@@ -41,16 +41,17 @@ async def post_x12_data(
                 data_format = (
                     f"X12_{m.header.st_segment.transaction_set_identifier_code}"
                 )
-                workflow: CoreWorkflow = CoreWorkflow(
-                    message=m.x12(),
-                    lfh_id=settings.connect_lfh_id,
-                    origin_url="/x12",
-                    operation="POST",
-                    data_format=data_format,
-                )
-                result = await workflow.run(response)
-                x12_results.append(result)
-            return x12_results
+
+        workflow: X12Workflow = X12Workflow(
+            message=x12_request.x12,
+            lfh_id=settings.connect_lfh_id,
+            origin_url="/x12",
+            operation="POST",
+            data_format=data_format,
+        )
+        result = await workflow.run(response)
+        x12_results.append(result)
+        return x12_results
     except ValidationError as ve:
         raise HTTPException(status_code=422, detail=ve)
     except Exception as ex:
