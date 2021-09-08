@@ -131,7 +131,7 @@ async def nats_sync_event_handler(msg: Msg):
         certificate_verify=settings.certificate_verify,
         lfh_id=message["lfh_id"],
         data_format=message["data_format"],
-        transmit_server=None,
+        transmit_servers=message["target_endpoint_urls"],
         do_sync=False,
         operation=message["operation"],
         do_retransmit=settings.nats_enable_retransmit,
