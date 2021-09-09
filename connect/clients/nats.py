@@ -122,13 +122,18 @@ async def nats_sync_event_handler(msg: Msg):
         f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}",
     )
 
+    msg_data = decode_to_dict(message["data"])
+    settings = get_settings()
+
+    # set up the FHIR server urls
     transmit_servers = []
-    if "target_endpoint_urls" in message:
-        transmit_servers = message["target_endpoint_urls"]
+    if message["data_format"].startswith("FHIR"):
+        resource_type = msg_data["resourceType"]
+        transmit_servers = [
+            f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers
+        ]
 
     # process the message into the local store
-    settings = get_settings()
-    msg_data = decode_to_dict(message["data"])
     workflow = core.CoreWorkflow(
         message=msg_data,
         origin_url=message["consuming_endpoint_url"],
