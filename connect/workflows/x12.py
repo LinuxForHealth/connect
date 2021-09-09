@@ -63,6 +63,7 @@ class X12Workflow(CoreWorkflow):
         """
         self.transformed_data = {
             "resourceType": "CoverageEligibilityRequest",
+            "id": "001",
             "text": {
                 "status": "generated",
                 "div": '<div xmlns="http://www.w3.org/1999/xhtml">A human-readable rendering of the CoverageEligibilityRequest</div>',
