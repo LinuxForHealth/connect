@@ -97,9 +97,13 @@ async def handle_fhir_resource(
     :return: The response
     """
     resource_type = request_data["resourceType"]
-    transmit_servers = [
-        f"{s}/{resource_type}" for s in settings.connect_external_fhir_servers
-    ]
+
+    transmit_servers = []
+    for s in settings.connect_external_fhir_servers:
+        if settings.connect_generate_fhir_server_url:
+            transmit_servers.append(f"{s}/{resource_type}")
+        else:
+            transmit_servers.append(s)
 
     workflow = FhirWorkflow(
         message=request_data,
