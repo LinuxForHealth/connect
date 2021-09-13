@@ -62,7 +62,7 @@ async def test_x12_post(
 
         async with async_test_client as ac:
             # remove external server setting
-            settings.connect_external_fhir_server = None
+            settings.connect_external_fhir_servers = None
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
             actual_response = await ac.post("/x12", json={"x12": x12_fixture})
