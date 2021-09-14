@@ -33,6 +33,7 @@ nats_clients = []
 timing_metrics = {}
 nats_retransmit_queue = []
 nats_retransmit_canceled = False
+retransmit_task = None
 
 
 async def create_nats_subscribers():
@@ -44,7 +45,8 @@ async def create_nats_subscribers():
     await start_retransmit_subscriber()
 
     retransmit_loop = asyncio.get_event_loop()
-    retransmit_loop.create_task(retransmitter())
+    global retransmit_task
+    retransmit_task = retransmit_loop.create_task(retransmitter())
 
 
 async def start_sync_event_subscribers():
@@ -298,6 +300,10 @@ async def stop_nats_clients():
 
     global nats_retransmit_canceled
     nats_retransmit_canceled = True
+
+    retransmit_task.cancel()
+    tasks = [retransmit_task]
+    await asyncio.gather(*tasks)
 
 
 async def get_nats_client() -> Optional[NatsClient]:
