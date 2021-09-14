@@ -47,11 +47,9 @@ class Settings(BaseSettings):
     connect_config_directory: str = "/home/lfh/connect/config"
     connect_lfh_id: str = host_name
     connect_logging_config_path: str = "logging.yaml"
-    # external FHIR server URL or None
+    # external FHIR server URLs or []
     # Example: ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
-    connect_external_fhir_servers: List[str] = [
-        "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
-    ]
+    connect_external_fhir_servers: List[str] = []
     connect_generate_fhir_server_url: bool = True
     connect_rate_limit: str = "5/second"
     connect_timing_enabled: bool = False
