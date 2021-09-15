@@ -3,6 +3,7 @@ import logging.config
 import os
 import sys
 import yaml
+from asyncio import CancelledError
 from yaml import YAMLError
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -17,7 +18,6 @@ from connect.clients.nats import (
     get_nats_client,
     stop_nats_clients,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -134,11 +134,16 @@ async def close_internal_clients() -> None:
     - Kafka
     - NATS
     """
-    kafka_producer = get_kafka_producer()
-    kafka_producer.close()
+    logger.info("Shutting down internal clients")
+    try:
+        kafka_producer = get_kafka_producer()
+        kafka_producer.close()
 
-    await stop_nats_clients()
-    stop_kafka_listeners()
+        stop_kafka_listeners()
+
+        await stop_nats_clients()
+    except CancelledError:
+        pass
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):
