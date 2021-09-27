@@ -13,10 +13,17 @@ services:
     profiles: ["deployment"]
     networks:
       - main
-    image: linuxforhealth/connect-demo:0.1.0
+    image: linuxforhealth/connect-eligibility-demo:0.42.0
     environment:
       CONNECT_CA_PATH: /usr/local/share/ca-certificates
       IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
+      CONNECT_EXTERNAL_FHIR_SERVERS: '["https://fhiruser:change-password@ibm-fhir:9443/fhir-server/api/v4"]'
+      X12_ISA_ELEMENT_SEPARATOR: 3
+      X12_ISA_REPETITION_SEPARATOR: 82
+      X12_ISA_SEGMENT_LENGTH: 106
+      X12_ISA_SEGMENT_TERMINATOR: 105
+      X12_CHARACTER_SET: EXTENDED
+      X12_READER_BUFFER_SIZE: 1024000
     ports:
       - "5000:5000"
   nats-server:
