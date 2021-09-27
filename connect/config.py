@@ -52,9 +52,7 @@ class Settings(BaseSettings):
     connect_logging_config_path: str = "logging.yaml"
     # Optional list of external FHIR server URLs to transmit to
     # Example: ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
-    connect_external_fhir_servers: List[str] = [
-        "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4",
-    ]
+    connect_external_fhir_servers: List[str] = []
     connect_rate_limit: str = "5/second"
     connect_timing_enabled: bool = False
 
@@ -75,7 +73,7 @@ class Settings(BaseSettings):
 
     # nats
     nats_servers: List[str] = ["tls://nats-server:4222"]
-    nats_sync_subscribers: List[str] = []
+    nats_sync_subscribers: List[str] = ["tls://13.90.214.97:4222"]
     nats_allow_reconnect: bool = True
     nats_max_reconnect_attempts: int = 10
     nats_nk_file: str = "nats-server.nk"

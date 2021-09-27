@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.7"
 networks:
   main:
     name: fabric_test
@@ -10,7 +10,6 @@ services:
       args:
         CONNECT_CERT_PATH_BUILD_ARG: ./local-config/connect
         CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
-    profiles: ["deployment"]
     networks:
       - main
     image: linuxforhealth/connect-demo:0.1.0
@@ -81,16 +80,14 @@ services:
       - ./local-config/ipfs/private-ipfs-network/swarm.key:/data/ipfs/swarm.key
       - ./local-config/ipfs/private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
   ibm-fhir:
-    profiles: ["fhir", "deployment"]
     networks:
       - main
-    image: docker.io/ibmcom/ibm-fhir-server:4.6.0
+    image: docker.io/ibmcom/ibm-fhir-server:4.4.0
     environment:
       BOOTSTRAP_DB: "true"
     ports:
       - 9443:9443
   msft-fhir-api:
-    profiles: ["fhir", "deployment"]
     networks:
       - main
     image: linuxforhealth/msft-fhir:20210903-001-R4
@@ -108,7 +105,6 @@ services:
     depends_on:
       - msft-sql
   msft-sql:
-    profiles: ["fhir", "deployment"]
     networks:
       - main
     image: "mcr.microsoft.com/mssql/server"
@@ -116,12 +112,11 @@ services:
       SA_PASSWORD: ${SAPASSWORD}
       ACCEPT_EULA: "Y"
     healthcheck:
-        test: ["CMD", "/opt/mssql-tools/bin/sqlcmd","-U sa -P ${SAPASSWORD} -Q 'SELECT * FROM INFORMATION_SCHEMA.TABLES'"]
-        interval: 10s
-        timeout: 10s
-        retries: 6
+      test: [ "CMD", "/opt/mssql-tools/bin/sqlcmd","-U sa -P ${SAPASSWORD} -Q 'SELECT * FROM INFORMATION_SCHEMA.TABLES'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 6
   fabric-client:
-    profiles: ["fabric"]
     networks:
       - main
     image: linuxforhealth/fabric-client-demo:0.1.0
@@ -134,7 +129,6 @@ services:
     ports:
       - "9043:9043"
   ethereum-client:
-    profiles: ["ethereum"]
     networks:
       - main
     image: linuxforhealth/ethereum-client:0.1.0

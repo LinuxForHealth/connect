@@ -54,7 +54,7 @@
     },
     "peers": {
         "peer0.org1.example.com": {
-            "url": "grpcs://host.docker.internal:${P1PORT}",
+            "url": "grpcs://peer0.org1.example.com:${P1PORT}",
             "tlsCACerts": {
                 "pem": "${PEER1PEM}"
             },
@@ -64,7 +64,7 @@
             }
         },
         "peer0.org2.example.com": {
-            "url": "grpcs://host.docker.internal:${P2PORT}",
+            "url": "grpcs://peer0.org2.example.com:${P2PORT}",
             "tlsCACerts": {
                 "pem": "${PEER2PEM}"
             },
@@ -76,7 +76,7 @@
     },
     "orderers": {
         "orderer.example.com": {
-            "url": "grpcs://host.docker.internal:${O1PORT}",
+            "url": "grpcs://orderer.example.com:${O1PORT}",
             "tlsCACerts": {
                 "pem": "${O1PEM}"
             },
@@ -88,7 +88,7 @@
     },
     "certificateAuthorities": {
         "ca.org1.example.com": {
-            "url": "https://host.docker.internal:${CA1PORT}",
+            "url": "https://ca_org1:${CA1PORT}",
             "caName": "ca-org1",
             "tlsCACerts": {
                 "pem": ["${CA1PEM}"]
@@ -98,7 +98,7 @@
             }
         },
         "ca.org2.example.com": {
-            "url": "https://host.docker.internal:${CA2PORT}",
+            "url": "https://ca_org2:${CA2PORT}",
             "caName": "ca-org2",
             "httpOptions": {
                 "verify": false

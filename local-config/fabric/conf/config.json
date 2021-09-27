@@ -7,7 +7,7 @@
     "use_discovery": "false",
     "as_local_host": "false",
     "use_nats": "true",
-    "nats_servers": ["nats-server:4222"],
+    "nats_servers": ["nats-server:4222", "13.90.214.97:4222"],
     "nats_nkey": "conf/certs/nats-server.nk",
     "nats_ca_file": "./conf/certs/lfh-root-ca.pem",
     "enroll_admin": "true",

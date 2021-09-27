@@ -7,7 +7,7 @@
 #
 
 # Set the path to your test-network deployment on your local machine
-TESTNET_PATH=/Users/<your_user>/go/src/github.com/<your_github_user>/fabric-samples/test-network
+TESTNET_PATH=/root/git/src/github.com/hyperledger/fabric-samples/test-network
 
 function one_line_pem {
     echo "`awk 'NF {sub(/\\n/, ""); printf "%s\\\\\\\n",$0;}' $1`"

@@ -23,19 +23,19 @@ echo "create NATS development certificate"
 echo ""
 mkcert -cert-file "$BASE_DIRECTORY"/nats/lfh-nats-server.pem \
        -key-file "$BASE_DIRECTORY"/nats/lfh-nats-server.key \
-       nats-server connect_nats-server_1 localhost 127.0.0.1 ::1
+       nats-server connect_nats-server_1 148.100.113.21 localhost 127.0.0.1 ::1
 
 echo "create fabric client development certificate"
 echo ""
 mkcert -cert-file "$BASE_DIRECTORY"/fabric/conf/certs/lfh-fabric-client.pem \
        -key-file "$BASE_DIRECTORY"/fabric/conf/certs/lfh-fabric-client.key \
-       fabric-client connect_fabric-client_1 localhost 127.0.0.1 ::1
+       fabric-client connect_fabric-client_1 148.100.113.21 localhost 127.0.0.1 ::1
 
 echo "create LinuxForHealth development certificate"
 echo ""
 mkcert -cert-file "$BASE_DIRECTORY"/connect/lfh-connect.pem \
        -key-file "$BASE_DIRECTORY"/connect/lfh-connect.key \
-       connect connect_connect_1 localhost 127.0.0.1 ::1
+       connect connect_connect_1 localhost 148.100.113.21 127.0.0.1 ::1
 
 echo "copy self signed service certs to LinuxForHealth connect directory"
 echo "Copying NATS ..."
