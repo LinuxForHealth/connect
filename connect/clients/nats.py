@@ -26,6 +26,7 @@ from connect.config import (
 from connect.routes.fhir import handle_fhir_resource
 from connect.support.encoding import (
     decode_to_dict,
+    decode_to_str,
     encode_from_dict,
     ConnectEncoder,
 )
@@ -122,7 +123,10 @@ async def nats_sync_event_handler(msg: Msg):
         f"nats_sync_event_handler: stored msg in kafka topic {kafka_sync_topic} at {kafka_cb.kafka_result}",
     )
 
-    msg_data = decode_to_dict(message["data"])
+    if message["data_format"].startswith("X12_"):
+        msg_data = decode_to_str(message["data"])
+    else:
+        msg_data = decode_to_dict(message["data"])
     settings = get_settings()
 
     # set up the FHIR server urls
