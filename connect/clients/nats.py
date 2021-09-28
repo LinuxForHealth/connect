@@ -23,6 +23,7 @@ from connect.config import (
 )
 from connect.support.encoding import (
     decode_to_dict,
+    decode_to_str,
     ConnectEncoder,
 )
 
@@ -147,7 +148,10 @@ async def nats_sync_event_handler(msg: Msg):
 
     # process the message into the local store
     settings = get_settings()
-    msg_data = decode_to_dict(message["data"])
+    if message["data_format"].startswith("X12_"):
+        msg_data = decode_to_str(message["data"])
+    else:
+        msg_data = decode_to_dict(message["data"])
     workflow = core.CoreWorkflow(
         message=msg_data,
         origin_url=message["consuming_endpoint_url"],
