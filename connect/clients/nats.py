@@ -23,6 +23,7 @@ from connect.config import (
 )
 from connect.support.encoding import (
     decode_to_dict,
+    decode_to_str,
     ConnectEncoder,
 )
 
@@ -33,6 +34,7 @@ nats_clients = []
 timing_metrics = {}
 nats_retransmit_queue = []
 nats_retransmit_canceled = False
+retransmit_task = None
 
 
 async def create_nats_subscribers():
@@ -44,7 +46,8 @@ async def create_nats_subscribers():
     await start_retransmit_subscriber()
 
     retransmit_loop = asyncio.get_event_loop()
-    retransmit_loop.create_task(retransmitter())
+    global retransmit_task
+    retransmit_task = retransmit_loop.create_task(retransmitter())
 
 
 async def start_sync_event_subscribers():
@@ -145,7 +148,10 @@ async def nats_sync_event_handler(msg: Msg):
 
     # process the message into the local store
     settings = get_settings()
-    msg_data = decode_to_dict(message["data"])
+    if message["data_format"].startswith("X12_"):
+        msg_data = decode_to_str(message["data"])
+    else:
+        msg_data = decode_to_dict(message["data"])
     workflow = core.CoreWorkflow(
         message=msg_data,
         origin_url=message["consuming_endpoint_url"],
@@ -298,6 +304,10 @@ async def stop_nats_clients():
 
     global nats_retransmit_canceled
     nats_retransmit_canceled = True
+
+    retransmit_task.cancel()
+    tasks = [retransmit_task]
+    await asyncio.gather(*tasks)
 
 
 async def get_nats_client() -> Optional[NatsClient]:
