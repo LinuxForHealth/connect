@@ -3,11 +3,14 @@ test_fhir.py
 Tests the /fhir endpoint
 """
 import asyncio
+import json
 import pytest
 from connect.clients import kafka, nats
 from connect.config import get_settings
-from connect.workflows.fhir import FhirWorkflow
-from starlette.responses import Response
+from connect.exceptions import FhirValidationError
+from connect.routes.fhir import validate
+from connect.workflows.core import CoreWorkflow
+from fhir.resources.encounter import Encounter
 from unittest.mock import AsyncMock
 
 
@@ -160,7 +163,7 @@ async def test_fhir_post(
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
-        m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
@@ -205,30 +208,46 @@ async def test_fhir_post_with_transmit(
     :param settings: connect configuration settings
     """
 
-    async def mock_workflow_transmit(self, response: Response):
+    async def mock_workflow_transmit(self):
         """
         A mock workflow transmission method used to set a response returned to a client
         """
         await asyncio.sleep(0.1)
-        response.status_code = 201
-        response.headers[
-            "location"
-        ] = "fhir/v4/Patient/5d7dc79a-faf2-453d-9425-a0efe85032ea/_history/1"
-        self.use_response = True
+        result = [
+            {
+                "url": "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient",
+                "result": "",
+                "status_code": 201,
+                "headers": {
+                    "location": "https://127.0.0.1:5000/fhir-server/api/v4/Patient/17c5ff8e0fa-b8562320-7070-4a83-9312-91938bb97c9e/_history/1",
+                    "etag": 'W/"1"',
+                    "last-modified": "Fri, 08 Oct 2021 12:55:18 GMT",
+                    "date": "Fri, 08 Oct 2021 12:55:18 GMT",
+                    "content-length": "0",
+                    "content-language": "en-US",
+                },
+            }
+        ]
+        return result
 
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
-        m.setattr(FhirWorkflow, "transmit", mock_workflow_transmit)
-        m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(CoreWorkflow, "transmit", mock_workflow_transmit)
+        m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            actual_json = actual_response.json()
 
-            assert actual_response.status_code == 201
-            assert actual_response.text == ""
-            assert "location" in actual_response.headers
+            assert (
+                actual_json[0]["url"]
+                == "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient"
+            )
+            assert actual_json[0]["result"] == ""
+            assert actual_json[0]["status_code"] == 201
+            assert "location" in actual_json[0]["headers"]
 
 
 @pytest.mark.asyncio
@@ -249,7 +268,7 @@ async def test_fhir_post_endpoints(
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
-        m.setattr(FhirWorkflow, "synchronize", AsyncMock())
+        m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
@@ -266,3 +285,26 @@ async def test_fhir_post_endpoints(
             encounter_fixture["resourceType"] = "Patient"
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
             assert actual_response.status_code == 422
+
+            # a missing FHIR resource type also causes a 422
+            del encounter_fixture["resourceType"]
+            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            assert actual_response.status_code == 422
+
+
+def test_validate(encounter_fixture):
+    """
+    Tests the FHIR route validate() where the resource is valid
+    """
+    result = validate("Encounter", encounter_fixture)
+    assert isinstance(result, Encounter)
+
+
+def test_validate_invalid_resource_type(encounter_fixture):
+    """
+    Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
+    """
+    encounter = encounter_fixture
+    encounter["resourceType"] = "NoSuchResourceName"
+    with pytest.raises(FhirValidationError):
+        validate("Encounter", encounter)

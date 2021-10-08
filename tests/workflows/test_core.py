@@ -41,19 +41,16 @@ def workflow() -> CoreWorkflow:
 
 def test_init(workflow: CoreWorkflow):
     """
-    Tests CoreWorkflow.__init__ and the state transition.
+    Tests CoreWorkflow.__init__.
     :param workflow: The CoreWorkflow fixture
     """
     assert workflow.message == {"first_name": "John", "last_name": "Doe"}
     assert workflow.data_format == "custom"
     assert workflow.origin_url == "http://localhost:5000/data"
     assert workflow.start_time is None
-    assert workflow.use_response is False
     assert workflow.verify_certs is False
     assert workflow.lfh_exception_topic == "LFH_EXCEPTION"
     assert workflow.lfh_id == "90cf887d-eaa0-4997-b2b7-b1e39ae0ec03"
-
-    assert workflow.state == "parse"
 
 
 @pytest.mark.asyncio
@@ -61,10 +58,7 @@ async def test_manual_flow(
     workflow: CoreWorkflow, monkeypatch, kafka_callback, mock_httpx_client
 ):
     """
-    Manually tests CoreWorkflow state transitions.
-
-    Transitions are tested in a single test case since the workflow model requires methods to be executed
-    sequentially in a specific order. The testing order mirrors the execution order provider in
+    Manually tests CoreWorkflow.  The testing order mirrors the execution order provider in
     CoreWorkflow.run.
 
     :param workflow: The CoreWorkflow fixture
@@ -81,75 +75,24 @@ async def test_manual_flow(
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=nats_mock))
 
-        await workflow.validate()
-        assert workflow.state.name == "validate"
-
         await workflow.transform()
-        assert workflow.state.name == "transform"
 
         await workflow.persist()
-        assert workflow.state.name == "persist"
         assert workflow.message["elapsed_storage_time"] > 0
         assert workflow.message["elapsed_total_time"] > 0
         assert workflow.message["data_record_location"] == "CUSTOM:0:0"
         assert workflow.message["status"] == "success"
 
-        workflow.transmit_servers = "https://external-server.com/data"
+        workflow.transmit_servers = ["https://external-server.com/data"]
         workflow.transmission_attributes["tenant_id"] = "MyTenant"
-        response = Response()
-        await workflow.transmit(response)
-        assert workflow.state.name == "transmit"
+        await workflow.transmit()
         assert workflow.message["transmit_date"] is not None
         assert workflow.message["elapsed_transmit_time"] > 0
         assert len(workflow.transmission_attributes) == 2
         assert workflow.transmission_attributes["tenant_id"] == "MyTenant"
         assert "content-length" in workflow.transmission_attributes
-        assert workflow.use_response is True
-        assert response.headers["LinuxForHealth-MessageId"] is not None
         await workflow.synchronize()
-        assert workflow.state.name == "sync"
-        assert nats_mock.publish.call_count == 6
-
-
-@pytest.mark.asyncio
-async def test_manual_flow_transmit_disabled(
-    workflow: CoreWorkflow, monkeypatch, kafka_callback, mock_httpx_client
-):
-    """
-    Manually tests CoreWorkflow state transitions where transmission is disabled
-
-    Transitions are tested in a single test case since the workflow model requires methods to be executed
-    sequentially in a specific order. The testing order mirrors the execution order provider in
-    CoreWorkflow.run.
-
-    :param workflow: The CoreWorkflow fixture
-    :param monkeypatch: Pytest monkeypatch fixture
-    :param kafka_callback: KafkaCallback fixture
-    :param mock_httpx_client: Mock HTTPX Client fixture
-    """
-    workflow.start_time = datetime.datetime.utcnow()
-    nats_mock = AsyncMock()
-
-    with monkeypatch.context() as m:
-        m.setattr(core, "get_kafka_producer", Mock(return_value=AsyncMock()))
-        m.setattr(core, "KafkaCallback", kafka_callback)
-        m.setattr(core, "AsyncClient", mock_httpx_client)
-        m.setattr(nats, "get_nats_client", AsyncMock(return_value=nats_mock))
-
-        await workflow.validate()
-        assert workflow.state.name == "validate"
-
-        await workflow.transform()
-        assert workflow.state.name == "transform"
-
-        await workflow.persist()
-        assert workflow.state.name == "persist"
-
-        await workflow.transmit(Mock())
-        assert workflow.state.name == "transmit"
-        assert workflow.message["transmit_date"] is None
-        assert workflow.message["elapsed_transmit_time"] is None
-        assert workflow.use_response is False
+        assert nats_mock.publish.call_count == 5
 
 
 @pytest.mark.asyncio
@@ -172,7 +115,8 @@ async def test_run_flow(
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
-        actual_value = await workflow.run(Mock())
+        result = await workflow.run()
+        actual_value = workflow.set_response(Response(), result)
         assert actual_value["consuming_endpoint_url"] == "http://localhost:5000/data"
         assert actual_value["creation_date"] is not None
         assert (
@@ -205,7 +149,7 @@ async def test_run_flow_error(
     :param mock_httpx_client: Mock HTTPX Client fixture
     """
     workflow.start_time = datetime.datetime.utcnow()
-    workflow.validate = Mock(side_effect=Exception("test exception"))
+    workflow.persist = Mock(side_effect=Exception("test exception"))
 
     with monkeypatch.context() as m:
         m.setattr(core, "get_kafka_producer", Mock(return_value=AsyncMock()))
@@ -214,4 +158,4 @@ async def test_run_flow_error(
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
         with pytest.raises(Exception):
-            await workflow.run(Mock())
+            await workflow.run()

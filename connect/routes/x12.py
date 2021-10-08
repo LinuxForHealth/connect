@@ -49,8 +49,8 @@ async def post_x12_data(
                     operation="POST",
                     data_format=data_format,
                 )
-                result = await workflow.run(response)
-                x12_results.append(result)
+                results = await workflow.run()
+                x12_results.append(results["lfh_message"])
             return x12_results
     except ValidationError as ve:
         raise HTTPException(status_code=422, detail=ve)
