@@ -238,19 +238,20 @@ async def do_retransmit(message: dict, queue_pos: int):
     if "retransmit_count" not in message:
         message["retransmit_count"] = 0
     message["retransmit_count"] += 1
+    target_endpoint_url = message["target_endpoint_urls"][0]
 
     try:
         # attempt to retransmit the message
         logger.trace(
-            f"do_retransmit #{message['retransmit_count']}: retransmitting to: {message['target_endpoint_url']}"
+            f"do_retransmit #{message['retransmit_count']}: retransmitting to: {target_endpoint_url}"
         )
         async with AsyncClient(verify=settings.certificate_verify) as client:
             if message["operation"] == "POST":
-                await client.post(message["target_endpoint_url"], json=resource)
+                await client.post(target_endpoint_url, json=resource)
             elif message["operation"] == "PUT":
-                await client.put(message["target_endpoint_url"], json=resource)
+                await client.put(target_endpoint_url, json=resource)
             elif message["operation"] == "PATCH":
-                await client.patch(message["target_endpoint_url"], json=resource)
+                await client.patch(target_endpoint_url, json=resource)
 
         # if the message came from the retransmit queue, remove it
         if not queue_pos == -1:

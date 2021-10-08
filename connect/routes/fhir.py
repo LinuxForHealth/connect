@@ -7,7 +7,7 @@ import logging
 from fastapi import Body, Depends, HTTPException, Response, Request
 from fastapi.routing import APIRouter
 from connect.config import get_settings
-from connect.exceptions import FhirValidationError, MissingFhirResourceType
+from connect.exceptions import FhirValidationError
 from connect.workflows.core import CoreWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
 from fhir.resources import construct_fhir_element
@@ -79,14 +79,10 @@ async def post_fhir_data(
         raise HTTPException(status_code=404, detail=f"/{resource_type} not found")
 
     if resource_type != request_data.get("resourceType"):
-        msg = f"request {request_data.get('resourceType')} does not match /{resource_type}"
+        msg = f"resource type {request_data.get('resourceType')} in request does not match url /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
     try:
-        resource_type = request_data["resourceType"]
-        if resource_type is None:
-            raise MissingFhirResourceType()
-
         # validate the input data and return a FHIR resource instance
         message = validate(resource_type, request_data)
         data_format = f"FHIR-R4_{resource_type.upper()}"
@@ -115,7 +111,7 @@ async def post_fhir_data(
 
         return workflow.set_response(response, results)
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=ex)
+        raise HTTPException(status_code=500, detail=str(ex))
 
 
 def validate(resource_type: str, request_data: dict) -> dict:

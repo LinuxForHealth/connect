@@ -83,18 +83,16 @@ async def test_manual_flow(
         assert workflow.message["data_record_location"] == "CUSTOM:0:0"
         assert workflow.message["status"] == "success"
 
-        workflow.transmit_servers = "https://external-server.com/data"
+        workflow.transmit_servers = ["https://external-server.com/data"]
         workflow.transmission_attributes["tenant_id"] = "MyTenant"
-        response = Response()
         await workflow.transmit()
         assert workflow.message["transmit_date"] is not None
         assert workflow.message["elapsed_transmit_time"] > 0
         assert len(workflow.transmission_attributes) == 2
         assert workflow.transmission_attributes["tenant_id"] == "MyTenant"
         assert "content-length" in workflow.transmission_attributes
-        assert response.headers["LinuxForHealth-MessageId"] is not None
         await workflow.synchronize()
-        assert nats_mock.publish.call_count == 6
+        assert nats_mock.publish.call_count == 5
 
 
 @pytest.mark.asyncio
@@ -117,7 +115,8 @@ async def test_run_flow(
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
-        actual_value = await workflow.run()
+        result = await workflow.run()
+        actual_value = workflow.set_response(Response(), result)
         assert actual_value["consuming_endpoint_url"] == "http://localhost:5000/data"
         assert actual_value["creation_date"] is not None
         assert (

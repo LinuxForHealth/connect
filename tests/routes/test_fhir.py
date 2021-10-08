@@ -7,7 +7,7 @@ import json
 import pytest
 from connect.clients import kafka, nats
 from connect.config import get_settings
-from connect.exceptions import FhirValidationError, MissingFhirResourceType
+from connect.exceptions import FhirValidationError
 from connect.routes.fhir import validate
 from connect.workflows.core import CoreWorkflow
 from fhir.resources.encounter import Encounter
@@ -215,14 +215,20 @@ async def test_fhir_post_with_transmit(
         await asyncio.sleep(0.1)
         result = [
             {
-                "url": "http://myserver:9445",
+                "url": "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient",
                 "result": "",
                 "status_code": 201,
                 "headers": {
-                    "location": "fhir/v4/Patient/5d7dc79a-faf2-453d-9425-a0efe85032ea/_history/1"
+                    "location": "https://127.0.0.1:5000/fhir-server/api/v4/Patient/17c5ff8e0fa-b8562320-7070-4a83-9312-91938bb97c9e/_history/1",
+                    "etag": 'W/"1"',
+                    "last-modified": "Fri, 08 Oct 2021 12:55:18 GMT",
+                    "date": "Fri, 08 Oct 2021 12:55:18 GMT",
+                    "content-length": "0",
+                    "content-language": "en-US",
                 },
             }
         ]
+        return result
 
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
@@ -233,12 +239,15 @@ async def test_fhir_post_with_transmit(
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
-            print(actual_response.text)
-            actual_result = json.loads(actual_response.text)
+            actual_json = actual_response.json()
 
-            assert actual_result["transmit_result"][0]["status_code"] == 201
-            assert actual_result["transmit_result"][0]["result"] == ""
-            assert "location" in actual_result["transmit_result"][0]["headers"]
+            assert (
+                actual_json[0]["url"]
+                == "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient"
+            )
+            assert actual_json[0]["result"] == ""
+            assert actual_json[0]["status_code"] == 201
+            assert "location" in actual_json[0]["headers"]
 
 
 @pytest.mark.asyncio
@@ -277,10 +286,10 @@ async def test_fhir_post_endpoints(
             actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
             assert actual_response.status_code == 422
 
-            encounter = encounter_fixture
-            del encounter["resourceType"]
-            with pytest.raises(MissingFhirResourceType):
-                await ac.post("/fhir/Encounter", json=encounter)
+            # a missing FHIR resource type also causes a 422
+            del encounter_fixture["resourceType"]
+            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            assert actual_response.status_code == 422
 
 
 def test_validate(encounter_fixture):
