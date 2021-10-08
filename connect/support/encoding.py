@@ -9,7 +9,7 @@ import decimal
 import json
 from json import JSONEncoder
 import datetime
-from typing import Any
+from typing import Any, Optional
 import uuid
 
 
@@ -37,6 +37,24 @@ class ConnectEncoder(JSONEncoder):
             return float(o)
         else:
             return super().default(o)
+
+
+def base64_encode_value(input_value: Any) -> Optional[str]:
+    """
+    Base64 encodes an input value.
+    Returns None if input_value, otherwise the value is encoded.
+    :param input_value The value to encode
+    :returns: the encoded value or None if the input is None
+    """
+    if input_value is None:
+        return None
+
+    if hasattr(input_value, "dict"):
+        return encode_from_dict(input_value.dict())
+    elif isinstance(input_value, dict):
+        return encode_from_dict(input_value)
+    else:
+        return encode_from_str(input_value)
 
 
 def encode_from_dict(data: dict) -> str:
