@@ -107,9 +107,7 @@ async def post_fhir_data(
             do_retransmit=settings.nats_enable_retransmit,
             transmission_attributes={k: v for k, v in request.headers.items()},
         )
-        results = await workflow.run()
-
-        return workflow.set_response(response, results)
+        return await workflow.run()
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 

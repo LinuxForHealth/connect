@@ -115,8 +115,7 @@ async def test_run_flow(
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
 
-        result = await workflow.run()
-        actual_value = workflow.set_response(Response(), result)
+        actual_value = await workflow.run()
         assert actual_value["consuming_endpoint_url"] == "http://localhost:5000/data"
         assert actual_value["creation_date"] is not None
         assert (

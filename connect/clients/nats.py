@@ -175,10 +175,9 @@ async def nats_sync_event_handler(msg: Msg):
         do_retransmit=settings.nats_enable_retransmit,
     )
 
-    results = await workflow.run()
-    location = results["message"]["data_record_location"]
+    result = await workflow.run()
     logger.trace(
-        f"nats_sync_event_handler: replayed nats sync message, data record location = {location}",
+        f"nats_sync_event_handler: replayed nats sync message, result = {result}",
     )
 
 

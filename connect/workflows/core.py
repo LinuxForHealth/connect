@@ -23,7 +23,7 @@ from connect.support.encoding import (
     ConnectEncoder,
 )
 from connect.support.timer import timer
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional, Union
 
 
 logger = logging.getLogger(__name__)
@@ -280,23 +280,20 @@ class CoreWorkflow:
             logger.trace(f"Running {self.__class__.__name__}")
             await self.transform()
             await self.persist()
-            results = await self.transmit()
+            result = await self.transmit()
             await self.synchronize()
-            return {"lfh_message": self.message, "transmit_result": results}
+            return self._set_response(result)
         except Exception as ex:
             msg = await self.error(ex)
             raise Exception(msg)
 
-    def set_response(self, response: Response, result: dict):
+    def _set_response(self, transmit_result: dict) -> Union[Response, Dict]:
         """
-        Set the HTTP response based on the result of handling the message.  The result will be of the form:
-            {
-                "lfh_message": LinuxForHealthDataRecordResponse,
-                "transmit_result": List[dict]
-            }
+        Return the result of handling the message.  The result from calling _set_response will be either
+        self.message (Dict) or a Response instance containing the body and status code from the transmit results,
+        along with the LinuxForHealth-MessageId message header.
 
-        where lfh_message is the resulting LinuxForHealth message and transmit_result is an array of 0 or more transmit
-        result dicts, of the form:
+        transmit_result is an array of 0 or more transmit result dicts, of the form:
             {
                 "url": str,
                 "result": str,
@@ -304,23 +301,21 @@ class CoreWorkflow:
                 "headers": dict,
             }
 
-        :param response: The HTTP response for this HTTP request
-        :param result: The LFH message and transmit results (if any)
+        :param transmit_result: The transmit result (if any)
         """
-        message = result["lfh_message"]
-        transmit_result = result["transmit_result"]
-        json_opts = {"cls": ConnectEncoder, "indent": 4}
-
         if transmit_result:
+            json_opts = {"cls": ConnectEncoder, "indent": 4}
+            response = Response(status_code=transmit_result[0]["status_code"])
+            response.headers["LinuxForHealth-MessageId"] = str(self.message["uuid"])
+
             if len(transmit_result) == 1:
                 response.body = json.dumps(transmit_result, **json_opts)
             else:
                 response.body = json.dumps({"results": transmit_result}, **json_opts)
-            response.status_code = transmit_result[0]["status_code"]
-            response.headers["LinuxForHealth-MessageId"] = str(message["uuid"])
+
             return response
-        elif message:
-            return message
+        else:
+            return self.message
 
     def _scrub_transmission_attributes(self) -> Dict:
         """

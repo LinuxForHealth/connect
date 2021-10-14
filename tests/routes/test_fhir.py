@@ -3,7 +3,6 @@ test_fhir.py
 Tests the /fhir endpoint
 """
 import asyncio
-import json
 import pytest
 from connect.clients import kafka, nats
 from connect.config import get_settings
