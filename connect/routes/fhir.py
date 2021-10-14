@@ -109,7 +109,7 @@ async def post_fhir_data(
         )
         return await workflow.run()
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=str(ex))
+        raise HTTPException(status_code=500, detail=ex)
 
 
 def validate(resource_type: str, request_data: dict) -> dict:

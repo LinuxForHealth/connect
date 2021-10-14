@@ -74,7 +74,7 @@ class CoreWorkflow:
             the original object instance in the data field as a byte string
         """
         logger.trace(
-            f"{self.__class__.__name__}: incoming message type = {type(self.message)}",
+            f"{self.__class__.__name__} persist: incoming message type = {type(self.message)}",
         )
 
         message = {
@@ -144,6 +144,10 @@ class CoreWorkflow:
         Output:
         The updated LinuxForHealth message
         """
+        logger.trace(
+            f"{self.__class__.__name__} transmit: transmitting message to {self.transmit_servers}",
+        )
+
         if self.transmit_servers:
             resource_str = decode_to_str(self.message["data"])
             self.transmission_attributes["content-length"] = str(len(resource_str))
@@ -177,33 +181,35 @@ class CoreWorkflow:
                             "headers": dict(post_result.headers.items()),
                         }
                     except Exception as ex:
-                        if isinstance(ex, httpx.ConnectTimeout) or isinstance(
-                            ex, httpx.ConnectError
+                        if (
+                            isinstance(ex, httpx.ConnectTimeout)
+                            or isinstance(ex, httpx.ConnectError)
+                            and self.do_retransmit
                         ):
-                            if self.do_retransmit:
-                                # send retransmit message to to Kafka to record
-                                # retransmit message contains only the URL that failed
-                                retransmit_message = self.message
-                                retransmit_message["target_endpoint_urls"] = [server]
-                                retransmit_message["status"] = "ERROR"
-                                kafka_producer = get_kafka_producer()
-                                await kafka_producer.produce(
-                                    "RETRANSMIT",
-                                    json.dumps(retransmit_message, cls=ConnectEncoder),
-                                )
+                            # send retransmit message to to Kafka to record
+                            # retransmit message contains only the URL that failed
+                            retransmit_message = self.message
+                            retransmit_message["target_endpoint_urls"] = [server]
+                            retransmit_message["status"] = "ERROR"
+                            kafka_producer = get_kafka_producer()
+                            await kafka_producer.produce(
+                                "RETRANSMIT",
+                                json.dumps(retransmit_message, cls=ConnectEncoder),
+                            )
 
-                                # publish retransmit message to NATS
-                                nats_client = await nats.get_nats_client()
-                                msg_str = json.dumps(
-                                    retransmit_message, cls=ConnectEncoder
-                                )
-                                await nats_client.publish(
-                                    nats_retransmit_subject, bytearray(msg_str, "utf-8")
-                                )
+                            # publish retransmit message to NATS
+                            nats_client = await nats.get_nats_client()
+                            msg_str = json.dumps(retransmit_message, cls=ConnectEncoder)
+                            await nats_client.publish(
+                                nats_retransmit_subject, bytearray(msg_str, "utf-8")
+                            )
+
+                        if not str(ex):
+                            ex = type(ex)
 
                         result = {
                             "url": server,
-                            "result": ex,
+                            "result": str(ex),
                             "status_code": 500,
                             "headers": {},
                         }
@@ -284,6 +290,7 @@ class CoreWorkflow:
             await self.synchronize()
             return self._set_response(result)
         except Exception as ex:
+            logger.trace(f"Exception during run(): {str(ex)}")
             msg = await self.error(ex)
             raise Exception(msg)
 

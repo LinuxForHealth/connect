@@ -261,7 +261,7 @@ async def do_retransmit(message: dict, queue_pos: int):
             + f"after {message['retransmit_count']} retries"
         )
     except Exception as ex:
-        logger.trace(f"do_retransmit: exception {ex}")
+        logger.trace(f"do_retransmit: exception {type(ex)}")
         if queue_pos == -1:
             nats_retransmit_queue.append(message)
             logger.trace(f"do_retransmit: queued message for retransmitter()")
