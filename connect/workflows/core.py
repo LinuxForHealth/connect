@@ -294,7 +294,7 @@ class CoreWorkflow:
             msg = await self.error(ex)
             raise Exception(msg)
 
-    def _set_response(self, transmit_result: dict) -> Union[Response, Dict]:
+    def _set_response(self, transmit_result: List[Dict]) -> Union[Response, Dict]:
         """
         Return the result of handling the message.  The result from calling _set_response will be either
         self.message (Dict) or a Response instance containing the body and status code from the transmit results,
