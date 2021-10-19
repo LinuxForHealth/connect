@@ -9,7 +9,6 @@ from json import JSONDecodeError
 import logging
 import connect.clients.nats as nats
 import uuid
-import xworkflows
 from datetime import datetime
 from fastapi import Response
 from httpx import AsyncClient
@@ -19,50 +18,18 @@ from connect.config import nats_sync_subject, nats_retransmit_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
-    encode_from_dict,
-    encode_from_str,
+    base64_encode_value,
     decode_to_str,
     ConnectEncoder,
 )
 from connect.support.timer import timer
-from typing import Any, Optional, Dict
+from typing import Dict, List, Optional, Union
 
 
 logger = logging.getLogger(__name__)
 
 
-class CoreWorkflowDef(xworkflows.Workflow):
-    """
-    Implements the base LinuxForHealth workflow definition.
-    """
-
-    states = (
-        ("parse", "Parse"),
-        ("validate", "Validate"),
-        ("transform", "Transform"),
-        ("persist", "Persist"),
-        ("transmit", "Transmit"),
-        ("sync", "Synchronize"),
-        ("error", "Error"),
-    )
-
-    transitions = (
-        ("do_validate", "parse", "validate"),
-        ("do_transform", "validate", "transform"),
-        ("do_persist", ("parse", "validate", "transform"), "persist"),
-        ("do_transmit", "persist", "transmit"),
-        ("do_sync", ("persist", "transmit"), "sync"),
-        (
-            "handle_error",
-            ("parse", "validate", "transform", "persist", "transmit", "sync"),
-            "error",
-        ),
-    )
-
-    initial_state = "parse"
-
-
-class CoreWorkflow(xworkflows.WorkflowEnabled):
+class CoreWorkflow:
     """
     Implements the base LinuxForHealth workflow.
     """
@@ -72,7 +39,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.data_format = kwargs.get("data_format")
         self.origin_url = kwargs["origin_url"]
         self.start_time = None
-        self.use_response = False
         self.verify_certs = kwargs.get("certificate_verify", True)
         self.lfh_exception_topic = "LFH_EXCEPTION"
         self.lfh_id = kwargs["lfh_id"]
@@ -83,17 +49,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.do_retransmit = kwargs.get("do_retransmit", True)
         self.transmission_attributes = kwargs.get("transmission_attributes", {})
 
-    state = CoreWorkflowDef()
-
-    @xworkflows.transition("do_validate")
-    @timer
-    def validate(self):
-        """
-        Override to provide data validation.
-        """
-        pass
-
-    @xworkflows.transition("do_transform")
     @timer
     def transform(self):
         """
@@ -102,42 +57,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         """
         pass
 
-    def _base64_encode_value(self, input_value: Any) -> Optional[str]:
-        """
-        Base64 encodes an input value.
-        Returns None if input_value, otherwise the value is encoded.
-        :param input_value The value to encode
-        :returns: the encoded value or None if the input is None
-        """
-        if input_value is None:
-            return None
-
-        if hasattr(input_value, "dict"):
-            return encode_from_dict(input_value.dict())
-        elif isinstance(input_value, dict):
-            return encode_from_dict(input_value)
-        else:
-            return encode_from_str(input_value)
-
-    def _scrub_transmission_attributes(self) -> Dict:
-        """
-        Removes sensitive attributes such as Authorization, Password, Token, etc
-        :returns: The "scrubbed" dictionary
-        """
-        if not self.transmission_attributes:
-            return {}
-
-        scrubbed_attributes = {
-            k: v
-            for k, v in self.transmission_attributes.items()
-            if "authorization" != k.lower()
-            and "password" not in k.lower()
-            and "pwd" not in k.lower()
-            and "token" not in k.lower()
-        }
-        return scrubbed_attributes
-
-    @xworkflows.transition("do_persist")
     @timer
     async def persist(self):
         """
@@ -154,9 +73,8 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         self.message: The python dict for LinuxForHealthDataRecordResponse instance with
             the original object instance in the data field as a byte string
         """
-
         logger.trace(
-            f"{self.__class__.__name__}: incoming message type = {type(self.message)}",
+            f"{self.__class__.__name__} persist: incoming message type = {type(self.message)}",
         )
 
         message = {
@@ -166,10 +84,10 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             "store_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
             "consuming_endpoint_url": self.origin_url,
             "data_format": self.data_format,
-            "data": self._base64_encode_value(self.message),
+            "data": base64_encode_value(self.message),
             "target_endpoint_urls": self.transmit_servers,
             "operation": self.operation,
-            "transmission_attributes": self._base64_encode_value(
+            "transmission_attributes": base64_encode_value(
                 self._scrub_transmission_attributes()
             ),
         }
@@ -203,24 +121,34 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         response = LinuxForHealthDataRecordResponse(**message).dict()
         self.message = response
 
-    @xworkflows.transition("do_transmit")
     @timer
-    async def transmit(self, response: Response):
+    async def transmit(self) -> Optional[List[dict]]:
         """
+        :returns: If transmit servers are defined, returns an array of dicts, of the form:
+            {
+                "url": server,
+                "result": response_body,
+                "status_code": post_result.status_code,
+                "headers": dict(post_result.headers.items())
+            }
+
         Transmit the message to an external service via HTTP,
         if self.transmit_servers is defined by the workflow.
 
         Input:
         self.message: The python dict for a LinuxForHealthDataRecordResponse instance
             containing the data to be transmitted
-        response: The FastAPI Response object
         self.verify_certs: Whether to verify certs, True/False, set at the application level in config.py
-        self.transmit_servers: The url of external server to transmit the data to
+        self.transmit_servers: A List of 0 or more urls to which to transmit the data
 
         Output:
-        The updated Response object
+        The updated LinuxForHealth message
         """
-        if self.transmit_servers and response:
+        logger.trace(
+            f"{self.__class__.__name__} transmit: transmitting message to {self.transmit_servers}",
+        )
+
+        if self.transmit_servers:
             resource_str = decode_to_str(self.message["data"])
             self.transmission_attributes["content-length"] = str(len(resource_str))
 
@@ -252,63 +180,48 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
                             "status_code": post_result.status_code,
                             "headers": dict(post_result.headers.items()),
                         }
-                        results.append(result)
                     except Exception as ex:
-                        if isinstance(ex, httpx.ConnectTimeout) or isinstance(
-                            ex, httpx.ConnectError
+                        if (
+                            isinstance(ex, httpx.ConnectTimeout)
+                            or isinstance(ex, httpx.ConnectError)
+                            and self.do_retransmit
                         ):
-                            if self.do_retransmit:
-                                # send retransmit message to to Kafka to record
-                                # retransmit message contains only the URL that failed
-                                retransmit_message = self.message
-                                retransmit_message["target_endpoint_urls"] = [server]
-                                retransmit_message["status"] = "ERROR"
-                                kafka_producer = get_kafka_producer()
-                                await kafka_producer.produce(
-                                    "RETRANSMIT",
-                                    json.dumps(retransmit_message, cls=ConnectEncoder),
-                                )
+                            # send retransmit message to to Kafka to record
+                            # retransmit message contains only the URL that failed
+                            retransmit_message = self.message
+                            retransmit_message["target_endpoint_urls"] = [server]
+                            retransmit_message["status"] = "ERROR"
+                            kafka_producer = get_kafka_producer()
+                            await kafka_producer.produce(
+                                "RETRANSMIT",
+                                json.dumps(retransmit_message, cls=ConnectEncoder),
+                            )
 
-                                # publish retransmit message to NATS
-                                nats_client = await nats.get_nats_client()
-                                msg_str = json.dumps(
-                                    retransmit_message, cls=ConnectEncoder
-                                )
-                                await nats_client.publish(
-                                    nats_retransmit_subject, bytearray(msg_str, "utf-8")
-                                )
+                            # publish retransmit message to NATS
+                            nats_client = await nats.get_nats_client()
+                            msg_str = json.dumps(retransmit_message, cls=ConnectEncoder)
+                            await nats_client.publish(
+                                nats_retransmit_subject, bytearray(msg_str, "utf-8")
+                            )
+
+                        if not str(ex):
+                            ex = type(ex)
 
                         result = {
                             "url": server,
-                            "result": ex,
+                            "result": str(ex),
                             "status_code": 500,
                             "headers": {},
                         }
-                        results.append(result)
+
+                    results.append(result)
 
             transmit_delta = datetime.now() - transmit_start
             self.message["elapsed_transmit_time"] = transmit_delta.total_seconds()
             self.message["elapsed_total_time"] += transmit_delta.total_seconds()
 
-            if len(self.transmit_servers) == 1:
-                # return the results of the single transmit server as the response
-                single_result = results[0]
-                response.body = (
-                    json.dumps(results[0]["result"])
-                    if single_result["result"]
-                    else None
-                )
-                response.status_code = single_result["status_code"]
-            else:
-                body = {"results": results}
-                response.body = json.dumps(body)
-                response.status_code = results[0]["status_code"]
+            return results
 
-            # Set original LFH message uuid in response header
-            response.headers["LinuxForHealth-MessageId"] = str(self.message["uuid"])
-            self.use_response = True
-
-    @xworkflows.transition("do_sync")
     @timer
     async def synchronize(self):
         """
@@ -319,7 +232,6 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
             msg_str = json.dumps(self.message, cls=ConnectEncoder)
             await nats_client.publish(nats_sync_subject, bytearray(msg_str, "utf-8"))
 
-    @xworkflows.transition("handle_error")
     @timer
     async def error(self, error) -> str:
         """
@@ -360,24 +272,72 @@ class CoreWorkflow(xworkflows.WorkflowEnabled):
         return error
 
     @timer
-    async def run(self, response: Response):
+    async def run(self) -> Optional[dict]:
         """
         Run the workflow according to the defined states.  Override to extend or exclude states
         for a particular implementation.
 
-        :return: the response instance, with updated body and status_code
+        :return: dict containing the resulting LinusForHealth message and the transmit response, which may be []
         """
         self.start_time = datetime.utcnow()
 
         try:
             # trace log
             logger.trace(f"Running {self.__class__.__name__}")
-            await self.validate()
             await self.transform()
             await self.persist()
-            await self.transmit(response)
+            result = await self.transmit()
             await self.synchronize()
-            return self.message
+            return self._set_response(result)
         except Exception as ex:
+            logger.trace(f"Exception during run(): {str(ex)}")
             msg = await self.error(ex)
             raise Exception(msg)
+
+    def _set_response(self, transmit_result: List[Dict]) -> Union[Response, Dict]:
+        """
+        Return the result of handling the message.  The result from calling _set_response will be either
+        self.message (Dict) or a Response instance containing the body and status code from the transmit results,
+        along with the LinuxForHealth-MessageId message header.
+
+        transmit_result is an array of 0 or more transmit result dicts, of the form:
+            {
+                "url": str,
+                "result": str,
+                "status_code": int,
+                "headers": dict,
+            }
+
+        :param transmit_result: The transmit result (if any)
+        """
+        if transmit_result:
+            json_opts = {"cls": ConnectEncoder, "indent": 4}
+            response = Response(status_code=transmit_result[0]["status_code"])
+            response.headers["LinuxForHealth-MessageId"] = str(self.message["uuid"])
+
+            if len(transmit_result) == 1:
+                response.body = json.dumps(transmit_result, **json_opts)
+            else:
+                response.body = json.dumps({"results": transmit_result}, **json_opts)
+
+            return response
+        else:
+            return self.message
+
+    def _scrub_transmission_attributes(self) -> Dict:
+        """
+        Removes sensitive attributes such as Authorization, Password, Token, etc
+        :returns: The "scrubbed" dictionary
+        """
+        if not self.transmission_attributes:
+            return {}
+
+        scrubbed_attributes = {
+            k: v
+            for k, v in self.transmission_attributes.items()
+            if "authorization" != k.lower()
+            and "password" not in k.lower()
+            and "pwd" not in k.lower()
+            and "token" not in k.lower()
+        }
+        return scrubbed_attributes

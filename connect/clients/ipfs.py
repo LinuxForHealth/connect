@@ -87,7 +87,7 @@ class IPFSClient:
         Note: IPFS Node Peers are managed implicitly by IPFS Cluster.
 
         :returns: Tuple containing an HTTP response code and JSON with IPFS
-                  Cluster and managed Nodes information. Returns reponse_code
+                  Cluster and managed Nodes information. Returns response_code
                   and None if a non 200 response code is returned from IPFS
                   Cluster
         """

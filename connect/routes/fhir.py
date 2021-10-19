@@ -3,14 +3,18 @@ fhir.py
 
 Receive and store any valid FHIR data record using the /fhir [POST] endpoint.
 """
+import logging
 from fastapi import Body, Depends, HTTPException, Response, Request
 from fastapi.routing import APIRouter
-from connect.config import get_settings, Settings
-from connect.workflows.fhir import FhirWorkflow
+from connect.config import get_settings
+from connect.exceptions import FhirValidationError
+from connect.workflows.core import CoreWorkflow
 from fhir.resources.fhirtypesvalidators import MODEL_CLASSES as FHIR_RESOURCES
-
+from fhir.resources import construct_fhir_element
+from pydantic.error_wrappers import ValidationError
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/{resource_type}")
@@ -75,57 +79,53 @@ async def post_fhir_data(
         raise HTTPException(status_code=404, detail=f"/{resource_type} not found")
 
     if resource_type != request_data.get("resourceType"):
-        msg = f"request {request_data.get('resourceType')} does not match /{resource_type}"
+        msg = f"resource type {request_data.get('resourceType')} in request does not match url /{resource_type}"
         raise HTTPException(status_code=422, detail=msg)
 
     try:
-        return await handle_fhir_resource(request, response, settings, request_data)
+        # validate the input data and return a FHIR resource instance
+        message = validate(resource_type, request_data)
+        data_format = f"FHIR-R4_{resource_type.upper()}"
+
+        # set up the FHIR servers to transmit to, if defined
+        transmit_servers = []
+        for s in settings.connect_external_fhir_servers:
+            if settings.connect_generate_fhir_server_url:
+                transmit_servers.append(f"{s}/{resource_type}")
+            else:
+                transmit_servers.append(s)
+
+        workflow: CoreWorkflow = CoreWorkflow(
+            message=message,
+            origin_url="/fhir/" + resource_type,
+            certificate_verify=settings.certificate_verify,
+            data_format=data_format,
+            lfh_id=settings.connect_lfh_id,
+            transmit_servers=transmit_servers,
+            do_sync=True,
+            operation="POST",
+            do_retransmit=settings.nats_enable_retransmit,
+            transmission_attributes={k: v for k, v in request.headers.items()},
+        )
+        return await workflow.run()
     except Exception as ex:
         raise HTTPException(status_code=500, detail=ex)
 
 
-async def handle_fhir_resource(
-    request: Request, response: Response, settings: Settings, request_data: dict
-):
+def validate(resource_type: str, request_data: dict) -> dict:
     """
-    Convenience method to allow submission of FHIR resources from either
-    the /fhir endpoint or via NATS messages.
-    :param request: The Fast API request model
-    :param response: The response object which will be returned to the client
-    :param settings: Application settings
-    :param request_data: The incoming FHIR message
-    :return: The response
+    Validate the incoming FHIR message by instantiating a fhir.resources
+    class from the input data dictionary.  Adapted from fhir.resources fhirtypesvalidators.py
+
+    :param  resource_type as a string for FHIR-R4 json type (e.g. Patient resource type)
+    :param  request_data as a dict for FHIR-R4 json (e.g. Patient resource)
+    :return: message as an instantiated and validated fhir.resources resource class
+    raises: FhirValidationError
     """
-    resource_type = request_data["resourceType"]
+    logger.trace(f"Validating FHIR resource type: {resource_type}")
 
-    transmit_servers = []
-    for s in settings.connect_external_fhir_servers:
-        if settings.connect_generate_fhir_server_url:
-            transmit_servers.append(f"{s}/{resource_type}")
-        else:
-            transmit_servers.append(s)
-
-    workflow = FhirWorkflow(
-        message=request_data,
-        origin_url="/fhir/" + resource_type,
-        certificate_verify=settings.certificate_verify,
-        lfh_id=settings.connect_lfh_id,
-        transmit_servers=transmit_servers,
-        do_sync=True,
-        operation="POST",
-        do_retransmit=settings.nats_enable_retransmit,
-        transmission_attributes={k: v for k, v in request.headers.items()},
-    )
-
-    result = await workflow.run(response)
-
-    if workflow.use_response:
-        if not response.body:
-            # properly return an empty response
-            new_response = Response(status_code=response.status_code)
-            new_response.headers.update(response.headers)
-            return new_response
-        else:
-            return response
-    else:
-        return result
+    try:
+        return construct_fhir_element(resource_type, request_data)
+    except (LookupError, ValidationError) as ex:
+        logging.exception(ex)
+        raise FhirValidationError(str(ex))
