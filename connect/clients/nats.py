@@ -152,6 +152,8 @@ async def nats_sync_event_handler(msg: Msg):
     if message["data_format"].startswith("FHIR-R4_"):
         for s in settings.connect_external_fhir_servers:
             if settings.connect_generate_fhir_server_url:
+                origin_url_elements = message["consuming_endpoint_url"].split("/")
+                resource_type = origin_url_elements[len(origin_url_elements) - 1]
                 transmit_servers.append(f"{s}/{resource_type}")
             else:
                 transmit_servers.append(s)
@@ -171,7 +173,7 @@ async def nats_sync_event_handler(msg: Msg):
         lfh_id=message["lfh_id"],
         transmit_servers=transmit_servers,
         do_sync=False,
-        operation="POST",
+        operation=message["operation"],
         do_retransmit=settings.nats_enable_retransmit,
     )
 
