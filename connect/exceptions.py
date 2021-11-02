@@ -22,15 +22,6 @@ class LFHError(BaseModel):
     data_record_location: Optional[constr(regex=data_record_regex)]
 
 
-class MissingFhirResourceType(Exception):
-    """Raised when an input FHIR message does not contain a resourceType"""
-
-    def __init__(self, msg=None):
-        if msg is None:
-            msg = "Input FHIR resource is missing resourceType"
-        super(MissingFhirResourceType, self).__init__(msg)
-
-
 class FhirValidationError(Exception):
     """Raised when a FHIR resource instance cannot be properly validated"""
 
