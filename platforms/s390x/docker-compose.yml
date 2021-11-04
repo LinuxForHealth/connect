@@ -30,11 +30,11 @@ services:
   zookeeper:
     networks:
       - main
-    image: docker.io/linuxforhealth/zookeeper-alpine:3.6.2
+    image: docker.io/linuxforhealth/zookeeper:3.6.3-alpine-3.14.2
   kafka:
     networks:
       - main
-    image: docker.io/linuxforhealth/kafka-alpine:2.5.0
+    image: docker.io/linuxforhealth/kafka:3.0.0-alpine-3.14.2
     restart: "always"
     ports:
       - "9094:9094"
