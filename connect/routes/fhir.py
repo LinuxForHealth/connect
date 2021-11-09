@@ -98,7 +98,7 @@ async def post_fhir_data(
             message=message,
             origin_url="/fhir/" + resource_type,
             certificate_verify=settings.certificate_verify,
-            data_format="FHIR",
+            data_format="FHIR-R4",
             lfh_id=settings.connect_lfh_id,
             transmit_servers=transmit_servers,
             do_sync=True,

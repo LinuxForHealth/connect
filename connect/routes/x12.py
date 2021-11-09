@@ -44,7 +44,7 @@ async def post_x12_data(
                     lfh_id=settings.connect_lfh_id,
                     origin_url="/x12",
                     operation="POST",
-                    data_format="X12",
+                    data_format="X12-5010",
                 )
                 results = await workflow.run()
                 x12_results.append(results)
