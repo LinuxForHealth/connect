@@ -39,15 +39,12 @@ async def post_x12_data(
     try:
         with X12ModelReader(x12_request.x12) as r:
             for m in r.models():
-                data_format = (
-                    f"X12_{m.header.st_segment.transaction_set_identifier_code}"
-                )
                 workflow: CoreWorkflow = CoreWorkflow(
                     message=m.x12(),
                     lfh_id=settings.connect_lfh_id,
                     origin_url="/x12",
                     operation="POST",
-                    data_format=data_format,
+                    data_format="X12",
                 )
                 results = await workflow.run()
                 x12_results.append(results)
