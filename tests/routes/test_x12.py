@@ -73,9 +73,9 @@ async def test_x12_post(
 
             json_resource = actual_json[0]
             assert json_resource["consuming_endpoint_url"] == "/x12"
-            assert json_resource["data_format"] == "X12_270"
+            assert json_resource["data_format"] == "X12-5010"
             assert json_resource["status"] == "success"
-            assert json_resource["data_record_location"] == "X12_270:0:0"
+            assert json_resource["data_record_location"] == "X12-5010:0:0"
 
             # invalid request
             error_fixture: str = x12_fixture.replace("HL*1**20*1~", "HL*1**20~")
