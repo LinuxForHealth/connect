@@ -80,6 +80,16 @@ services:
       - ./local-config/ipfs/volumes/ipfs-node-0:/data/ipfs
       - ./local-config/ipfs/private-ipfs-network/swarm.key:/data/ipfs/swarm.key
       - ./local-config/ipfs/private-ipfs-network/init.sh:/usr/local/bin/start_ipfs
+  postgres:
+    # See https://hub.docker.com/_/postgres/ for config info, e.g. how to run
+    # initialization scripts using an image derived from the official image.
+    image: postgres:14.1-alpine3.14
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
   ibm-fhir:
     profiles: ["fhir", "deployment"]
     networks:
@@ -144,3 +154,6 @@ services:
       ETHEREUM_CONTRACT_ADDRESS: "0x7Bad280884c907bBf3955c21351ce41122aB88eB"
     ports:
       - "5100:5100"
+
+volumes:
+  postgres-data:
