@@ -42,8 +42,8 @@ async def create_nats_subscribers():
     Create NATS subscribers.  Add additional subscribers as needed.
     """
     await start_sync_event_subscribers()
-    await start_timing_subscriber()
-    await start_retransmit_subscriber()
+    await start_subscriber("TIMING", nats_timing_event_handler)
+    await start_subscriber(nats_retransmit_subject, nats_retransmit_event_handler)
 
     retransmit_loop = asyncio.get_event_loop()
     global retransmit_task
@@ -58,13 +58,7 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    client = await get_nats_client()
-    await subscribe(
-        client,
-        nats_sync_subject,
-        nats_sync_event_handler,
-        "".join(settings.nats_servers),
-    )
+    await start_subscriber(nats_sync_subject, nats_sync_event_handler)
 
     # subscribe to nats_sync_subject from any additional NATS servers
     for server in settings.nats_sync_subscribers:
@@ -72,36 +66,17 @@ async def start_sync_event_subscribers():
         await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
 
 
-async def start_timing_subscriber():
+async def start_subscriber(subject: str, callback: Callable) -> None:
     """
-    Create a NATS subscriber for the NATS subject TIMING at the local NATS server/cluster.
-    """
-    settings = get_settings()
+    Create a NATS subscriber with the provided subject and callback,
+    subscribed to events from the local NATS server/cluster.
 
-    # subscribe to TIMING.* from the local NATS server or cluster
-    client = await get_nats_client()
-    await subscribe(
-        client,
-        "TIMING",
-        nats_timing_event_handler,
-        ",".join(settings.nats_servers),
-    )
-
-
-async def start_retransmit_subscriber():
-    """
-    Create a NATS subscriber 'nats_retransmit_subject', as defined in config.py, for the local NATS server/cluster.
+    :param subject: the NATS subject to subscribe to
+    :param callback: the callback to call when a message is received on the subscription
     """
     settings = get_settings()
-
-    # subscribe to TIMING.* from the local NATS server or cluster
     client = await get_nats_client()
-    await subscribe(
-        client,
-        nats_retransmit_subject,
-        nats_retransmit_event_handler,
-        ",".join(settings.nats_servers),
-    )
+    await subscribe(client, subject, callback, ",".join(settings.nats_servers))
 
 
 async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
