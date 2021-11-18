@@ -85,7 +85,6 @@ async def post_fhir_data(
     try:
         # validate the input data and return a FHIR resource instance
         message = validate(resource_type, request_data)
-        data_format = f"FHIR-R4_{resource_type.upper()}"
 
         # set up the FHIR servers to transmit to, if defined
         transmit_servers = []
@@ -99,7 +98,7 @@ async def post_fhir_data(
             message=message,
             origin_url="/fhir/" + resource_type,
             certificate_verify=settings.certificate_verify,
-            data_format=data_format,
+            data_format="FHIR-R4",
             lfh_id=settings.connect_lfh_id,
             transmit_servers=transmit_servers,
             do_sync=True,
