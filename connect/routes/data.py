@@ -9,7 +9,6 @@ from typing import Optional, List
 from connect.clients.kafka import get_kafka_consumer
 from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
-
 import uuid
 import datetime
 import json
