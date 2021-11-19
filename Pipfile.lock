@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "989ecc009500ab4b2eb75c8ed7597ee1b3d0a577b2906e5ee692c99dd491444c"
+            "sha256": "fa0b45bd0e5a293c9b4dcb5afc7564cad11dc372628aa9709f2fe17c44b3bb6d"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -170,19 +170,19 @@
         },
         "linuxforhealth-edi": {
             "hashes": [
-                "sha256:4bac8b55f372edacc00bfe7ec2016cc1d46e112d5e1d16310446a5569774a7f1",
-                "sha256:4fc10054d5afcc47110a646407c4868d34bbcc1f0070d143f6efc8bf5eecddad"
+                "sha256:1610ba2a46759235a1dd8189f44ed0ade5701dadaf643b20fcfae2eccf4c2e99",
+                "sha256:e4efa96269a41bb8ae3288c75831481d49ce8db881eb8a215694ed8d44e91757"
             ],
             "index": "pypi",
-            "version": "==0.25.0"
+            "version": "==0.26.0"
         },
         "linuxforhealth-x12": {
             "hashes": [
-                "sha256:31faa1c7b01afae565f76e52aeda6487923458ce2a8b49d89e6d8823417de8b7",
-                "sha256:766a07ea840fc3f3090ff4d231a08c166907201b2f3511b54c83db1f62188c81"
+                "sha256:2ae15252b6e50e8e4d1cf3067f290e7656b3fd718c4960f60a9395f30477467a",
+                "sha256:3f578c34d8e868a2ca0843fe109d9e4bff4ff24b48bfde9051dd49ebea9f3a30"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==0.53.0"
+            "version": "==0.54.1"
         },
         "lxml": {
             "hashes": [
@@ -422,7 +422,7 @@
                 "sha256:4987c65554f7a2dbf30c18fd48778ef124af6fab771a377103da0585e2336ece",
                 "sha256:c4fdf4019605b6e5423637e01bc9fe4daef873709a7973e195ceba0a62bbc844"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4.0'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'",
             "version": "==1.26.7"
         },
         "uvicorn": {
@@ -540,11 +540,11 @@
         },
         "identify": {
             "hashes": [
-                "sha256:12f204544d1b718d5be2c82d95d30ff163614d7e15ae180bfbe923614a5f9a9f",
-                "sha256:eda2c9ad2d53fcc1ff110fc9816206a9ec236a5cc8469f815fc8d8193d58363a"
+                "sha256:a33ae873287e81651c7800ca309dc1f84679b763c9c8b30680e16fbfa82f0107",
+                "sha256:eba31ca80258de6bb51453084bff4a923187cd2193b9c13710f2516ab30732cc"
             ],
             "markers": "python_full_version >= '3.6.1'",
-            "version": "==2.3.7"
+            "version": "==2.4.0"
         },
         "idna": {
             "hashes": [

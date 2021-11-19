@@ -9,11 +9,9 @@ from typing import Optional, List
 from connect.clients.kafka import get_kafka_consumer
 from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
-
 import uuid
 import datetime
 import json
-
 router = APIRouter()
 
 data_record_regex = "^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$"
