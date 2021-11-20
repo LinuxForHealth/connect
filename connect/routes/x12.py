@@ -11,7 +11,7 @@ from fastapi.routing import APIRouter
 from fastapi import Depends, Response, HTTPException
 from connect.config import get_settings
 from connect.workflows.core import CoreWorkflow
-from x12.io import X12ModelReader
+from linuxforhealth.x12.io import X12ModelReader
 
 router = APIRouter()
 
