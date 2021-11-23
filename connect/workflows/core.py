@@ -19,6 +19,7 @@ from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
     base64_encode_value,
+    encode_from_bytes,
     decode_to_str,
     ConnectEncoder,
 )
@@ -84,13 +85,16 @@ class CoreWorkflow:
             "store_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
             "consuming_endpoint_url": self.origin_url,
             "data_format": self.data_format,
-            "data": base64_encode_value(self.message),
             "target_endpoint_urls": self.transmit_servers,
             "operation": self.operation,
-            "transmission_attributes": base64_encode_value(
-                self._scrub_transmission_attributes()
-            ),
+            "transmission_attributes": self._scrub_transmission_attributes(),
         }
+
+        if isinstance(self.message, bytes):
+            message["data"] = encode_from_bytes(self.message)
+        else:
+            message["data"] = base64_encode_value(self.message)
+
         response = LinuxForHealthDataRecordResponse(**message)
 
         # Add the IPFS URI to the message
@@ -324,20 +328,21 @@ class CoreWorkflow:
         else:
             return self.message
 
-    def _scrub_transmission_attributes(self) -> Dict:
+    def _scrub_transmission_attributes(self) -> Union[None, Dict]:
         """
         Removes sensitive attributes such as Authorization, Password, Token, etc
         :returns: The "scrubbed" dictionary
         """
-        if not self.transmission_attributes:
-            return {}
+        scrubbed_attributes = None
 
-        scrubbed_attributes = {
-            k: v
-            for k, v in self.transmission_attributes.items()
-            if "authorization" != k.lower()
-            and "password" not in k.lower()
-            and "pwd" not in k.lower()
-            and "token" not in k.lower()
-        }
+        if self.transmission_attributes:
+            scrubbed_attributes = {
+                k: v
+                for k, v in self.transmission_attributes.items()
+                if "authorization" != k.lower()
+                and "password" not in k.lower()
+                and "pwd" not in k.lower()
+                and "token" not in k.lower()
+            }
+
         return scrubbed_attributes

@@ -5,7 +5,7 @@ Provides access to LinuxForHealth data records using the /data [GET] endpoint
 """
 from pydantic import BaseModel, AnyUrl, constr
 from fastapi.routing import APIRouter, HTTPException
-from typing import Optional, List
+from typing import Optional, List, Dict
 from connect.clients.kafka import get_kafka_consumer
 from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
@@ -41,7 +41,7 @@ class LinuxForHealthDataRecordResponse(BaseModel):
     transmit_date: Optional[datetime.datetime]
     elapsed_transmit_time: Optional[float]
     elapsed_total_time: Optional[float]
-    transmission_attributes: Optional[str]
+    transmission_attributes: Optional[Dict]
 
 
 @router.get("")

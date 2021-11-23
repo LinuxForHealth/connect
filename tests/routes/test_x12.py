@@ -4,19 +4,10 @@ test_x12.py
 Tests the /x12 endpoints
 """
 
-import os
 import pytest
-from tests import resources_directory
 from connect.clients import kafka, nats
 from connect.config import get_settings
 from unittest.mock import AsyncMock
-
-
-@pytest.fixture
-def x12_fixture() -> str:
-    file_path = os.path.join(resources_directory, "270-5010.x12")
-    with open(file_path, "r") as f:
-        return f.read()
 
 
 @pytest.mark.asyncio
