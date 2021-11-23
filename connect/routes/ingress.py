@@ -56,6 +56,8 @@ async def post_edi_data(
     """
     Handles inbound EDI data, persisting it in Kafka and raising a sync event.
 
+    :param settings: Connect configuration settings.
+    :param request_data: Request data (dictionary)
     """
     edi_data: str = request_data.get("data")
     return await _process_edi_data(settings, edi_data, "/ingress")
@@ -69,6 +71,8 @@ async def upload_edi_data(
     """
     Handles inbound EDI data, persisting it in Kafka and raising a sync event.
 
+    :param settings: Connect configuration settings.
+    :param file: The uploaded file
     """
     edi_data: bytes = await file.read()
     return await _process_edi_data(settings, edi_data, "/ingress/upload")
