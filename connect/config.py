@@ -20,6 +20,7 @@ import ssl
 host_name = socket.gethostname()
 nats_sync_subject = "EVENTS.sync"
 nats_retransmit_subject = "EVENTS.retransmit"
+nats_app_sync_subject = "EVENTS.app_sync"
 kafka_sync_topic = "LFH_SYNC"
 
 

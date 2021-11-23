@@ -19,6 +19,7 @@ from connect.config import (
     get_ssl_context,
     nats_sync_subject,
     nats_retransmit_subject,
+    nats_app_sync_subject,
     kafka_sync_topic,
 )
 from connect.support.encoding import (
@@ -42,8 +43,8 @@ async def create_nats_subscribers():
     Create NATS subscribers.  Add additional subscribers as needed.
     """
     await start_sync_event_subscribers()
-    await start_subscriber("TIMING", nats_timing_event_handler)
-    await start_subscriber(nats_retransmit_subject, nats_retransmit_event_handler)
+    await start_local_subscriber("TIMING", nats_timing_event_handler)
+    await start_local_subscriber(nats_retransmit_subject, nats_retransmit_event_handler)
 
     retransmit_loop = asyncio.get_event_loop()
     global retransmit_task
@@ -58,15 +59,15 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    await start_subscriber(nats_sync_subject, nats_sync_event_handler)
+    await start_local_subscriber(nats_sync_subject, nats_sync_event_handler)
 
     # subscribe to nats_sync_subject from any additional NATS servers
-    for server in settings.nats_sync_subscribers:
-        client = await create_nats_client(server)
-        await subscribe(client, nats_sync_subject, nats_sync_event_handler, server)
+    await start_subscribers(
+        nats_sync_subject, nats_sync_event_handler, settings.nats_sync_subscribers
+    )
 
 
-async def start_subscriber(subject: str, callback: Callable) -> None:
+async def start_local_subscriber(subject: str, callback: Callable) -> None:
     """
     Create a NATS subscriber with the provided subject and callback,
     subscribed to events from the local NATS server/cluster.
@@ -76,20 +77,28 @@ async def start_subscriber(subject: str, callback: Callable) -> None:
     """
     settings = get_settings()
     client = await get_nats_client()
-    await subscribe(client, subject, callback, ",".join(settings.nats_servers))
-
-
-async def subscribe(client: NatsClient, subject: str, callback: Callable, servers: str):
-    """
-    Subscribe a NATS client to a subject.
-
-    :param client: a connected NATS client
-    :param subject: the NATS subject to subscribe to
-    :param callback: the callback to call when a message is received on the subscription
-    """
     await client.subscribe(subject, cb=callback)
     nats_clients.append(client)
+    servers = ",".join(settings.nats_servers)
     logger.debug(f"Subscribed {servers} to NATS subject {subject}")
+
+
+async def start_subscribers(
+    subject: str, callback: Callable, servers: List[str]
+) -> None:
+    """
+    Create NATS subscribers with the provided subject and callback,
+    subscribed to events from the servers in the provided servers list.
+
+    :param subject: the NATS subject to subscribe to
+    :param callback: the callback to call when a message is received on the subscription
+    :param servers: the list of NATS servers to subscribe to
+    """
+    for server in servers:
+        client = await create_nats_client(server)
+        await client.subscribe(subject, cb=callback)
+        nats_clients.append(client)
+        logger.debug(f"Subscribed {server} to NATS subject {subject}")
 
 
 async def nats_sync_event_handler(msg: Msg):
@@ -102,6 +111,12 @@ async def nats_sync_event_handler(msg: Msg):
     reply = msg.reply
     data = msg.data.decode()
     logger.trace(f"nats_sync_event_handler: received a message on {subject} {reply}")
+
+    # Emit an app_sync message so LFH clients that are listening only for
+    # messages from this LFH node will be able to get all sync'd messages
+    # from all LFH nodes.
+    client = await get_nats_client()
+    await client.publish(nats_app_sync_subject, msg.data)
 
     # if the message is from our local LFH, don't store in kafka
     message = json.loads(data)
