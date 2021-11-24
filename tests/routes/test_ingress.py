@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock
     ],
 )
 @pytest.mark.asyncio
-async def test_ingress_post_x12(
+async def test_ingress_post(
     fixture_name,
     data_format,
     request,
