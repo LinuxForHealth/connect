@@ -18,7 +18,8 @@ httpx = "==0.19.0"
 slowapi = "==0.1.5"
 uvicorn = "==0.14.0"
 nkeys = "==0.1.0"
-linuxforhealth-edi = "==0.26.0"
+linuxforhealth-edi = "==0.28.0"
+python-multipart = "==0.0.5"
 
 [dev-packages]
 pytest = "==6.2.5"

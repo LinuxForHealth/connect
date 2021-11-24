@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fa0b45bd0e5a293c9b4dcb5afc7564cad11dc372628aa9709f2fe17c44b3bb6d"
+            "sha256": "1d175afacb35757531641bd4f33e88179e8a31d7a542966837f4953409fed2bd"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -16,11 +16,11 @@
     "default": {
         "anyio": {
             "hashes": [
-                "sha256:4fd09a25ab7fa01d34512b7249e366cd10358cdafc95022c7ff8c8f8a5026d66",
-                "sha256:67da67b5b21f96b9d3d65daa6ea99f5d5282cb09f50eb4456f8fb51dffefc3ff"
+                "sha256:24adc69309fb5779bc1e06158e143e0b6d2c56b302a3ac3de3083c705a6ed39d",
+                "sha256:2855a9423524abcdd652d942f8932fda1735210f77a6b392eafd9ff34d3fe020"
             ],
             "markers": "python_full_version >= '3.6.2'",
-            "version": "==3.3.4"
+            "version": "==3.4.0"
         },
         "asgiref": {
             "hashes": [
@@ -170,11 +170,11 @@
         },
         "linuxforhealth-edi": {
             "hashes": [
-                "sha256:1610ba2a46759235a1dd8189f44ed0ade5701dadaf643b20fcfae2eccf4c2e99",
-                "sha256:e4efa96269a41bb8ae3288c75831481d49ce8db881eb8a215694ed8d44e91757"
+                "sha256:9984d66b17892528102a031c10d1f77bd9998122162a92ab024a9f90ff684859",
+                "sha256:bcfb11e553bae0bbef36cd0f64c3c749a9629ad4f75d32a017d7f9e2c6e94e26"
             ],
             "index": "pypi",
-            "version": "==0.26.0"
+            "version": "==0.28.0"
         },
         "linuxforhealth-x12": {
             "hashes": [
@@ -311,6 +311,13 @@
             ],
             "markers": "python_version >= '3.5'",
             "version": "==0.19.2"
+        },
+        "python-multipart": {
+            "hashes": [
+                "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43"
+            ],
+            "index": "pypi",
+            "version": "==0.0.5"
         },
         "pyyaml": {
             "hashes": [

@@ -3,11 +3,9 @@ test_fhir.py
 Tests the /fhir endpoint
 """
 import asyncio
-import os
 import pytest
 import json
 from typing import Dict
-from tests import resources_directory
 from connect.clients import kafka, nats
 from connect.config import get_settings
 from connect.exceptions import FhirValidationError
@@ -18,16 +16,14 @@ from unittest.mock import AsyncMock
 
 
 @pytest.fixture
-def encounter_fixture() -> Dict:
-    file_path = os.path.join(resources_directory, "fhir-r4-encounter.json")
-    with open(file_path, "r") as f:
-        return json.loads(f.read())
+def fhir_resource(fhir_fixture) -> Dict:
+    return json.loads(fhir_fixture)
 
 
 @pytest.mark.asyncio
 async def test_fhir_post(
     async_test_client,
-    encounter_fixture,
+    fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
     settings,
@@ -35,7 +31,7 @@ async def test_fhir_post(
     """
     Tests /fhir [POST] where data is not transmitted to an external server
     :param async_test_client: HTTPX test client fixture
-    :param encounter_fixture: FHIR R4 Encounter Resource fixture
+    :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
     :param settings: connect configuration settings fixture
@@ -49,8 +45,7 @@ async def test_fhir_post(
             # remove external server setting
             settings.connect_external_fhir_servers = []
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
-
-            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
 
         assert actual_response.status_code == 200
 
@@ -73,7 +68,7 @@ async def test_fhir_post(
 @pytest.mark.asyncio
 async def test_fhir_post_with_transmit(
     async_test_client,
-    encounter_fixture,
+    fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
     settings,
@@ -81,7 +76,7 @@ async def test_fhir_post_with_transmit(
     """
     Tests /fhir [POST] with an external FHIR server defined.
     :param async_test_client: HTTPX test client fixture
-    :param encounter_fixture: FHIR R4 Encounter Resource fixture
+    :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
     :param settings: connect configuration settings
@@ -117,7 +112,7 @@ async def test_fhir_post_with_transmit(
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
-            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
             actual_json = actual_response.json()
 
             assert (
@@ -132,7 +127,7 @@ async def test_fhir_post_with_transmit(
 @pytest.mark.asyncio
 async def test_fhir_post_endpoints(
     async_test_client,
-    encounter_fixture,
+    fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
     settings,
@@ -140,7 +135,7 @@ async def test_fhir_post_endpoints(
     """
     Tests /fhir [POST] endpoints to ensure that 404 and 422 status codes are returned when appropriate
     :param async_test_client: HTTPX test client fixture
-    :param encounter_fixture: FHIR R4 Encounter Resource fixture
+    :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
     :param settings: connect configuration settings fixture
@@ -155,35 +150,34 @@ async def test_fhir_post_endpoints(
             settings.connect_external_fhir_servers = []
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
 
-            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
             assert actual_response.status_code == 200
 
-            actual_response = await ac.post("/fhir/encounter", json=encounter_fixture)
+            actual_response = await ac.post("/fhir/encounter", json=fhir_resource)
             assert actual_response.status_code == 404
 
-            encounter_fixture["resourceType"] = "Patient"
-            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            fhir_resource["resourceType"] = "Patient"
+            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
             assert actual_response.status_code == 422
 
             # a missing FHIR resource type also causes a 422
-            del encounter_fixture["resourceType"]
-            actual_response = await ac.post("/fhir/Encounter", json=encounter_fixture)
+            del fhir_resource["resourceType"]
+            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
             assert actual_response.status_code == 422
 
 
-def test_validate(encounter_fixture):
+def test_validate(fhir_resource):
     """
     Tests the FHIR route validate() where the resource is valid
     """
-    result = validate("Encounter", encounter_fixture)
+    result = validate("Encounter", fhir_resource)
     assert isinstance(result, Encounter)
 
 
-def test_validate_invalid_resource_type(encounter_fixture):
+def test_validate_invalid_resource_type(fhir_resource):
     """
     Tests FhirWorkflow.validate where the resourceType in the message does not match the actual resource
     """
-    encounter = encounter_fixture
-    encounter["resourceType"] = "NoSuchResourceName"
+    fhir_resource["resourceType"] = "NoSuchResourceName"
     with pytest.raises(FhirValidationError):
-        validate("Encounter", encounter)
+        validate("Encounter", fhir_resource)
