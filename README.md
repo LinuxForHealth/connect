@@ -154,55 +154,12 @@ reformatted connect/routes/api.py
 All done! ✨ 🍰 ✨
 1 file reformatted.
 ```
-## Build multi-arch docker image 
-LinuxForHealth connect runs on amd64, arm64 & s390x platforms.  Follow these instructions to build the multi-arch image that supports all these platforms.  At this time, you need access to all 3 platforms in order to build the multi-arch image.
-
-### Build the amd64 and arm64 image
-Run `docker buildx` to build an image that supports amd64 and arm64.  The s390x image has to be built separately, for now.
+## Build the Multi-arch Docker Image 
+LinuxForHealth connect runs on amd64, arm64 & s390x platforms.  From the top-level connect directory, use this command to build, tag and push the multi-arch image that supports all these platforms:
 ```shell
-docker buildx build --pull --push --platform linux/amd64,linux/arm64 --build-arg APPLICATION_BUILD_CERT_PATH=./local-config/ -t linuxforhealth/connect:0.42.0 .
+docker buildx build --pull --push --platform linux/amd64,linux/arm64,linux/s390x --build-arg APPLICATION_BUILD_CERT_PATH=./local-config/ -t linuxforhealth/connect:0.42.0 .
 ```
 
-### Pull, tag and push the amd64 image
-On your amd64 machine:
-```shell
-docker pull linuxforhealth/connect:0.42.0
-docker images
-docker image tag <image_id> linuxforhealth/connect:0.42.0-amd64
-docker push linuxforhealth/connect:0.42.0-amd64
-```
-
-### Pull, tag and push the arm64 image
-On your arm64 device:
-```shell
-docker pull linuxforhealth/connect:0.42.0
-docker images
-docker image tag <image_id> linuxforhealth/connect:0.42.0-arm64
-docker push linuxforhealth/connect:0.42.0-arm64
-```
-
-### Build, tag and push the s390x image
-On your s390x machine, build the s390x connect image, then tag and push the image:
-```shell
-cp platforms/s390x/Dockerfile .
-cp platforms/s390x/docker-compose.yml .
-sudo docker-compose build --no-cache connect
-docker image tag <image_id> linuxforhealth/connect:0.42.0-s390x
-docker push linuxforhealth/connect:0.42.0-s390x
-```
-Additional information about LinuxForHealth connect on s390x can be found [here](./platforms/s390x/README.md)
-
-### Create the multi-arch image
-Use `docker manifest` to create the multi-arch image for all 3 platforms and push it:
-```shell
-docker manifest create \
-linuxforhealth/connect:0.42.0 \
---amend linuxforhealth/connect:0.42.0-s390x \
---amend linuxforhealth/connect:0.42.0-amd64 \
---amend linuxforhealth/connect:0.42.0-arm64
-
-docker manifest push linuxforhealth/connect:0.42.0 --purge
-```
 That's it - you can now run `docker pull linuxforhealth/connect:0.42.0` on all 3 LinuxForHealth connect platforms.
 
 ## Links and Resources 
