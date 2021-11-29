@@ -9,7 +9,9 @@ RUN apk update && \
         openssl \
         python3-dev \
         librdkafka-dev \
-        librdkafka
+        librdkafka \
+        libxml2-dev \
+        libxslt-dev
 
 # install certificates
 # copy certificates and keys
