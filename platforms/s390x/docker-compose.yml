@@ -24,7 +24,7 @@ services:
     image: linuxforhealth/nats-server:v2.6.6
     volumes:
       - ./local-config/nats:/conf
-    command: server --config=/conf/nats-server.conf
+    command: "--config=/conf/nats-server.conf --jetstream"
     ports:
       - "4222:4222"
   zookeeper:
