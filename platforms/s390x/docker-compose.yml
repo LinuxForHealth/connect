@@ -21,7 +21,7 @@ services:
   nats-server:
     networks:
       - main
-    image: docker.io/linuxforhealth/jetstream:v0.0.19
+    image: linuxforhealth/nats-server:v2.6.6
     volumes:
       - ./local-config/nats:/conf
     command: server --config=/conf/nats-server.conf

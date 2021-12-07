@@ -6,20 +6,28 @@ import asyncio
 import connect.workflows.core as core
 import json
 import logging
+import nats
 import os
 import ssl
-from asyncio import get_running_loop
 from datetime import datetime
 from httpx import AsyncClient
-from nats.aio.client import Client as NatsClient, Msg
+from nats.aio.client import Client as NatsClient
+from nats.aio.msg import Msg
+from nats.js import JetStreamContext
+from nats.js.api import RetentionPolicy, StorageType
 from typing import Callable, List, Optional
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
 from connect.config import (
     get_settings,
     get_ssl_context,
+    nats_timing_subject,
+    nats_timing_consumer,
     nats_sync_subject,
+    nats_sync_consumer,
     nats_retransmit_subject,
+    nats_retransmit_consumer,
     nats_app_sync_subject,
+    nats_app_sync_consumer,
     kafka_sync_topic,
 )
 from connect.support.encoding import (
@@ -32,6 +40,7 @@ from connect.support.encoding import (
 logger = logging.getLogger(__name__)
 nats_client = None
 nats_clients = []
+jetstream_context = None
 timing_metrics = {}
 nats_retransmit_queue = []
 nats_retransmit_canceled = False
@@ -43,8 +52,12 @@ async def create_nats_subscribers():
     Create NATS subscribers.  Add additional subscribers as needed.
     """
     await start_sync_event_subscribers()
-    await start_local_subscriber("TIMING", nats_timing_event_handler)
-    await start_local_subscriber(nats_retransmit_subject, nats_retransmit_event_handler)
+    await start_local_subscriber(
+        nats_timing_consumer, nats_timing_event_handler, "EVENTS", "TIMING"
+    )
+    await start_local_subscriber(
+        nats_retransmit_consumer, nats_retransmit_event_handler, "EVENTS", "RETRANSMIT"
+    )
 
     retransmit_loop = asyncio.get_event_loop()
     global retransmit_task
@@ -59,32 +72,42 @@ async def start_sync_event_subscribers():
     settings = get_settings()
 
     # subscribe to nats_sync_subject from the local NATS server or cluster
-    await start_local_subscriber(nats_sync_subject, nats_sync_event_handler)
+    await start_local_subscriber(
+        nats_sync_consumer, nats_sync_event_handler, "EVENTS", "SYNC"
+    )
 
     # subscribe to nats_sync_subject from any additional NATS servers
     await start_subscribers(
-        nats_sync_subject, nats_sync_event_handler, settings.nats_sync_subscribers
+        nats_sync_consumer,
+        nats_sync_event_handler,
+        settings.nats_sync_subscribers,
+        "EVENTS",
+        "SYNC",
     )
 
 
-async def start_local_subscriber(subject: str, callback: Callable) -> None:
+async def start_local_subscriber(
+    subject: str, callback: Callable, stream: str, consumer: str
+) -> None:
     """
     Create a NATS subscriber with the provided subject and callback,
     subscribed to events from the local NATS server/cluster.
 
     :param subject: the NATS subject to subscribe to
     :param callback: the callback to call when a message is received on the subscription
+    :param stream: the name of the stream that the subscription will use
+    :param consumer: the durable consumer associated with this subscription or None
     """
     settings = get_settings()
-    client = await get_nats_client()
-    await client.subscribe(subject, cb=callback)
-    nats_clients.append(client)
+    js = await get_jetstream_context()
+    logger.trace(f"Subscribing to subject {subject}")
+    await js.subscribe(subject, cb=callback, stream=stream, durable=consumer)
     servers = ",".join(settings.nats_servers)
     logger.debug(f"Subscribed {servers} to NATS subject {subject}")
 
 
 async def start_subscribers(
-    subject: str, callback: Callable, servers: List[str]
+    subject: str, callback: Callable, servers: List[str], stream: str, consumer: str
 ) -> None:
     """
     Create NATS subscribers with the provided subject and callback,
@@ -93,11 +116,14 @@ async def start_subscribers(
     :param subject: the NATS subject to subscribe to
     :param callback: the callback to call when a message is received on the subscription
     :param servers: the list of NATS servers to subscribe to
+    :param stream: the name of the stream that the subscription will use
+    :param consumer: the durable consumer associated with this subscription or None
     """
     for server in servers:
-        client = await create_nats_client(server)
-        await client.subscribe(subject, cb=callback)
-        nats_clients.append(client)
+        nc = await create_nats_client(server)
+        js = nc.jetstream()
+        await js.subscribe(subject, cb=callback, stream=stream, durable=consumer)
+        nats_clients.append(nc)
         logger.debug(f"Subscribed {server} to NATS subject {subject}")
 
 
@@ -110,16 +136,21 @@ async def nats_sync_event_handler(msg: Msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
-    logger.trace(f"nats_sync_event_handler: received a message on {subject} {reply}")
+    message = json.loads(data)
+    logger.trace(
+        f"nats_sync_event_handler: received a message with id={message['uuid']} on {subject} {reply}"
+    )
+
+    response = await msg.ack_sync()
+    logger.trace(f"nats_sync_event_handler: ack response={response}")
 
     # Emit an app_sync message so LFH clients that are listening only for
     # messages from this LFH node will be able to get all sync'd messages
     # from all LFH nodes.
-    client = await get_nats_client()
-    await client.publish(nats_app_sync_subject, msg.data)
+    js = await get_jetstream_context()
+    await js.publish(nats_app_sync_subject, msg.data)
 
     # if the message is from our local LFH, don't store in kafka
-    message = json.loads(data)
     if get_settings().connect_lfh_id == message["lfh_id"]:
         logger.trace(
             "nats_sync_event_handler: detected local LFH message, not storing in kafka",
@@ -169,17 +200,21 @@ async def nats_sync_event_handler(msg: Msg):
 
     result = await workflow.run()
     logger.trace(
-        f"nats_sync_event_handler: replayed nats sync message, result = {result}",
+        f"nats_sync_event_handler: successfully replayed nats sync message with id={message['uuid']}"
     )
 
 
-def nats_timing_event_handler(msg: Msg):
+async def nats_timing_event_handler(msg: Msg):
     """
     Callback for NATS TIMING messages - calculates the average run time for any function timed with @timer.
 
     :param msg: a message delivered from the NATS server
     """
+    subject = msg.subject
+    reply = msg.reply
     data = msg.data.decode()
+    logger.trace(f"nats_timing_event_handler: received a message on {subject} {reply}")
+    await msg.ack()
 
     message = json.loads(data)
     function_name = message["function"]
@@ -205,11 +240,14 @@ async def nats_retransmit_event_handler(msg: Msg):
     subject = msg.subject
     reply = msg.reply
     data = msg.data.decode()
+    message = json.loads(data)
     logger.trace(
-        f"nats_retransmit_event_handler: received a message on {subject} {reply}"
+        f"nats_retransmit_event_handler: received a message with id={message['uuid']} on {subject} {reply}"
     )
 
-    message = json.loads(data)
+    response = await msg.ack_sync()
+    logger.trace(f"nats_sync_event_handler: ack response={response}")
+
     await do_retransmit(message, -1)
 
 
@@ -336,27 +374,112 @@ async def create_nats_client(servers: List[str]) -> Optional[NatsClient]:
     """
     Create a NATS client for any NATS server or NATS cluster configured to accept this installation's NKey.
 
-    :param servers: List of one or more NATS servers.  If multiple servers are
-    provided, they should be in the same NATS cluster.
+    :param servers: List of one or more NATS servers in the same NATS cluster.
     :return: a connected NATS client instance
     """
     settings = get_settings()
 
-    client = NatsClient()
-    await client.connect(
+    client = await nats.connect(
+        verbose=True,
         servers=servers,
         nkeys_seed=os.path.join(
             settings.connect_config_directory, settings.nats_nk_file
         ),
-        loop=get_running_loop(),
         tls=get_ssl_context(ssl.Purpose.SERVER_AUTH),
         allow_reconnect=settings.nats_allow_reconnect,
         max_reconnect_attempts=settings.nats_max_reconnect_attempts,
     )
+
     logger.info("Created NATS client")
     logger.debug(f"Created NATS client for servers = {servers}")
 
     return client
+
+
+async def get_jetstream_context() -> Optional[JetStreamContext]:
+    """
+    Create or return a JetStream context for the local NATS
+    server or cluster defined by 'nats_servers' in config.py.
+
+    :return: a configured NATS JetStream context
+    """
+    global jetstream_context
+
+    if not jetstream_context:
+        jetstream_context = await create_jetstream_context()
+
+    return jetstream_context
+
+
+async def create_jetstream_context() -> Optional[JetStreamContext]:
+    """
+    Create a NATS JetStream context, streams and consumers
+    in the local NATS server or cluster defined by 'nats_servers'
+    in config.py.
+
+    Important defaults used by all consumers:
+    - deliver_policy: nats.js.api.DeliverPolicy.last
+    - ack_policy: nats.js.api.AckPolicy.explicit
+    - replay_policy: nats.js.api.ReplayPolicy.instant
+
+    :return: a configured JetStreamContext instance
+    """
+    nc = await get_nats_client()
+
+    # Create JetStream context
+    js = nc.jetstream()
+
+    # Create JetStream stream to persist messages on EVENTS.* subject
+    await js.add_stream(
+        name="EVENTS",
+        subjects=["EVENTS.*"],
+        retention=RetentionPolicy.limits,
+        max_msgs=-1,
+        max_bytes=-1,
+        max_age=365 * 24 * 60 * 60 * 1_000_000_000,
+        storage=StorageType.file,
+        duplicate_window=30,
+    )
+    logger.trace(f"Created NATS JetStream EVENTS stream")
+
+    # Create the JetStream push consumer for data synchronization
+    await js.add_consumer(
+        "EVENTS",
+        durable_name="SYNC",
+        deliver_subject=nats_sync_consumer,
+        filter_subject=nats_sync_subject,
+    )
+    logger.trace(f"Created NATS JetStream SYNC consumer")
+
+    # Create the JetStream push consumer for code timing events
+    await js.add_consumer(
+        "EVENTS",
+        durable_name="TIMING",
+        deliver_subject=nats_timing_consumer,
+        filter_subject=nats_timing_subject,
+    )
+    logger.trace(f"Created NATS JetStream TIMING consumer")
+
+    # Create the JetStream push consumer for retransmit messages
+    await js.add_consumer(
+        "EVENTS",
+        durable_name="RETRANSMIT",
+        deliver_subject=nats_retransmit_consumer,
+        filter_subject=nats_retransmit_subject,
+    )
+    logger.trace(f"Created NATS JetStream RETRANSMIT consumer")
+
+    # Create the JetStream push consumer for app sync messages
+    await js.add_consumer(
+        "EVENTS",
+        durable_name="APP_SYNC",
+        deliver_subject=nats_app_sync_consumer,
+        filter_subject=nats_app_sync_subject,
+    )
+    logger.trace(f"Created NATS JetStream APP_SYNC consumer")
+
+    logger.info("Created and configured the NATS JetStream context")
+    return js
 
 
 async def get_client_status() -> Optional[str]:

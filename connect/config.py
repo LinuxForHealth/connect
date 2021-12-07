@@ -18,9 +18,14 @@ import socket
 import ssl
 
 host_name = socket.gethostname()
+nats_timing_subject = "EVENTS.timing"
+nats_timing_consumer = "timing.EVENTS"
 nats_sync_subject = "EVENTS.sync"
+nats_sync_consumer = "sync.EVENTS"
 nats_retransmit_subject = "EVENTS.retransmit"
+nats_retransmit_consumer = "retransmit.EVENTS"
 nats_app_sync_subject = "EVENTS.app_sync"
+nats_app_sync_consumer = "app_sync.EVENTS"
 kafka_sync_topic = "LFH_SYNC"
 
 
