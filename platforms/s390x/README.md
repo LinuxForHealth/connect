@@ -32,14 +32,14 @@ cp platforms/s390x/docker-compose.yml .
 ### Start connect and supporting services
 To run connect locally, first start the LinuxForHealth services, then start connect:
 ```shell
-docker-compose up -d nats-server zookeeper kafka ibm-fhir
+docker-compose up -d nats-server ipfs-node-0 zookeeper kafka ipfs-cluster-0
 docker-compose ps
 pipenv run connect
 ```
 
 To run connect in a container, start it with the other LinuxForHealth services:
 ```shell
-docker-compose up -d nats-server zookeeper kafka ibm-fhir connect
+docker-compose up -d nats-server ipfs-node-0 zookeeper kafka ipfs-cluster-0 connect
 ```
 
 ### Stop connect and supporting services
