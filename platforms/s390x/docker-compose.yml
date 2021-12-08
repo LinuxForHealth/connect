@@ -4,12 +4,6 @@ networks:
     name: main
 services:
   connect:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        CONNECT_CERT_PATH_BUILD_ARG: ./local-config/connect
-        CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
     networks:
       - main
     image: linuxforhealth/connect:0.42.0

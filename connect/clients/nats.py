@@ -246,7 +246,7 @@ async def nats_retransmit_event_handler(msg: Msg):
     )
 
     response = await msg.ack_sync()
-    logger.trace(f"nats_sync_event_handler: ack response={response}")
+    logger.trace(f"nats_retransmit_event_handler: ack response={response}")
 
     await do_retransmit(message, -1)
 
