@@ -38,6 +38,7 @@ async def test_ingress_post(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting
@@ -102,6 +103,7 @@ async def test_edi_upload(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting

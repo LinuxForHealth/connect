@@ -15,6 +15,7 @@ from connect.clients.kafka import (
 )
 from connect.clients.nats import (
     create_nats_subscribers,
+    get_jetstream_context,
     get_nats_client,
     stop_nats_clients,
 )
@@ -124,6 +125,7 @@ async def configure_internal_integrations() -> None:
     """
     get_kafka_producer()
     await get_nats_client()
+    await get_jetstream_context()
     await create_nats_subscribers()
     create_kafka_listeners()
 

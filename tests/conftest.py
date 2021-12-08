@@ -14,6 +14,7 @@ from nats.aio.client import Client as NatsClient
 from connect.clients.kafka import ConfluentAsyncKafkaConsumer
 from connect.config import Settings
 from tests import resources_directory
+from nats.js import JetStreamContext
 
 
 @pytest.fixture
@@ -178,6 +179,13 @@ def mock_httpx_client():
 def nats_client() -> AsyncMock:
     """Returns an AsyncMock Nats Client"""
     mock = AsyncMock(spec=NatsClient)
+    return mock
+
+
+@pytest.fixture
+def jetstream_context() -> AsyncMock:
+    """Returns an AsyncMock NATS JetStream Context"""
+    mock = AsyncMock(spec=JetStreamContext)
     return mock
 
 

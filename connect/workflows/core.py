@@ -5,6 +5,7 @@ Provides the base LinuxForHealth workflow definition.
 """
 import httpx
 import json
+import traceback
 from json import JSONDecodeError
 import logging
 import connect.clients.nats as nats
@@ -202,9 +203,9 @@ class CoreWorkflow:
                             )
 
                             # publish retransmit message to NATS
-                            nats_client = await nats.get_nats_client()
+                            js = await nats.get_jetstream_context()
                             msg_str = json.dumps(retransmit_message, cls=ConnectEncoder)
-                            await nats_client.publish(
+                            await js.publish(
                                 nats_retransmit_subject, bytearray(msg_str, "utf-8")
                             )
 
@@ -232,9 +233,9 @@ class CoreWorkflow:
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
         if self.do_sync:
-            nats_client = await nats.get_nats_client()
+            js = await nats.get_jetstream_context()
             msg_str = json.dumps(self.message, cls=ConnectEncoder)
-            await nats_client.publish(nats_sync_subject, bytearray(msg_str, "utf-8"))
+            await js.publish(nats_sync_subject, msg_str.encode())
 
     @timer
     async def error(self, error) -> str:
@@ -294,7 +295,8 @@ class CoreWorkflow:
             await self.synchronize()
             return self._set_response(result)
         except Exception as ex:
-            logger.trace(f"Exception during run(): {str(ex)}")
+            logger.error(f"Exception during run(): {str(ex)}")
+            logger.trace(traceback.print_exc())
             msg = await self.error(ex)
             raise Exception(msg)
 
