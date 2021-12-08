@@ -29,6 +29,7 @@ async def test_x12_post(
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting

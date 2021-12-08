@@ -34,10 +34,10 @@ def timer(func):
 
         run_time = time.time() - start_time
 
-        nats_client = await nats.get_nats_client()
+        js = await nats.get_jetstream_context()
         message = {"function": func.__name__, "elapsed_time": run_time}
         msg_str = json.dumps(message, cls=ConnectEncoder)
-        await nats_client.publish("TIMING", bytearray(msg_str, "utf-8"))
+        await js.publish("TIMING", bytearray(msg_str, "utf-8"))
 
         return result
 

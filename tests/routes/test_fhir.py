@@ -40,6 +40,7 @@ async def test_fhir_post(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting
@@ -109,6 +110,7 @@ async def test_fhir_post_with_transmit(
         m.setattr(CoreWorkflow, "transmit", mock_workflow_transmit)
         m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             ac._transport.app.dependency_overrides[get_settings] = lambda: settings
@@ -144,6 +146,7 @@ async def test_fhir_post_endpoints(
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
         m.setattr(CoreWorkflow, "synchronize", AsyncMock())
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         async with async_test_client as ac:
             # remove external server setting
