@@ -478,7 +478,7 @@ async def create_jetstream_context() -> Optional[JetStreamContext]:
     )
     logger.trace(f"Created NATS JetStream APP_SYNC consumer")
 
-    logger.info("Created and configured the NATS JetStream context")
+    logger.info("Created the NATS JetStream context")
     return js
 
 

@@ -9,10 +9,13 @@ s390x requires the following docker-compose version:
 ## Before You Begin
 Perform these steps before you get started with the instructions in the main [README](../../README.md).
 
-### Install librdkafka
-To run connect locally (development mode) on s390x you must install librdkafka.  If you want to run connect in a docker container, you may skip this step, as the connect container build also builds librdkafka.  Follow this step to install librdkafka:
+### Install Packages
+To run connect locally (development mode) on s390x you must install librdkafka and additional packages.  If you want to run connect in a docker container, you may skip this step, as the connect container build also installs these packages.  Follow this step to install the required packages:
 ```shell
 sudo apt-get install -y librdkafka-dev
+sudo apt-get install -y libxml2-dev
+sudo apt-get install -y libxslt1-dev
+sudo apt-get install -y python-lxml
 ```
 
 ## Running Connect
