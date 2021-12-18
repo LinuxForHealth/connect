@@ -13,6 +13,8 @@ services:
       IPFS_CLUSTER_URI: http://ipfs-cluster-0:9099
     ports:
       - "5000:5000"
+    depends_on:
+      - opensearch
   nats-server:
     networks:
       - main
@@ -151,6 +153,15 @@ services:
       ETHEREUM_CONTRACT_ADDRESS: "0x7Bad280884c907bBf3955c21351ce41122aB88eB"
     ports:
       - "5100:5100"
+  opensearch:
+    networks:
+      - main
+    image: opensearchproject/opensearch:1.2.1
+    environment:
+      discovery.type: "single-node"
+    ports:
+      - "9200:9200"
+      - "9600:9600"
 
 volumes:
   postgres-data:

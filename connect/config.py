@@ -90,6 +90,12 @@ class Settings(BaseSettings):
     # -1 replication factor replicates to all nodes in the cluster, or set to desired # of replicas
     ipfs_cluster_replication_factor: int = -1
 
+    # OpenSearch
+    opensearch_server: str = "localhost"
+    opensearch_port: int = 9200
+    opensearch_user: str = "user"
+    opensearch_password: str = "password"
+
     class Config:
         case_sensitive = False
 

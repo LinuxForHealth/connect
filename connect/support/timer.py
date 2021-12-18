@@ -9,6 +9,7 @@ import json
 import logging
 import time
 from connect.clients import nats
+from connect.config import nats_timing_subject
 from connect.support.encoding import ConnectEncoder
 
 
@@ -37,7 +38,7 @@ def timer(func):
         js = await nats.get_jetstream_context()
         message = {"function": func.__name__, "elapsed_time": run_time}
         msg_str = json.dumps(message, cls=ConnectEncoder)
-        await js.publish("TIMING", bytearray(msg_str, "utf-8"))
+        await js.publish(nats_timing_subject, bytearray(msg_str, "utf-8"))
 
         return result
 

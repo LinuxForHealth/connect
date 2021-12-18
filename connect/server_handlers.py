@@ -19,6 +19,7 @@ from connect.clients.nats import (
     get_nats_client,
     stop_nats_clients,
 )
+from connect.clients.opensearch import add_index
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,7 @@ async def configure_internal_integrations() -> None:
     await get_jetstream_context()
     await create_nats_subscribers()
     create_kafka_listeners()
+    await add_index("lpr")
 
 
 async def close_internal_clients() -> None:
