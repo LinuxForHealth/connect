@@ -4,12 +4,6 @@ networks:
     name: main
 services:
   connect:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        CONNECT_CERT_PATH_BUILD_ARG: ./local-config/connect
-        CONNECT_CONFIG_PATH_BUILD_ARG: ./local-config/connect
     networks:
       - main
     image: linuxforhealth/connect:0.42.0
@@ -21,10 +15,10 @@ services:
   nats-server:
     networks:
       - main
-    image: docker.io/linuxforhealth/jetstream:v0.0.19
+    image: linuxforhealth/nats-server:v2.6.6
     volumes:
       - ./local-config/nats:/conf
-    command: server --config=/conf/nats-server.conf
+    command: "--config=/conf/nats-server.conf --jetstream"
     ports:
       - "4222:4222"
   zookeeper:

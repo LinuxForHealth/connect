@@ -68,12 +68,14 @@ async def test_manual_flow(
     """
     workflow.start_time = datetime.datetime.utcnow()
     nats_mock = AsyncMock()
+    jetstream_mock = AsyncMock()
 
     with monkeypatch.context() as m:
         m.setattr(core, "get_kafka_producer", Mock(return_value=AsyncMock()))
         m.setattr(core, "KafkaCallback", kafka_callback)
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=nats_mock))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=jetstream_mock))
 
         await workflow.transform()
 
@@ -92,7 +94,8 @@ async def test_manual_flow(
         assert workflow.transmission_attributes["tenant_id"] == "MyTenant"
         assert "content-length" in workflow.transmission_attributes
         await workflow.synchronize()
-        assert nats_mock.publish.call_count == 5
+        assert nats_mock.publish.call_count == 0
+        assert jetstream_mock.publish.call_count == 5
 
 
 @pytest.mark.asyncio
@@ -114,6 +117,7 @@ async def test_run_flow(
         m.setattr(core, "KafkaCallback", kafka_callback)
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         actual_value = await workflow.run()
         assert actual_value["consuming_endpoint_url"] == "http://localhost:5000/data"
@@ -155,6 +159,7 @@ async def test_run_flow_error(
         m.setattr(core, "KafkaCallback", kafka_callback)
         m.setattr(core, "AsyncClient", mock_httpx_client)
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
+        m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         with pytest.raises(Exception):
             await workflow.run()

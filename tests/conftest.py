@@ -2,17 +2,19 @@
 conftest.py
 Contains global/common pytest fixtures
 """
-
-from confluent_kafka import Producer
-from connect.clients.kafka import ConfluentAsyncKafkaConsumer
-from connect.config import Settings
-from fastapi.testclient import TestClient
-from httpx import AsyncClient, Response
-from typing import Callable
-import pytest
+import os
 from unittest.mock import AsyncMock
+from typing import Callable
+from httpx import AsyncClient, Response
+import pytest
+from confluent_kafka import Producer
+from fastapi.testclient import TestClient
 from connect.main import get_app
 from nats.aio.client import Client as NatsClient
+from connect.clients.kafka import ConfluentAsyncKafkaConsumer
+from connect.config import Settings
+from tests import resources_directory
+from nats.js import JetStreamContext
 
 
 @pytest.fixture
@@ -178,3 +180,39 @@ def nats_client() -> AsyncMock:
     """Returns an AsyncMock Nats Client"""
     mock = AsyncMock(spec=NatsClient)
     return mock
+
+
+@pytest.fixture
+def jetstream_context() -> AsyncMock:
+    """Returns an AsyncMock NATS JetStream Context"""
+    mock = AsyncMock(spec=JetStreamContext)
+    return mock
+
+
+@pytest.fixture
+def x12_fixture() -> str:
+    file_path = os.path.join(resources_directory, "270-5010.x12")
+    with open(file_path, "r") as f:
+        return f.read()
+
+
+@pytest.fixture
+def fhir_fixture() -> str:
+    file_path = os.path.join(resources_directory, "fhir-r4-encounter.json")
+    with open(file_path, "r") as f:
+        return f.read()
+
+
+@pytest.fixture
+def hl7_fixture() -> str:
+    file_path = os.path.join(resources_directory, "adt_a01_26.hl7")
+    with open(file_path, "r") as f:
+        return f.read()
+
+
+@pytest.fixture
+def dicom_fixture():
+    file_path = os.path.join(resources_directory, "image-00020.dcm")
+    f = open(file_path, "rb")
+    yield f
+    f.close()

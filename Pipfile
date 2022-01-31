@@ -9,7 +9,7 @@ check-format="black -t py38 --check --diff connect tests"
 format="black -t py38 connect tests"
 
 [packages]
-asyncio-nats-client = "==0.11.4"
+nats-py = "==2.0.0rc3"
 confluent-kafka = "==1.7.0"
 fastapi = "==0.70.0"
 pyaml = "==20.4.0"
@@ -18,7 +18,9 @@ httpx = "==0.19.0"
 slowapi = "==0.1.5"
 uvicorn = "==0.14.0"
 nkeys = "==0.1.0"
-linuxforhealth-edi = "==0.26.0"
+linuxforhealth-edi = "==0.28.0"
+python-multipart = "==0.0.5"
+charset-normalizer = "==2.0.7"
 
 [dev-packages]
 pytest = "==6.2.5"

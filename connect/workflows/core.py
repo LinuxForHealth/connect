@@ -5,6 +5,7 @@ Provides the base LinuxForHealth workflow definition.
 """
 import httpx
 import json
+import traceback
 from json import JSONDecodeError
 import logging
 import connect.clients.nats as nats
@@ -19,6 +20,7 @@ from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
 from connect.support.encoding import (
     base64_encode_value,
+    encode_from_bytes,
     decode_to_str,
     ConnectEncoder,
 )
@@ -84,13 +86,16 @@ class CoreWorkflow:
             "store_date": str(datetime.utcnow().replace(microsecond=0)) + "Z",
             "consuming_endpoint_url": self.origin_url,
             "data_format": self.data_format,
-            "data": base64_encode_value(self.message),
             "target_endpoint_urls": self.transmit_servers,
             "operation": self.operation,
-            "transmission_attributes": base64_encode_value(
-                self._scrub_transmission_attributes()
-            ),
+            "transmission_attributes": self._scrub_transmission_attributes(),
         }
+
+        if isinstance(self.message, bytes):
+            message["data"] = encode_from_bytes(self.message)
+        else:
+            message["data"] = base64_encode_value(self.message)
+
         response = LinuxForHealthDataRecordResponse(**message)
 
         # Add the IPFS URI to the message
@@ -198,9 +203,9 @@ class CoreWorkflow:
                             )
 
                             # publish retransmit message to NATS
-                            nats_client = await nats.get_nats_client()
+                            js = await nats.get_jetstream_context()
                             msg_str = json.dumps(retransmit_message, cls=ConnectEncoder)
-                            await nats_client.publish(
+                            await js.publish(
                                 nats_retransmit_subject, bytearray(msg_str, "utf-8")
                             )
 
@@ -228,9 +233,9 @@ class CoreWorkflow:
         Send the message to NATS subscribers for synchronization across LFH instances.
         """
         if self.do_sync:
-            nats_client = await nats.get_nats_client()
+            js = await nats.get_jetstream_context()
             msg_str = json.dumps(self.message, cls=ConnectEncoder)
-            await nats_client.publish(nats_sync_subject, bytearray(msg_str, "utf-8"))
+            await js.publish(nats_sync_subject, msg_str.encode())
 
     @timer
     async def error(self, error) -> str:
@@ -290,7 +295,8 @@ class CoreWorkflow:
             await self.synchronize()
             return self._set_response(result)
         except Exception as ex:
-            logger.trace(f"Exception during run(): {str(ex)}")
+            logger.error(f"Exception during run(): {str(ex)}")
+            logger.trace(traceback.print_exc())
             msg = await self.error(ex)
             raise Exception(msg)
 
@@ -324,20 +330,21 @@ class CoreWorkflow:
         else:
             return self.message
 
-    def _scrub_transmission_attributes(self) -> Dict:
+    def _scrub_transmission_attributes(self) -> Union[None, Dict]:
         """
         Removes sensitive attributes such as Authorization, Password, Token, etc
         :returns: The "scrubbed" dictionary
         """
-        if not self.transmission_attributes:
-            return {}
+        scrubbed_attributes = None
 
-        scrubbed_attributes = {
-            k: v
-            for k, v in self.transmission_attributes.items()
-            if "authorization" != k.lower()
-            and "password" not in k.lower()
-            and "pwd" not in k.lower()
-            and "token" not in k.lower()
-        }
+        if self.transmission_attributes:
+            scrubbed_attributes = {
+                k: v
+                for k, v in self.transmission_attributes.items()
+                if "authorization" != k.lower()
+                and "password" not in k.lower()
+                and "pwd" not in k.lower()
+                and "token" not in k.lower()
+            }
+
         return scrubbed_attributes
