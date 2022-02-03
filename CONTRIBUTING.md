@@ -47,38 +47,31 @@ To connect with us, please open an [issue](https://github.com/LinuxForHealth/con
 See the [MAINTAINERS.md](MAINTAINERS.md) page.
 
 ## Setup
-LinuxForHealth is requires Java 1.8 or higher and Gradle 6.x.  
+The LinuxForHealth connect local development environment requires Python 3.8 or higher and Docker Desktop.
 
 LinuxForHealth is currently built on:
 
-    Apache Camel for integration, supported by one of the most active development communities.
+    Fast API and Pydantic for data ingress and validation.
 
     Kafka and NATS for world-class data streaming and messaging.
 
-    Standard data formats, including HL7 FHIR R4, HL7 MLLP and EDI, with easy extensiblity to support any format.
+    Standard data formats, including ASC X12, C-CDA, DICOM, HL7 FHIR, and HL7 2.xwith easy extensiblity to support any format.
 
 
 Instructions for developer setup can be found [here](https://linuxforhealth.github.io/docs/developer-setup.html).
 
 
 ## Testing
-To ensure a working build, please run the full build from the root of the project before submitting your pull request.
+To ensure a working environment, please run the project tests and the code formatter before submitting your pull request.
 
-## Coding style guidelines
-Formatting has not been strictly enforced, but we'd like to improve it over time, so please consider the following points as you change the code:
+## Coding guidelines
 
-1. Write tests. Pull Requests should include necessary updates to unit tests (src/test/java of the corresponding project) and integration tests (in the fhir-server-test project)
+1. Write tests. Pull Requests should include necessary updates to unit tests.
 
-2. Use comments. Preferably javadoc.
+2. Use docstrings.
 
 3. Keep the [documentation](https://github.com/LinuxForHealth/docs) up-to-date. Documentation updates require a pull request.
 
-4. Use spaces (not tabs) in java source. For this we have a checkstyle rule which will fail the build if you're using tabs. We also prefer spaces over tabs in JSON and XML, but its not strictly enforced.
-
-5. Use spaces after control flow keywords (they're not function calls!); if/for/while blocks should always have { }
-
 Leave the code better than you found it.
-
-
 
 LinuxForHealth is sublicensed by the Linux Foundation with Sublicense ID: 20200615-0008
