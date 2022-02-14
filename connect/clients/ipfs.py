@@ -4,11 +4,12 @@ ipfs.py
 IPFS client services that support REST calls for persistence of records with an
 IPFS cluster
 """
+import base64
 import logging
 import httpx
 import json
 from connect.config import get_settings
-from connect.support.encoding import ConnectEncoder
+from connect.support.encoding import ConnectEncoder, decode_to_str
 from tempfile import NamedTemporaryFile
 from typing import Any, Tuple
 
@@ -17,16 +18,23 @@ logger = logging.getLogger(__name__)
 _ipfs_client = None
 
 
-# ******************************************
-# IPFS client services for persistence
-# ******************************************
 class IPFSClient:
-    def __init__(self, uri, replication_factor):
-        self._uri = uri
+    """
+    IPFS client services for persistence.  Uses the IPFS cluster
+    REST API (https://cluster.ipfs.io/documentation/reference/api/)
+    for all URIs that don't begin with /api/v0 and the IPFS
+    HTTP API (https://docs.ipfs.io/reference/http/api/) for URIs
+    starting with /api/v0.
+    """
+
+    def __init__(self, cluster_uri, http_uri, replication_factor):
+        self._uri = cluster_uri
+        self._http_uri = http_uri
         self._replication_factor = replication_factor
         self._add_uri = self._uri + "/add"
         self._get_peers_uri = self._uri + "/peers"
         self._unpin_cid_uri = self._uri + "/pins/"
+        self._cat_uri = self._http_uri + "/api/v0/cat"
 
     async def persist_json_to_ipfs(self, payload: dict) -> Tuple[int, str]:
         """
@@ -80,6 +88,36 @@ class IPFSClient:
                     f"Exception raised while persisting to the IPFS Cluster: {ex}"
                 )
                 return 500, None
+
+    async def get_object_from_ipfs(self, path: str) -> dict:
+        """
+        Retrieves a JSON payload (as a dict) from an IPFS cluster
+
+        :param path: The IPFS path for the object to retrieve
+        :returns: Object (dict) stored in IPFS.
+        """
+        if not path:
+            error_msg = "IPFS path not provided for retrieval from IPFS"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(f"{self._cat_uri}?arg={path}")
+                response_code = response.status_code
+
+                if response_code == 200:
+                    result = json.loads(response.text)
+                    logger.trace(f"Successfully retrieved from IPFS: {result}")
+                    return {"response_code": response_code, "document": result}
+                else:
+                    logger.error(
+                        f"Error retrieving from IPFS, HTTP response code: {response.status_code}"
+                    )
+                    return {"response_code": response_code, "document": None}
+            except Exception as ex:
+                logger.error(f"Exception raised while retrieving from IPFS: {ex}")
+                return {"response_code": 500, "document": None}
 
     async def get_ipfs_cluster_peers(self) -> Tuple[int, Any]:
         """
@@ -138,7 +176,9 @@ def get_ipfs_cluster_client() -> IPFSClient:
         settings = get_settings()
 
         _ipfs_client = IPFSClient(
-            settings.ipfs_cluster_uri, settings.ipfs_cluster_replication_factor
+            settings.ipfs_cluster_uri,
+            settings.ipfs_http_uri,
+            settings.ipfs_cluster_replication_factor,
         )
 
     return _ipfs_client

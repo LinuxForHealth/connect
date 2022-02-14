@@ -145,6 +145,8 @@ class ConfluentAsyncKafkaConsumer:
         :param callback_method: Takes a callback_method which is automatically called on successfully retrieving
                                 a message from the KafkaBroker.
         """
+        settings = get_settings()
+
         if self.consumer is None:
             logger.error("Kafka Consumer not initialized prior to this call")
             raise ValueError("ERROR - Consumer not initialized")
@@ -165,7 +167,9 @@ class ConfluentAsyncKafkaConsumer:
             self.consumer.assign([topic_partition])
 
             # polls for exactly one record - waits for a configurable max time (seconds)
-            msg = await loop.run_in_executor(None, self.consumer.poll, 5.0)
+            msg = await loop.run_in_executor(
+                None, self.consumer.poll, settings.kafka_poll_timeout
+            )
 
             if msg is None:  # Handle timeout during poll
                 msg = "Consumer error: timeout while polling message from Kafka"

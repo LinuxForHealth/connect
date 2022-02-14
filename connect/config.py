@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     # Example: ["https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"]
     connect_external_fhir_servers: List[str] = []
     connect_generate_fhir_server_url: bool = True
-    connect_rate_limit: str = "10/second"
+    connect_rate_limit: str = "10000/second"
     connect_timing_enabled: bool = False
 
     # kakfa
@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     kafka_admin_new_topic_partitions: int = 1
     kafka_admin_new_topic_replication_factor: int = 1
     kafka_listener_timeout: float = 1.0
+    kafka_poll_timeout: float = 10.0
     kafka_topics_timeout: float = 0.5
 
     # nats
@@ -87,6 +88,7 @@ class Settings(BaseSettings):
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"
+    ipfs_http_uri: str = "http://127.0.0.1:5001"
     # -1 replication factor replicates to all nodes in the cluster, or set to desired # of replicas
     ipfs_cluster_replication_factor: int = -1
 

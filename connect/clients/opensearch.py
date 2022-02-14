@@ -2,6 +2,7 @@
 opensearch.py
 OpenSearch client wrapper
 """
+import json
 import logging
 from connect.config import get_settings
 from opensearchpy import OpenSearch
@@ -75,7 +76,7 @@ async def add_patient_document(index: str, message: dict, data: Any):
     client = await get_opensearch_client()
 
     if message["data_format"] == "FHIR-R4":
-        patient_id = data["id"]
+        patient_id = data.dict()["id"]
     else:
         logger.trace(f"Can't index unsupported document type: {message['data_format']}")
         return
@@ -91,18 +92,21 @@ async def add_patient_document(index: str, message: dict, data: Any):
     )
 
 
-async def search_by_patient_id(index: str, patient_id: str):
+async def search_by_patient_id(index: str, patient_id: str) -> Optional[dict]:
     client = await get_opensearch_client()
     query = {"query": {"term": {"patient_id": patient_id}}}
     response = client.search(body=query, index=index)
-    logger.trace(f"Search results for id={patient_id} in index={index}: {response}")
+    logger.trace(
+        f"Search results for patient_id={patient_id} in index={index}: {response}"
+    )
+    return response
 
 
-async def delete_document(index: str, patient_id: str):
+async def delete_document(index: str, doc_id: str):
     client = await get_opensearch_client()
     response = client.indices.delete(index=index)
     logger.trace(
-        f"Deleted document with id={patient_id} from index={index}, response={response}"
+        f"Deleted document with id={doc_id} from index={index}, response={response}"
     )
 
 

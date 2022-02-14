@@ -19,14 +19,14 @@ connect_rate_limit: str = "10000/second"
 ### Example 1
 Use the provided FHIR resource files to test LinuxForHealth connect /fhir and /data endpoints:
 ```shell
-cd connect/load-test
+cd connect/load-test/ipfs-opensearch
 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
 ```
 ### Example 2
 By default, this load test POSTs to /fhir using randomly selected FHIR resources from connect/load-test/messages/fhir[1...NUM_FILES].json files.  You can replace the contents of these fhir*.json files with your own FHIR resources or add fhir resource files to connect/load-test/messages using the same naming convention.  To separate FHIR resources, place them in separate files.  To change the number of files used by the load test (default = 2):
 ```shell
-cd connect/load-test
-NUM_FILES=1 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
+cd connect/load-test/ipfs-opensearch
+NUM_PATIENTS=1 locust --host https://localhost:5000 --run-time 5m --users 500 --spawn-rate 20 --headless
 ```
 Result:  
 Loading message file = ./messages/fhir1.json

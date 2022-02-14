@@ -125,7 +125,7 @@ class CoreWorkflow:
         message["status"] = kafka_cb.kafka_status
 
         # Store Kafka location in OpenSearch index
-        add_patient_document("lpr", message, self.message)
+        await add_patient_document("lpr", message, self.message)
 
         response = LinuxForHealthDataRecordResponse(**message).dict()
         self.message = response
