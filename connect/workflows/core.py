@@ -15,7 +15,6 @@ from fastapi import Response
 from httpx import AsyncClient
 from connect.clients.kafka import get_kafka_producer, KafkaCallback
 from connect.clients.ipfs import get_ipfs_cluster_client
-from connect.clients.opensearch import add_patient_document
 from connect.config import nats_sync_subject, nats_retransmit_subject
 from connect.exceptions import LFHError
 from connect.routes.data import LinuxForHealthDataRecordResponse
