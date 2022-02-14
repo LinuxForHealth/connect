@@ -2,7 +2,6 @@
 opensearch.py
 OpenSearch client wrapper
 """
-import json
 import logging
 from connect.config import get_settings
 from opensearchpy import OpenSearch
@@ -54,6 +53,9 @@ async def create_opensearch_client() -> Optional[OpenSearch]:
 
 
 async def add_index(index: str):
+    """
+    Create a new index.
+    """
     client = await get_opensearch_client()
     try:
         response = client.indices.create(index=index, body={})
@@ -67,50 +69,61 @@ async def add_index(index: str):
 
 
 async def add_document(index: str, document: dict):
+    """
+    Add a document to an index.
+    :param index: Name of the index to add the document to
+    :param document: The dict specifying the document to add.
+        For example, to add a patient document for a patient with id = "001"
+        and kafka and ipfs storage locations, use:
+        {
+            "patient_id": "001"",
+            "data_record_location": message["data_record_location"],
+            "ipfs_uri": message["ipfs_uri"],
+        }
+        where the LinuxForHealth message[] contains the kafka and ipfs data storage locations.
+    :return:
+    """
     client = await get_opensearch_client()
     response = client.index(index=index, body=document, refresh=True)
     logger.trace(f"Added document to index={index}, response={response}")
 
 
-async def add_patient_document(index: str, message: dict, data: Any):
+async def search_by_query(index: str, query: dict) -> Optional[dict]:
+    """
+    Search via a provided query.
+    :param index: Name of the index to search
+    :param query: The dict specifying the query search terms.
+        For example, to search an index for a patient_id of "001", use:
+        {"query": {"term": {"patient_id": "001"}}}
+    :return: dict containing the search results
+    """
     client = await get_opensearch_client()
-
-    if message["data_format"] == "FHIR-R4":
-        patient_id = data.dict()["id"]
-    else:
-        logger.trace(f"Can't index unsupported document type: {message['data_format']}")
-        return
-
-    document = {
-        "patient_id": patient_id,
-        "data_record_location": message["data_record_location"],
-        "ipfs_uri": message["ipfs_uri"],
-    }
-    response = client.index(index=index, body=document, refresh=True)
-    logger.trace(
-        f"Added document for patient id={patient_id} to index={index}, response={response}"
-    )
-
-
-async def search_by_patient_id(index: str, patient_id: str) -> Optional[dict]:
-    client = await get_opensearch_client()
-    query = {"query": {"term": {"patient_id": patient_id}}}
     response = client.search(body=query, index=index)
-    logger.trace(
-        f"Search results for patient_id={patient_id} in index={index}: {response}"
-    )
+    logger.trace(f"Search results for query={query} in index={index}: {response}")
     return response
 
 
 async def delete_document(index: str, doc_id: str):
+    """
+    Delete a document from an index.
+    :param index: Name of the index to add the document to
+    :param doc_id: Id of the document to delete
+
+    One way to use this method is to first query for records, then use the
+    query results to get the ids of the documents to delete.
+    """
     client = await get_opensearch_client()
-    response = client.indices.delete(index=index)
+    response = client.delete(index=index, id=doc_id)
     logger.trace(
         f"Deleted document with id={doc_id} from index={index}, response={response}"
     )
 
 
 async def delete_index(index: str):
+    """
+    Delete an index.
+    :param index: Name of the index to delete
+    """
     client = await get_opensearch_client()
     response = client.indices.delete(index=index)
     logger.trace(f"Deleted index={index}, response={response}")

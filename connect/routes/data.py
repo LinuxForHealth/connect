@@ -8,8 +8,6 @@ from pydantic import BaseModel, AnyUrl, constr
 from fastapi.routing import APIRouter, HTTPException
 from typing import Optional, List, Dict
 from connect.clients.kafka import get_kafka_consumer
-from connect.clients.opensearch import search_by_patient_id
-from connect.clients.ipfs import get_ipfs_cluster_client
 from connect.exceptions import KafkaMessageNotFoundError
 from confluent_kafka import KafkaException
 import uuid
@@ -75,27 +73,6 @@ async def get_data_record(dataformat: str, partition: int, offset: int):
 
     except KafkaMessageNotFoundError as kmnfe:
         raise HTTPException(status_code=404, detail=str(kmnfe))
-
-
-@router.get("/lpr")
-async def get_lpr(patient_id: str):
-    """
-    Returns a set of data records from the LinuxForHealth data store.
-
-    :param patient_id: The id of the patient to return records for
-    :return: set of LinuxForHealth messages that make up the records in the patient's lpr
-    """
-    records: List = []
-    try:
-        results = await search_by_patient_id("lpr", patient_id)
-        for result in results["hits"]["hits"]:
-            ipfs_path = result["_source"]["ipfs_uri"]
-            client = get_ipfs_cluster_client()
-            record = await client.get_object_from_ipfs(ipfs_path)
-            records.append(record)
-        return records
-    except Exception as ex:
-        logger.trace(f"exception={ex}")
 
 
 async def _fetch_data_record_cb(kafka_consumer_msg):
