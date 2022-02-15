@@ -4,12 +4,11 @@ ipfs.py
 IPFS client services that support REST calls for persistence of records with an
 IPFS cluster
 """
-import base64
 import logging
 import httpx
 import json
 from connect.config import get_settings
-from connect.support.encoding import ConnectEncoder, decode_to_str
+from connect.support.encoding import ConnectEncoder
 from tempfile import NamedTemporaryFile
 from typing import Any, Tuple
 
@@ -28,13 +27,11 @@ class IPFSClient:
     """
 
     def __init__(self, cluster_uri, http_uri, replication_factor):
-        self._uri = cluster_uri
-        self._http_uri = http_uri
         self._replication_factor = replication_factor
-        self._add_uri = self._uri + "/add"
-        self._get_peers_uri = self._uri + "/peers"
-        self._unpin_cid_uri = self._uri + "/pins/"
-        self._cat_uri = self._http_uri + "/api/v0/cat"
+        self._add_uri = cluster_uri + "/add"
+        self._get_peers_uri = cluster_uri + "/peers"
+        self._unpin_cid_uri = cluster_uri + "/pins/"
+        self._cat_uri = http_uri + "/api/v0/cat"
 
     async def persist_json_to_ipfs(self, payload: dict) -> Tuple[int, str]:
         """
