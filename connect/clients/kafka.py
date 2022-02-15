@@ -123,7 +123,13 @@ class ConfluentAsyncKafkaConsumer:
     """
 
     def __init__(
-        self, topic_name, partition, consumer_conf, offset=None, consumer_group_id=None
+        self,
+        topic_name,
+        partition,
+        consumer_conf,
+        poll_timeout,
+        offset=None,
+        consumer_group_id=None,
     ):
 
         # Check if a consumer_group_id was provided by the user; then set it
@@ -134,6 +140,7 @@ class ConfluentAsyncKafkaConsumer:
         self.topic_name = topic_name
         self.partition = partition
         self.offset = offset
+        self.poll_timeout = poll_timeout
         logger.info(f"Created Kafka Consumer")
         logger.debug(f"Kafka Consumer configs = {consumer_conf}")
 
@@ -165,7 +172,9 @@ class ConfluentAsyncKafkaConsumer:
             self.consumer.assign([topic_partition])
 
             # polls for exactly one record - waits for a configurable max time (seconds)
-            msg = await loop.run_in_executor(None, self.consumer.poll, 5.0)
+            msg = await loop.run_in_executor(
+                None, self.consumer.poll, self.poll_timeout
+            )
 
             if msg is None:  # Handle timeout during poll
                 msg = "Consumer error: timeout while polling message from Kafka"
@@ -186,7 +195,7 @@ class ConfluentAsyncKafkaConsumer:
 
             if headers is None:
                 message = msg.value()
-            # Re-evaluate later if we will need message semgentation or have a use case where the producer
+            # Re-evaluate later if we will need message segmentation or have a use case where the producer
             # will chunk messages and record them with the broker
             # else:
             #     message = combine_segments(msg.value(), self._generate_header_dictionary(msg.headers()))
@@ -251,7 +260,12 @@ def get_kafka_consumer(
     }
 
     kafka_consumer = ConfluentAsyncKafkaConsumer(
-        topic_name, partition, consumer_conf, offset, consumer_group_id
+        topic_name,
+        partition,
+        consumer_conf,
+        settings.kafka_poll_timeout,
+        offset,
+        consumer_group_id,
     )
     return kafka_consumer
 

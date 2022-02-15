@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     kafka_admin_new_topic_partitions: int = 1
     kafka_admin_new_topic_replication_factor: int = 1
     kafka_listener_timeout: float = 1.0
+    kafka_poll_timeout: float = 10.0
     kafka_topics_timeout: float = 0.5
 
     # nats
@@ -87,8 +88,15 @@ class Settings(BaseSettings):
 
     # ipfs-cluster
     ipfs_cluster_uri: str = "http://0.0.0.0:9099"
+    ipfs_http_uri: str = "http://127.0.0.1:5001"
     # -1 replication factor replicates to all nodes in the cluster, or set to desired # of replicas
     ipfs_cluster_replication_factor: int = -1
+
+    # OpenSearch
+    opensearch_server: str = "localhost"
+    opensearch_port: int = 9200
+    opensearch_user: str = "user"
+    opensearch_password: str = "password"
 
     class Config:
         case_sensitive = False

@@ -3,6 +3,7 @@ Load test LinuxForHealth REST APIs using locust.
 """
 import json
 import os
+import resource
 from locust import task, between
 from locust.contrib.fasthttp import FastHttpUser
 from random import randint
@@ -20,6 +21,7 @@ for file_num in range(1, num_files + 1):
 
 class QuickstartUser(FastHttpUser):
     wait_time = between(1, 2.5)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (999999, 999999))
 
     @task
     def post_patient(self):
@@ -31,7 +33,7 @@ class QuickstartUser(FastHttpUser):
     @task
     def get_data(self):
         self.client.get(
-            "/data?dataformat=FHIR-R4_PATIENT&partition=0&offset=0",
+            "/data?dataformat=FHIR-R4&partition=0&offset=0",
             verify=False,
             name="/data",
         )

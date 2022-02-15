@@ -3,6 +3,7 @@ data.py
 
 Provides access to LinuxForHealth data records using the /data [GET] endpoint
 """
+import logging
 from pydantic import BaseModel, AnyUrl, constr
 from fastapi.routing import APIRouter, HTTPException
 from typing import Optional, List, Dict
@@ -13,8 +14,10 @@ import uuid
 import datetime
 import json
 
+
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 data_record_regex = "^[A-Za-z0-9_-]*:[0-9]*:[0-9]*$"
 
 
