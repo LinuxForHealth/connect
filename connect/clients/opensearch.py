@@ -109,7 +109,7 @@ async def delete_document(index: str, doc_id: str):
     :param index: Name of the index to add the document to
     :param doc_id: Id of the document to delete
 
-    One way to use this method is to first query for records, then use the
+    One way to use this function is to first query for records, then use the
     query results to get the ids of the documents to delete.
     """
     client = await get_opensearch_client()
