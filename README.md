@@ -9,7 +9,6 @@ LinuxForHealth Connectors for Inbound Data Processing
 ![GitHub Forks](https://img.shields.io/github/forks/LinuxForHealth/connect)
 ![GitHub Stars](https://img.shields.io/github/stars/LinuxForHealth/connect)
 ![GitHub License](https://img.shields.io/github/license/LinuxForHealth/connect)  
-[![Cauldron Report](https://img.shields.io/badge/Cauldron%20Report-View%20Project%20Metrics-brightgreen)](https://cauldron.io/project/4148)  
 
 
 
@@ -18,8 +17,8 @@ LinuxForHealth Connectors for Inbound Data Processing
 | ----------- | ----------- |
 | 🚨 Bug Reports | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/labels/bug) |  
 | 🎁 Feature Requests & Ideas | [GitHub Issues Tracker](https://github.com/LinuxForHealth/connect/issues)  | 
-| ❔ Questions | [LFH Slack Channel](https://linuxforhealth.slack.com) |   
-| 🚙 Roadmap | [Project Board](https://github.com/LinuxForHealth/connect/projects/1#workspaces/linux-for-health-5ee2d7cecec5920ec43ae1cb/board?notFullScreen=false&repos=337464130) |
+| ❔ Questions | [LFH Slack Workspace](https://linuxforhealth.slack.com) |   
+| 🚙 Roadmap | [ZenHub Board](https://github.com/LinuxForHealth/connect#workspaces/linux-for-health-5ee2d7cecec5920ec43ae1cb/board?repos=337464130) |
 
 
 ## Getting Started
@@ -109,7 +108,7 @@ docker-compose --profile deployment up -d
 ```
 
 ### Developing for connect: Black code formatting integration
-LinuxForHealth connect utilizes the [black library](https://black.readthedocs.io/en/stable/index.html) to provide standard code formatting. Code formatting and style are validated as part of the [LinuxForHealth connect ci process](./.github/workflows/connect-ci.yml). LinuxForHealth connect provides developers with an option of formatting using pipenv scripts, or a git pre-commit hook.
+LinuxForHealth Connect utilizes the [black library](https://black.readthedocs.io/en/stable/index.html) to provide standard code formatting. Code formatting and style are validated as part of the [LinuxForHealth connect ci process](./.github/workflows/connect-ci.yml). LinuxForHealth connect provides developers with an option of formatting using pipenv scripts, or a git pre-commit hook.
 
 #### Pipenv Scripts
 
