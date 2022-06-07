@@ -15,6 +15,8 @@ from connect.clients.kafka import ConfluentAsyncKafkaConsumer
 from connect.config import Settings
 from tests import resources_directory
 from nats.js import JetStreamContext
+from connect.config import get_settings
+
 
 
 @pytest.fixture
@@ -216,3 +218,23 @@ def dicom_fixture():
     f = open(file_path, "rb")
     yield f
     f.close()
+
+
+@pytest.fixture(scope="session")
+def session_test_client() -> TestClient:
+    test_client = TestClient(get_app())
+
+    settings_fields = {
+        "kafka_bootstrap_servers": ["localhost:8080"],
+        "nats_servers": ["tls://localhost:8080"],
+        "uvicorn_reload": False,
+        "uvicorn_app": "connect.asgi:app",
+        "connect_cert_key_name": "./mycert.key",
+        "connect_cert_name": "./mycert.pem",
+        "connect_external_fhir_servers": [
+            "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4"
+        ],
+    }
+    mock_settings = Settings(**settings_fields)
+    test_client.app.dependency_overrides[get_settings] = lambda: mock_settings
+    return test_client

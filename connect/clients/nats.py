@@ -433,11 +433,12 @@ async def create_jetstream_context() -> Optional[JetStreamContext]:
     await js.add_stream(
         name="EVENTS",
         subjects=["EVENTS.*"],
-        retention=RetentionPolicy.limits,
+        retention=RetentionPolicy.LIMITS,
         max_msgs=-1,
         max_bytes=-1,
-        max_age=365 * 24 * 60 * 60 * 1_000_000_000,
-        storage=StorageType.file,
+        # TODO : determine optimal max_age value vs config?
+        # max_age=365 * 24 * 60 * 60 * 1_000_000_000,
+        storage=StorageType.FILE,
         duplicate_window=30,
     )
     logger.trace(f"Created NATS JetStream EVENTS stream")
