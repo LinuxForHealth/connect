@@ -43,7 +43,9 @@ def test_ingress_post(
         settings.connect_external_fhir_servers = []
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
 
-        actual_response = session_test_client.post("https://testserver/ingress", json={"data": fixture})
+        actual_response = session_test_client.post(
+            "https://testserver/ingress", json={"data": fixture}
+        )
 
     assert actual_response.status_code == 200
     actual_json = actual_response.json()
@@ -68,7 +70,7 @@ def test_ingress_post(
 
 
 def test_ingress_post_422_error(
-        session_test_client, mock_async_kafka_producer, monkeypatch, settings, x12_fixture
+    session_test_client, mock_async_kafka_producer, monkeypatch, settings, x12_fixture
 ):
     """
     Parameterized /ingress [POST] test with X12, FHIR, and HL7 inputs
@@ -82,7 +84,9 @@ def test_ingress_post_422_error(
     # remove external server setting
     settings.connect_external_fhir_servers = []
     session_test_client.app.dependency_overrides[get_settings] = lambda: settings
-    actual_response = session_test_client.post("https://testserver/ingress", json={"data": invalid_x12})
+    actual_response = session_test_client.post(
+        "https://testserver/ingress", json={"data": invalid_x12}
+    )
 
     assert actual_response.status_code == 422
 
@@ -105,7 +109,8 @@ def test_edi_upload(
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
 
         actual_response = session_test_client.post(
-            "https://testserver/ingress/upload", files={"file": ("dcm_1.dcm", dicom_fixture)}
+            "https://testserver/ingress/upload",
+            files={"file": ("dcm_1.dcm", dicom_fixture)},
         )
 
     assert actual_response.status_code == 200

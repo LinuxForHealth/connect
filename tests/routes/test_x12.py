@@ -15,7 +15,7 @@ def test_x12_post(
     mock_async_kafka_producer,
     monkeypatch,
     settings,
-    capsys
+    capsys,
 ):
     """
     Tests /x12 [POST] where data is not transmitted to an external server
@@ -35,7 +35,9 @@ def test_x12_post(
         settings.connect_external_fhir_servers = None
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
 
-        actual_response = session_test_client.post("https://testserver/x12", json={"x12": x12_fixture})
+        actual_response = session_test_client.post(
+            "https://testserver/x12", json={"x12": x12_fixture}
+        )
 
     assert actual_response.status_code == 200
 
@@ -50,5 +52,7 @@ def test_x12_post(
 
     # invalid request
     error_fixture: str = x12_fixture.replace("HL*1**20*1~", "HL*1**20~")
-    actual_response = session_test_client.post("https://testserver/x12", json={"x12": error_fixture})
+    actual_response = session_test_client.post(
+        "https://testserver/x12", json={"x12": error_fixture}
+    )
     assert actual_response.status_code == 422

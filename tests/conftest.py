@@ -18,7 +18,6 @@ from nats.js import JetStreamContext
 from connect.config import get_settings
 
 
-
 @pytest.fixture
 def settings() -> Settings:
     """

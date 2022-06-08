@@ -44,7 +44,9 @@ def test_fhir_post(
         # remove external server setting
         settings.connect_external_fhir_servers = []
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
-        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/Encounter", json=fhir_resource
+        )
 
     assert actual_response.status_code == 200
 
@@ -110,7 +112,9 @@ def test_fhir_post_with_transmit(
         m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
-        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/Encounter", json=fhir_resource
+        )
 
     actual_json = actual_response.json()
 
@@ -148,19 +152,27 @@ def test_fhir_post_endpoints(
         settings.connect_external_fhir_servers = []
         session_test_client.app.dependency_overrides[get_settings] = lambda: settings
 
-        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/Encounter", json=fhir_resource
+        )
         assert actual_response.status_code == 200
 
-        actual_response = session_test_client.post("https://testserver/fhir/encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/encounter", json=fhir_resource
+        )
         assert actual_response.status_code == 404
 
         fhir_resource["resourceType"] = "Patient"
-        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/Encounter", json=fhir_resource
+        )
         assert actual_response.status_code == 422
 
         # a missing FHIR resource type also causes a 422
         del fhir_resource["resourceType"]
-        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        actual_response = session_test_client.post(
+            "https://testserver/fhir/Encounter", json=fhir_resource
+        )
         assert actual_response.status_code == 422
 
 

@@ -30,9 +30,7 @@ class X12Request(BaseModel):
 
 
 @router.post("")
-async def post_x12_data(
-    x12_request: X12Request, settings=Depends(get_settings)
-):
+async def post_x12_data(x12_request: X12Request, settings=Depends(get_settings)):
 
     x12_results: list = []
 

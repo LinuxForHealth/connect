@@ -29,7 +29,9 @@ def test_get_data_ok(
             data, "get_kafka_consumer", Mock(return_value=mock_async_kafka_consumer)
         )
 
-        actual_response = session_test_client.get("https://testserver/data", params=endpoint_parameters)
+        actual_response = session_test_client.get(
+            "https://testserver/data", params=endpoint_parameters
+        )
 
     assert actual_response.status_code == 200
     actual_json = actual_response.json()
@@ -53,7 +55,9 @@ def test_get_data_bad_request(
         m.setattr(
             data, "get_kafka_consumer", Mock(return_value=mock_async_kafka_consumer)
         )
-        actual_response = session_test_client.get("https://testserver/data", params=endpoint_parameters)
+        actual_response = session_test_client.get(
+            "https://testserver/data", params=endpoint_parameters
+        )
 
     assert actual_response.status_code == 400
     actual_json = actual_response.json()
@@ -77,7 +81,9 @@ def test_get_data_not_found(
         m.setattr(
             data, "get_kafka_consumer", Mock(return_value=mock_async_kafka_consumer)
         )
-        actual_response = session_test_client.get("https://testserver/data", params=endpoint_parameters)
+        actual_response = session_test_client.get(
+            "https://testserver/data", params=endpoint_parameters
+        )
 
     assert actual_response.status_code == 404
     actual_json = actual_response.json()
