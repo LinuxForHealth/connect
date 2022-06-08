@@ -169,6 +169,7 @@ class CoreWorkflow:
                             server,
                             json=json.loads(resource_str),
                             headers=self.transmission_attributes,
+                            follow_redirects=True,
                         )
 
                         if post_result.text is None:

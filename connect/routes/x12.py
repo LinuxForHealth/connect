@@ -8,7 +8,7 @@ Example: X12_270
 """
 from pydantic import BaseModel, ValidationError
 from fastapi.routing import APIRouter
-from fastapi import Depends, Response, HTTPException
+from fastapi import Depends, HTTPException
 from connect.config import get_settings
 from connect.workflows.core import CoreWorkflow
 from linuxforhealth.x12.io import X12ModelReader
@@ -29,10 +29,8 @@ class X12Request(BaseModel):
         }
 
 
-@router.post("/")
-async def post_x12_data(
-    x12_request: X12Request, response: Response, settings=Depends(get_settings)
-):
+@router.post("")
+async def post_x12_data(x12_request: X12Request, settings=Depends(get_settings)):
 
     x12_results: list = []
 
