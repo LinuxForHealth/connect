@@ -20,9 +20,8 @@ def fhir_resource(fhir_fixture) -> Dict:
     return json.loads(fhir_fixture)
 
 
-@pytest.mark.asyncio
-async def test_fhir_post(
-    async_test_client,
+def test_fhir_post(
+    session_test_client,
     fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
@@ -30,11 +29,11 @@ async def test_fhir_post(
 ):
     """
     Tests /fhir [POST] where data is not transmitted to an external server
-    :param async_test_client: HTTPX test client fixture
+    :param session_test_client: The configured Fast API test client, includes app and settings.
     :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
-    :param settings: connect configuration settings fixture
+    :param settings: configuration settings fixture
     """
     with monkeypatch.context() as m:
         m.setattr(kafka, "ConfluentAsyncKafkaProducer", mock_async_kafka_producer)
@@ -42,33 +41,31 @@ async def test_fhir_post(
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
         m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
-        async with async_test_client as ac:
-            # remove external server setting
-            settings.connect_external_fhir_servers = []
-            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
-            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
+        # remove external server setting
+        settings.connect_external_fhir_servers = []
+        session_test_client.app.dependency_overrides[get_settings] = lambda: settings
+        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
 
-        assert actual_response.status_code == 200
+    assert actual_response.status_code == 200
 
-        actual_json = actual_response.json()
-        assert "uuid" in actual_json
-        assert "creation_date" in actual_json
-        assert "store_date" in actual_json
-        assert "transmit_date" in actual_json
-        assert "target_endpoint_urls" in actual_json
-        assert "elapsed_storage_time" in actual_json
-        assert "elapsed_transmit_time" in actual_json
-        assert "elapsed_total_time" in actual_json
+    actual_json = actual_response.json()
+    assert "uuid" in actual_json
+    assert "creation_date" in actual_json
+    assert "store_date" in actual_json
+    assert "transmit_date" in actual_json
+    assert "target_endpoint_urls" in actual_json
+    assert "elapsed_storage_time" in actual_json
+    assert "elapsed_transmit_time" in actual_json
+    assert "elapsed_total_time" in actual_json
 
-        assert actual_json["consuming_endpoint_url"] == "/fhir/Encounter"
-        assert actual_json["data_format"] == "FHIR-R4"
-        assert actual_json["status"] == "success"
-        assert actual_json["data_record_location"] == "FHIR-R4:0:0"
+    assert actual_json["consuming_endpoint_url"] == "/fhir/Encounter"
+    assert actual_json["data_format"] == "FHIR-R4"
+    assert actual_json["status"] == "success"
+    assert actual_json["data_record_location"] == "FHIR-R4:0:0"
 
 
-@pytest.mark.asyncio
-async def test_fhir_post_with_transmit(
-    async_test_client,
+def test_fhir_post_with_transmit(
+    session_test_client,
     fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
@@ -76,7 +73,7 @@ async def test_fhir_post_with_transmit(
 ):
     """
     Tests /fhir [POST] with an external FHIR server defined.
-    :param async_test_client: HTTPX test client fixture
+    :param session_test_client: The configured Fast API test client, includes app and settings.
     :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
@@ -112,23 +109,22 @@ async def test_fhir_post_with_transmit(
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
         m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
-        async with async_test_client as ac:
-            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
-            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
-            actual_json = actual_response.json()
+        session_test_client.app.dependency_overrides[get_settings] = lambda: settings
+        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
 
-            assert (
-                actual_json[0]["url"]
-                == "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient"
-            )
-            assert actual_json[0]["result"] == ""
-            assert actual_json[0]["status_code"] == 201
-            assert "location" in actual_json[0]["headers"]
+    actual_json = actual_response.json()
+
+    assert (
+        actual_json[0]["url"]
+        == "https://fhiruser:change-password@localhost:9443/fhir-server/api/v4/Patient"
+    )
+    assert actual_json[0]["result"] == ""
+    assert actual_json[0]["status_code"] == 201
+    assert "location" in actual_json[0]["headers"]
 
 
-@pytest.mark.asyncio
-async def test_fhir_post_endpoints(
-    async_test_client,
+def test_fhir_post_endpoints(
+    session_test_client,
     fhir_resource,
     mock_async_kafka_producer,
     monkeypatch,
@@ -136,7 +132,7 @@ async def test_fhir_post_endpoints(
 ):
     """
     Tests /fhir [POST] endpoints to ensure that 404 and 422 status codes are returned when appropriate
-    :param async_test_client: HTTPX test client fixture
+    :param session_test_client: The configured Fast API test client, includes app and settings.
     :param fhir_resource: FHIR R4 Encounter Resource fixture
     :param mock_async_kafka_producer: Mock Kafka producer fixture
     :param monkeypatch: MonkeyPatch instance used to mock test cases
@@ -148,25 +144,24 @@ async def test_fhir_post_endpoints(
         m.setattr(nats, "get_nats_client", AsyncMock(return_value=AsyncMock()))
         m.setattr(nats, "get_jetstream_context", AsyncMock(return_value=AsyncMock()))
 
-        async with async_test_client as ac:
-            # remove external server setting
-            settings.connect_external_fhir_servers = []
-            ac._transport.app.dependency_overrides[get_settings] = lambda: settings
+        # remove external server setting
+        settings.connect_external_fhir_servers = []
+        session_test_client.app.dependency_overrides[get_settings] = lambda: settings
 
-            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
-            assert actual_response.status_code == 200
+        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        assert actual_response.status_code == 200
 
-            actual_response = await ac.post("/fhir/encounter", json=fhir_resource)
-            assert actual_response.status_code == 404
+        actual_response = session_test_client.post("https://testserver/fhir/encounter", json=fhir_resource)
+        assert actual_response.status_code == 404
 
-            fhir_resource["resourceType"] = "Patient"
-            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
-            assert actual_response.status_code == 422
+        fhir_resource["resourceType"] = "Patient"
+        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        assert actual_response.status_code == 422
 
-            # a missing FHIR resource type also causes a 422
-            del fhir_resource["resourceType"]
-            actual_response = await ac.post("/fhir/Encounter", json=fhir_resource)
-            assert actual_response.status_code == 422
+        # a missing FHIR resource type also causes a 422
+        del fhir_resource["resourceType"]
+        actual_response = session_test_client.post("https://testserver/fhir/Encounter", json=fhir_resource)
+        assert actual_response.status_code == 422
 
 
 def test_validate(fhir_resource):

@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 async def post_fhir_data(
     resource_type: str,
     request: Request,
-    response: Response,
     settings=Depends(get_settings),
     request_data: dict = Body(...),
 ):
@@ -68,7 +67,6 @@ async def post_fhir_data(
 
     :param resource_type: Path parameter for the FHIR Resource type (Encounter, Patient, Practitioner, etc)
     :param request: The Fast API request model
-    :param response: The response object which will be returned to the client
     :param settings: Connect configuration settings
     :param request_data: The incoming FHIR message
     :return: A LinuxForHealth message containing the resulting FHIR message or the

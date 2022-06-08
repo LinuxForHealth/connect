@@ -9,7 +9,6 @@ import pytest
 from connect.support.availability import get_host_ports, is_service_available, ping_host
 
 
-@pytest.mark.asyncio
 def test_ping_host(monkeypatch):
     """
     Validates positive and negative results for ping_host.

@@ -48,7 +48,7 @@ async def _process_edi_data(
     return await workflow.run()
 
 
-@router.post("/", response_model=LinuxForHealthDataRecordResponse)
+@router.post("", response_model=LinuxForHealthDataRecordResponse)
 async def post_edi_data(
     settings=Depends(get_settings),
     request_data: dict = Body(...),

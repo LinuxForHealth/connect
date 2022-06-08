@@ -229,6 +229,7 @@ def session_test_client() -> TestClient:
         "nats_servers": ["tls://localhost:8080"],
         "uvicorn_reload": False,
         "uvicorn_app": "connect.asgi:app",
+        "uvicorn_host": "testserver",
         "connect_cert_key_name": "./mycert.key",
         "connect_cert_name": "./mycert.pem",
         "connect_external_fhir_servers": [
