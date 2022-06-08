@@ -436,8 +436,7 @@ async def create_jetstream_context() -> Optional[JetStreamContext]:
         retention=RetentionPolicy.LIMITS,
         max_msgs=-1,
         max_bytes=-1,
-        # TODO : determine optimal max_age value vs config?
-        # max_age=365 * 24 * 60 * 60 * 1_000_000_000,
+        max_age=365 * 24 * 60 * 60,
         storage=StorageType.FILE,
         duplicate_window=30,
     )
